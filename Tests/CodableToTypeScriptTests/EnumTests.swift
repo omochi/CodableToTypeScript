@@ -57,7 +57,21 @@ enum E {
   };
 }
 """)
+    }
 
+    func testTranspileDictionary() throws {
+        try assertTranspile("""
+enum E {
+    case a([String: Int], [String: Int?])
+}
+""", """
+{
+  a: {
+    _0: { [key: string]: number; };
+    _1: { [key: string]: number | null; };
+  };
+}
+""")
     }
 
     private func assertTranspile(

@@ -64,18 +64,22 @@ final class EnumConverter {
         if isWrapped {
             let wrapped = transpile(fieldType: unwrappedFieldType)
             return .union([wrapped, .named("null")])
-        }
-
-        if let st = fieldType.struct,
-           st.name == "Array",
-           st.genericsArguments.count > 0
+        } else if let st = fieldType.struct,
+                  st.name == "Array",
+                  st.genericsArguments.count >= 1
         {
             let element = transpile(fieldType: st.genericsArguments[0])
             return .array(element)
+        } else if let st = fieldType.struct,
+                  st.name == "Dictionary",
+                  st.genericsArguments.count >= 2
+        {
+            let element = transpile(fieldType: st.genericsArguments[1])
+            return .dictionary(element)
+        } else {
+            let typeName = typeMap.map(name: fieldType.name)
+            return .named(typeName)
         }
-
-        let typeName = typeMap.map(name: fieldType.name)
-        return .named(typeName)
     }
 
 }
