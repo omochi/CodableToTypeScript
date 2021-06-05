@@ -42,6 +42,24 @@ enum E {
 """)
     }
 
+    func testTranspileArray() throws {
+        try assertTranspile("""
+enum E {
+    case a([Int], [[Int]], [Int]?, [Int?])
+}
+""", """
+{
+  a: {
+    _0: number[];
+    _1: number[][];
+    _2?: number[];
+    _3: (number | null)[];
+  };
+}
+""")
+
+    }
+
     private func assertTranspile(
         _ source: String,
         _ expected: String,

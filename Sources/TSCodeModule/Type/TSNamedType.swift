@@ -1,5 +1,3 @@
-import Foundation
-
 public struct TSNamedType: PrettyPrintable {
     public init(_ name: String) {
         self.name = name

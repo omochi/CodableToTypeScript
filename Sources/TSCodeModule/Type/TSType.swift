@@ -1,7 +1,8 @@
-public enum TSType: PrettyPrintable {
+public indirect enum TSType: PrettyPrintable {
     case named(TSNamedType)
     case record(TSRecordType)
     case union(TSUnionType)
+    case array(TSArrayType)
     case stringLiteral(TSStringLiteralType)
 
     public func print(printer: PrettyPrinter) {
@@ -9,6 +10,7 @@ public enum TSType: PrettyPrintable {
         case .named(let t): t.print(printer: printer)
         case .record(let t): t.print(printer: printer)
         case .union(let t): t.print(printer: printer)
+        case .array(let t): t.print(printer: printer)
         case .stringLiteral(let t): t.print(printer: printer)
         }
     }
@@ -24,6 +26,10 @@ public enum TSType: PrettyPrintable {
 
     public static func union(_ items: [TSType]) -> TSType {
         .union(TSUnionType(items))
+    }
+
+    public static func array(_ element: TSType) -> TSType {
+        .array(TSArrayType(element))
     }
 
     public static func stringLiteral(_ value: String) -> TSType {
