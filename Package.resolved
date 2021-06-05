@@ -1,0 +1,25 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "SwiftSyntax",
+        "repositoryURL": "https://github.com/apple/swift-syntax.git",
+        "state": {
+          "branch": null,
+          "revision": "2fff9fc25cdc059379b6bd309377cfab45d8520c",
+          "version": "0.50400.0"
+        }
+      },
+      {
+        "package": "SwiftTypeReader",
+        "repositoryURL": "https://github.com/omochi/SwiftTypeReader",
+        "state": {
+          "branch": "main",
+          "revision": "a778f6bda15cd0a2e38508d2395be918629da3e0",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}
