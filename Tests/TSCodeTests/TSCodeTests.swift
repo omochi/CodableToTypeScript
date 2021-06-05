@@ -52,7 +52,7 @@ export type S1 = {
   kind: "b";
   b: {
   };
-};
+}
 """
 
         XCTAssertEqual(e.description, expected)

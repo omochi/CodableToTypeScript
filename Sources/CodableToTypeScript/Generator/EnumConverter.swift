@@ -64,37 +64,14 @@ final class EnumConverter {
 
     private func transpile(associatedValue av: AssociatedValue, index: Int) -> TSRecordType.Field {
         let fieldName = Utils.label(of: av, index)
-        let (type, isOuterOptional) = Utils.unwrapOptional(av.type, limit: 1)
-        let fieldType = transpile(fieldType: type)
+        let (type, isOptional) = Utils.unwrapOptional(av.type, limit: 1)
+        let fieldType = StructConverter.transpile(typeMap: typeMap, fieldType: type)
 
         return .init(
             name: fieldName,
             type: fieldType,
-            isOptional: isOuterOptional
+            isOptional: isOptional
         )
-    }
-
-    private func transpile(fieldType: Type) -> TSType {
-        let (unwrappedFieldType, isWrapped) = Utils.unwrapOptional(fieldType, limit: nil)
-        if isWrapped {
-            let wrapped = transpile(fieldType: unwrappedFieldType)
-            return .union([wrapped, .named("null")])
-        } else if let st = fieldType.struct,
-                  st.name == "Array",
-                  st.genericsArguments.count >= 1
-        {
-            let element = transpile(fieldType: st.genericsArguments[0])
-            return .array(element)
-        } else if let st = fieldType.struct,
-                  st.name == "Dictionary",
-                  st.genericsArguments.count >= 2
-        {
-            let element = transpile(fieldType: st.genericsArguments[1])
-            return .dictionary(element)
-        } else {
-            let typeName = typeMap.map(name: fieldType.name)
-            return .named(typeName)
-        }
     }
 
     static func caseElements(from jsonType: TSUnionType) -> [TSRecordType.Field] {
@@ -159,6 +136,7 @@ export function \(taggedName)Decode(json: \(jsonName)): \(taggedName) {
     ifCase(ce, i)
 })
 }
+
 """
 
 

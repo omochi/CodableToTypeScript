@@ -35,7 +35,10 @@ final class CodeGeneratorImpl {
                 .custom(ret.decodeFunc)
             ]
         case .struct(let type):
-            fatalError()
+            let ret = StructConverter(typeMap: typeMap).convert(type: type)
+            code.decls += [
+                .typeDecl(name: type.name, type: .record(ret))
+            ]
         case .unresolved:
             break
         }

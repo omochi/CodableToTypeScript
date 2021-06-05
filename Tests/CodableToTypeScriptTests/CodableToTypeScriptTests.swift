@@ -3,13 +3,35 @@ import XCTest
 import SwiftTypeReader
 
 final class CodableToTypeScriptTests: XCTestCase {
+    func testStruct() throws {
+        try assertGenerate(source: """
+struct S {
+    var x: Int
+    var o1: Int?
+    var o2: Int??
+    var o3: Int???
+    var a1: [Int?]
+    var d1: [String: Int]
+}
+""", expected: """
+export type S = {
+  x: number;
+  o1?: number;
+  o2?: number | null;
+  o3?: number | null;
+  a1: (number | null)[];
+  d1: { [key: string]: number; };
+};
+
+""")
+    }
+
     func testEnum() throws {
-        let source = """
+        try assertGenerate(source: """
 enum E {
     case a(x: Int, y: Int)
     case b([String])
-"""
-        let expected = """
+""", expected: """
 export type EJSON = {
   a: {
     x: number;
@@ -43,11 +65,17 @@ export function EDecode(json: EJSON): E {
         throw new Error("unknown kind");
     }
 }
-"""
 
+""")
+    }
+
+    private func assertGenerate(
+        source: String, expected: String,
+        file: StaticString = #file, line: UInt = #line
+    ) throws {
         let module = try Reader().read(source: source)
-        let swType = try XCTUnwrap(module.types.compactMap { $0.enum }.first)
-        let tsCode = CodeGenerator(typeMap: .default).generate(type: .enum(swType))
+        let swType = try XCTUnwrap(module.types.first)
+        let tsCode = CodeGenerator(typeMap: .default).generate(type: swType)
         XCTAssertEqual(tsCode.description, expected)
     }
 }
