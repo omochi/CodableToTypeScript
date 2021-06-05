@@ -1,5 +1,15 @@
 import SwiftTypeReader
 
+extension DefaultStringInterpolation {
+    mutating func appendInterpolation<S: Sequence>(
+        lines: S,
+        _ f: (S.Element) -> String
+    ) {
+        let str = lines.map { f($0) }.joined(separator: "\n")
+        self.appendInterpolation(str)
+    }
+}
+
 enum Utils {
     static func pascalCase(_ str: String) -> String {
         if str.isEmpty { return str }

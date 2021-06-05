@@ -4,7 +4,7 @@ import SwiftTypeReader
 import TestUtils
 import TSCodeModule
 
-final class EnumTests: XCTestCase {
+final class EnumTranspileTests: XCTestCase {
     func testTranspile() throws {
         try assertTranspile("""
 enum E {
