@@ -10,8 +10,6 @@ public struct TSUnionType: PrettyPrintable {
             printer.write(item)
             if i < items.count - 1 {
                 printer.write(" | ")
-            } else {
-                printer.write(";")
             }
         }
     }

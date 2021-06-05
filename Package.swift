@@ -15,6 +15,9 @@ let package = Package(
     ],
     targets: [
         .target(
+            name: "TestUtils"
+        ),
+        .target(
             name: "TSCodeModule"
         ),
         .testTarget(
@@ -24,6 +27,7 @@ let package = Package(
         .target(
             name: "CodableToTypeScript",
             dependencies: [
+                "TestUtils",
                 "TSCodeModule",
                 .product(name: "SwiftTypeReader", package: "SwiftTypeReader")
             ]
