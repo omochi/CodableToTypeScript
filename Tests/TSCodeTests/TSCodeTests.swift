@@ -48,8 +48,7 @@ export type S1 = {
   kind: "a";
   a: {
   };
-} |
-{
+} | {
   kind: "b";
   b: {
   };

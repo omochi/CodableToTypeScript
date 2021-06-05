@@ -9,7 +9,7 @@ public struct TSUnionType: PrettyPrintable {
         for (i, item) in items.enumerated() {
             printer.write(item)
             if i < items.count - 1 {
-                printer.writeLine(" |")
+                printer.write(" | ")
             } else {
                 printer.write(";")
             }
