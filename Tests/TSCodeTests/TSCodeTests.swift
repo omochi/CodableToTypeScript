@@ -57,4 +57,18 @@ export type S1 = {
 
         XCTAssertEqual(e.description, expected)
     }
+
+    func testImport() {
+        let imp = TSImportDecl(names: ["A", "B", "C"], from: "..")
+
+        let expected = """
+import {
+    A,
+    B,
+    C
+} from "..";
+
+"""
+        XCTAssertEqual(imp.description, expected)
+    }
 }
