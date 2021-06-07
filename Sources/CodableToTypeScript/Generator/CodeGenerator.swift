@@ -9,7 +9,7 @@ public final class CodeGenerator {
         self.typeMap = typeMap
     }
 
-    public func generate(type: Type) -> TSCode {
+    public func generate(type: SType) -> TSCode {
         let impl = CodeGeneratorImpl(typeMap: typeMap)
         impl.generate(type: type)
         return impl.code
@@ -25,7 +25,7 @@ final class CodeGeneratorImpl {
     let typeMap: TypeMap
     var code: TSCode
 
-    func generate(type: Type) {
+    func generate(type: SType) {
         switch type {
         case .enum(let type):
             let ret = EnumConverter(typeMap: typeMap).convert(type: type)

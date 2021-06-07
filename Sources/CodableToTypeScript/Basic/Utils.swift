@@ -32,7 +32,7 @@ enum Utils {
         }
     }
 
-    static func unwrapOptional(_ type: Type, limit: Int?) -> (type: Type, isWrapped: Bool) {
+    static func unwrapOptional(_ type: SType, limit: Int?) -> (type: SType, isWrapped: Bool) {
         var isWrapped = false
         var type = type
         var i = 0

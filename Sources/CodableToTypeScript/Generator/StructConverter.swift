@@ -24,7 +24,7 @@ final class StructConverter {
         return TSRecordType(fields)
     }
 
-    static func transpile(typeMap: TypeMap, fieldType: Type) -> TSType {
+    static func transpile(typeMap: TypeMap, fieldType: SType) -> TSType {
         let (unwrappedFieldType, isWrapped) = Utils.unwrapOptional(fieldType, limit: nil)
         if isWrapped {
             let wrapped = transpile(
