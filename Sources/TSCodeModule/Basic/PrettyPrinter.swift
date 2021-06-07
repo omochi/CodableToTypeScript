@@ -53,6 +53,6 @@ public final class PrettyPrinter {
     private func writeIndentIfNeeded() {
         guard needsIndent else { return }
         needsIndent = false
-        output += String(repeating: "  ", count: level)
+        output += String(repeating: "    ", count: level)
     }
 }

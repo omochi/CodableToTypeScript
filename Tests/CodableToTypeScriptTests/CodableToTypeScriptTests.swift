@@ -15,12 +15,12 @@ struct S {
 }
 """, expected: """
 export type S = {
-  x: number;
-  o1?: number;
-  o2?: number | null;
-  o3?: number | null;
-  a1: (number | null)[];
-  d1: { [key: string]: number; };
+    x: number;
+    o1?: number;
+    o2?: number | null;
+    o3?: number | null;
+    a1: (number | null)[];
+    d1: { [key: string]: number; };
 };
 
 """)
@@ -33,27 +33,27 @@ enum E {
     case b([String])
 """, expected: """
 export type EJSON = {
-  a: {
-    x: number;
-    y: number;
-  };
+    a: {
+        x: number;
+        y: number;
+    };
 } | {
-  b: {
-    _0: string[];
-  };
+    b: {
+        _0: string[];
+    };
 };
 
 export type E = {
-  kind: "a";
-  a: {
-    x: number;
-    y: number;
-  };
+    kind: "a";
+    a: {
+        x: number;
+        y: number;
+    };
 } | {
-  kind: "b";
-  b: {
-    _0: string[];
-  };
+    kind: "b";
+    b: {
+        _0: string[];
+    };
 };
 
 export function EDecode(json: EJSON): E {

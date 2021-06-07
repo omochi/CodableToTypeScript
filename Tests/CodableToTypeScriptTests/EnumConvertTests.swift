@@ -16,14 +16,14 @@ final class EnumConvertTests: XCTestCase {
         let t = EnumConverter.makeTaggedType(jsonType: Self.jsonType)
         XCTAssertEqual(t.description, """
 {
-  kind: "a";
-  a: {
-  };
+    kind: "a";
+    a: {
+    };
 } | {
-  kind: "b";
-  b: {
-    _0: number;
-  };
+    kind: "b";
+    b: {
+        _0: number;
+    };
 }
 """)
     }

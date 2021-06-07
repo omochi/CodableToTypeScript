@@ -13,14 +13,14 @@ enum E {
 }
 ""","""
 {
-  a: {
-    x: number;
-  };
+    a: {
+        x: number;
+    };
 } | {
-  b: {
-    y: string;
-    _1: number;
-  };
+    b: {
+        y: string;
+        _1: number;
+    };
 }
 """)
     }
@@ -32,12 +32,12 @@ enum E {
 }
 """, """
 {
-  a: {
-    _0: number;
-    _1?: number;
-    _2?: number | null;
-    _3?: number | null;
-  };
+    a: {
+        _0: number;
+        _1?: number;
+        _2?: number | null;
+        _3?: number | null;
+    };
 }
 """)
     }
@@ -49,12 +49,12 @@ enum E {
 }
 """, """
 {
-  a: {
-    _0: number[];
-    _1: number[][];
-    _2?: number[];
-    _3: (number | null)[];
-  };
+    a: {
+        _0: number[];
+        _1: number[][];
+        _2?: number[];
+        _3: (number | null)[];
+    };
 }
 """)
     }
@@ -66,10 +66,10 @@ enum E {
 }
 """, """
 {
-  a: {
-    _0: { [key: string]: number; };
-    _1: { [key: string]: number | null; };
-  };
+    a: {
+        _0: { [key: string]: number; };
+        _1: { [key: string]: number | null; };
+    };
 }
 """)
     }

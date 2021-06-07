@@ -20,10 +20,10 @@ final class TSCodeTests: XCTestCase {
 
         let expected = """
 export type S1 = {
-  a?: {
-    a: number;
-    b: string;
-  };
+    a?: {
+        a: number;
+        b: string;
+    };
 };
 
 """
@@ -45,13 +45,13 @@ export type S1 = {
 
         let expected = """
 {
-  kind: "a";
-  a: {
-  };
+    kind: "a";
+    a: {
+    };
 } | {
-  kind: "b";
-  b: {
-  };
+    kind: "b";
+    b: {
+    };
 }
 """
 
