@@ -73,9 +73,9 @@ export function EDecode(json: EJSON): E {
         source: String, expected: String,
         file: StaticString = #file, line: UInt = #line
     ) throws {
-        let module = try Reader().read(source: source)
-        let swType = try XCTUnwrap(module.types.first)
-        let tsCode = CodeGenerator(typeMap: .default).generate(type: swType)
+        let result = try Reader().read(source: source)
+        let swType = try XCTUnwrap(result.module.types.first)
+        let tsCode = try CodeGenerator(typeMap: .default).generate(type: swType)
         XCTAssertEqual(tsCode.description, expected)
     }
 }

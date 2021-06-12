@@ -32,13 +32,13 @@ enum Utils {
         }
     }
 
-    static func unwrapOptional(_ type: SType, limit: Int?) -> (type: SType, isWrapped: Bool) {
+    static func unwrapOptional(_ type: SType, limit: Int?) throws -> (type: SType, isWrapped: Bool) {
         var isWrapped = false
         var type = type
         var i = 0
         while let st = type.struct,
            st.name == "Optional",
-           st.genericsArguments.count > 0
+           try st.genericArguments().count > 0
         {
             if let limit = limit,
                i >= limit
@@ -46,7 +46,7 @@ enum Utils {
                 break
             }
 
-            type = st.genericsArguments[0]
+            type = try st.genericArguments()[0]
             isWrapped = true
             i += 1
         }

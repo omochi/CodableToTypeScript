@@ -16,8 +16,8 @@ final class EnumConverter {
         var decodeFunc: String
     }
 
-    func convert(type: EnumType) -> Value {
-        let jsonType = transpile(type: type)
+    func convert(type: EnumType) throws -> Value {
+        let jsonType = try transpile(type: type)
         let jsonTypeName = type.name + "JSON"
         let taggedTypeName = type.name
         let taggedType = Self.makeTaggedType(jsonType: jsonType)
@@ -35,22 +35,22 @@ final class EnumConverter {
         )
     }
 
-    func transpile(type: EnumType) -> TSUnionType {
+    func transpile(type: EnumType) throws -> TSUnionType {
         var itemTypes: [TSType] = []
 
         for ce in type.caseElements {
-            let record = transpile(caseElement: ce)
+            let record = try transpile(caseElement: ce)
             itemTypes.append(.record(record))
         }
 
         return TSUnionType(itemTypes)
     }
 
-    private func transpile(caseElement: CaseElement) -> TSRecordType {
+    private func transpile(caseElement: CaseElement) throws -> TSRecordType {
         var fields: [TSRecordType.Field] = []
 
         for (i, av) in caseElement.associatedValues.enumerated() {
-            let field = transpile(associatedValue: av, index: i)
+            let field = try transpile(associatedValue: av, index: i)
             fields.append(field)
         }
 
@@ -62,10 +62,10 @@ final class EnumConverter {
         ])
     }
 
-    private func transpile(associatedValue av: AssociatedValue, index: Int) -> TSRecordType.Field {
+    private func transpile(associatedValue av: AssociatedValue, index: Int) throws -> TSRecordType.Field {
         let fieldName = Utils.label(of: av, index)
-        let (type, isOptional) = Utils.unwrapOptional(av.type, limit: 1)
-        let fieldType = StructConverter.transpile(typeMap: typeMap, fieldType: type)
+        let (type, isOptional) = try Utils.unwrapOptional(try av.type(), limit: 1)
+        let fieldType = try StructConverter.transpile(typeMap: typeMap, fieldType: type)
 
         return .init(
             name: fieldName,

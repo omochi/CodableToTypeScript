@@ -80,9 +80,9 @@ enum E {
         file: StaticString = #file,
         line: UInt = #line
     ) throws {
-        let module = try Reader().read(source: source)
-        let swType = try XCTUnwrap(module.types.compactMap { $0.enum }.first)
-        let tsType = EnumConverter(typeMap: .default).transpile(type: swType)
+        let result = try Reader().read(source: source)
+        let swType = try XCTUnwrap(result.module.types.compactMap { $0.enum }.first)
+        let tsType = try EnumConverter(typeMap: .default).transpile(type: swType)
         XCTAssertEqual(tsType.description, expected, file: file, line: line)
     }
 }

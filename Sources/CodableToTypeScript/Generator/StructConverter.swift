@@ -8,13 +8,13 @@ final class StructConverter {
         self.typeMap = typeMap
     }
 
-    func convert(type: StructType) -> TSRecordType {
+    func convert(type: StructType) throws -> TSRecordType {
         var fields: [TSRecordType.Field] = []
 
         for property in type.storedProperties {
             let fieldName = property.name
-            let (type, isOptional) = Utils.unwrapOptional(property.type, limit: 1)
-            let fieldType = Self.transpile(typeMap: typeMap, fieldType: type)
+            let (type, isOptional) = try Utils.unwrapOptional(try property.type(), limit: 1)
+            let fieldType = try Self.transpile(typeMap: typeMap, fieldType: type)
 
             fields.append(
                 .init(name: fieldName, type: fieldType, isOptional: isOptional)
@@ -24,30 +24,30 @@ final class StructConverter {
         return TSRecordType(fields)
     }
 
-    static func transpile(typeMap: TypeMap, fieldType: SType) -> TSType {
-        let (unwrappedFieldType, isWrapped) = Utils.unwrapOptional(fieldType, limit: nil)
+    static func transpile(typeMap: TypeMap, fieldType: SType) throws -> TSType {
+        let (unwrappedFieldType, isWrapped) = try Utils.unwrapOptional(fieldType, limit: nil)
         if isWrapped {
-            let wrapped = transpile(
+            let wrapped = try transpile(
                 typeMap: typeMap,
                 fieldType: unwrappedFieldType
             )
             return .union([wrapped, .named("null")])
         } else if let st = fieldType.struct,
                   st.name == "Array",
-                  st.genericsArguments.count >= 1
+                  try st.genericArguments().count >= 1
         {
-            let element = transpile(
+            let element = try transpile(
                 typeMap: typeMap,
-                fieldType: st.genericsArguments[0]
+                fieldType: try st.genericArguments()[0]
             )
             return .array(element)
         } else if let st = fieldType.struct,
                   st.name == "Dictionary",
-                  st.genericsArguments.count >= 2
+                  try st.genericArguments().count >= 2
         {
-            let element = transpile(
+            let element = try transpile(
                 typeMap: typeMap,
-                fieldType: st.genericsArguments[1]
+                fieldType: try st.genericArguments()[1]
             )
             return .dictionary(element)
         } else {
