@@ -17,7 +17,6 @@ public indirect enum TSType: PrettyPrintable {
         }
     }
 
-
     public static func named(_ name: String, genericArguments: [String] = []) -> TSType {
         .named(TSNamedType(name, genericArguments: genericArguments))
     }

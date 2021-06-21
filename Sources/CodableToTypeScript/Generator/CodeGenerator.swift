@@ -2,30 +2,73 @@ import Foundation
 import SwiftTypeReader
 import TSCodeModule
 
-public final class CodeGenerator {
-    public var typeMap: TypeMap
+public struct CodeGenerator {
+    public static let defaultStandardTypes: Set<String> = [
+        "void",
+        "null",
+        "undefined",
+        "number",
+        "string"
+    ]
 
-    public init(typeMap: TypeMap) {
+    public var typeMap: TypeMap
+    public var standardTypes: Set<String>
+    public var importFrom: String
+
+    public init(
+        typeMap: TypeMap,
+        standardTypes: Set<String> = Self.defaultStandardTypes,
+        importFrom: String = ".."
+    ) {
         self.typeMap = typeMap
+        self.standardTypes = standardTypes
+        self.importFrom = importFrom
     }
 
-    public func generate(type: SType) throws -> TSCode {
-        let impl = CodeGeneratorImpl(typeMap: typeMap)
-        try impl.generate(type: type)
-        return impl.code
+    public func callAsFunction(type: SType) throws -> TSCode {
+        try Impl(
+            typeMap: typeMap,
+            standardTypes: standardTypes,
+            importFrom: importFrom,
+            type: type
+        ).run()
     }
 }
 
-final class CodeGeneratorImpl {
-    init(typeMap: TypeMap, code: TSCode = TSCode(decls: [])) {
+private final class Impl {
+    init(
+        typeMap: TypeMap,
+        standardTypes: Set<String>,
+        importFrom: String,
+        type: SType
+    ) {
         self.typeMap = typeMap
-        self.code = code
+        self.standardTypes = standardTypes
+        self.importFrom = importFrom
+        self.type = type
+        self.code = TSCode(decls: [])
     }
 
     let typeMap: TypeMap
+    let standardTypes: Set<String>
+    let importFrom: String
+    let type: SType
     var code: TSCode
 
-    func generate(type: SType) throws {
+    func run() throws -> TSCode {
+        try convert(type: type)
+
+        let deps = DependencyScanner(standardTypes: standardTypes)(code: code)
+
+        if !deps.isEmpty {
+            let importDecl = TSImportDecl(names: deps, from: importFrom)
+            code.decls.insert(.importDecl(importDecl), at: 0)
+        }
+
+        return code
+    }
+
+    func convert(type: SType) throws {
         guard let type = type.regular else {
             return
         }

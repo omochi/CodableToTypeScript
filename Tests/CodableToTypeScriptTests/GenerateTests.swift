@@ -94,9 +94,11 @@ export function EDecode<T>(json: EJSON<T>): E<T>
         expecteds: [String],
         file: StaticString = #file, line: UInt = #line
     ) throws {
-        let result = try Reader().read(source: source)
-        let swType = try XCTUnwrap(result.module.types.first { $0.name == type })
-        let tsCode = try CodeGenerator(typeMap: .default).generate(type: swType)
+        let tsCode = try Utils.generate(
+            source: source,
+            type: { $0.name == type },
+            file: file, line: line
+        )
         let actual = tsCode.description
         for expected in expecteds {
             if !actual.contains(expected) {
