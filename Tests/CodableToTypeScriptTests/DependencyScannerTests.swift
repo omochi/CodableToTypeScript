@@ -7,10 +7,13 @@ final class DependencyScannerTests: XCTestCase {
     func testGenericStruct() throws {
         let tsCode = try Utils.generate(
             source: """
-struct S {
+struct S<T, U> {
     var a: A?
     var b: number
     var c: [B]
+    var t: T
+    var sc: S<C>
+    var st: R<U>
 }
 """,
             type: { $0.name == "S" }
@@ -23,6 +26,6 @@ struct S {
             }
         }.first)
 
-        XCTAssertEqual(imp.names, ["A", "B"])
+        XCTAssertEqual(imp.names, ["A", "B", "C", "R"])
     }
 }

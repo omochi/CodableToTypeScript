@@ -67,7 +67,7 @@ final class EnumConverter {
     private func transpile(associatedValue av: AssociatedValue, index: Int) throws -> TSRecordType.Field {
         let fieldName = Utils.label(of: av, index)
         let (type, isOptional) = try Utils.unwrapOptional(try av.type(), limit: 1)
-        let fieldType = try StructConverter.transpile(typeMap: typeMap, fieldType: type)
+        let fieldType = try StructConverter.transpile(typeMap: typeMap, type: type)
 
         return .init(
             name: fieldName,
