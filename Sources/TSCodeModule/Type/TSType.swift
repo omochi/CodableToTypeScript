@@ -18,8 +18,8 @@ public indirect enum TSType: PrettyPrintable {
     }
 
 
-    public static func named(_ name: String) -> TSType {
-        .named(TSNamedType(name))
+    public static func named(_ name: String, genericArguments: [String] = []) -> TSType {
+        .named(TSNamedType(name, genericArguments: genericArguments))
     }
 
     public static func record(_ fields: [TSRecordType.Field]) -> TSType {

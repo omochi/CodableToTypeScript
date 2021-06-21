@@ -30,7 +30,10 @@ final class EnumConvertTests: XCTestCase {
 
     func testMakeDecodeFunc() throws {
         let f = EnumConverter.makeDecodeFunc(
-            taggedName: "E", jsonName: "EJSON", jsonType: Self.jsonType
+            taggedName: "E",
+            jsonName: "EJSON",
+            jsonType: Self.jsonType,
+            genericParameters: []
         )
         print(f)
     }

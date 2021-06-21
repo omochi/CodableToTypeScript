@@ -26,22 +26,39 @@ final class CodeGeneratorImpl {
     var code: TSCode
 
     func generate(type: SType) throws {
-        switch type.state {
-        case .resolved(.enum(let type)):
+        guard let type = type.regular else {
+            return
+        }
+        switch type {
+        case .enum(let type):
+            let genericParameters = type.genericParameters.map { $0.name }
             let ret = try EnumConverter(typeMap: typeMap).convert(type: type)
             code.decls += [
-                .typeDecl(name: ret.jsonTypeName, type: .union(ret.jsonType)),
-                .typeDecl(name: ret.taggedTypeName, type: .union(ret.taggedType)),
+                .typeDecl(
+                    name: ret.jsonTypeName,
+                    genericParameters: genericParameters,
+                    type: .union(ret.jsonType)
+                ),
+                .typeDecl(
+                    name: ret.taggedTypeName,
+                    genericParameters: genericParameters,
+                    type: .union(ret.taggedType)
+                ),
                 .custom(ret.decodeFunc)
             ]
-        case .resolved(.struct(let type)):
+        case .struct(let type):
+            let genericParameters = type.genericParameters.map { $0.name }
             let ret = try StructConverter(typeMap: typeMap).convert(type: type)
             code.decls += [
-                .typeDecl(name: type.name, type: .record(ret))
+                .typeDecl(
+                    name: type.name,
+                    genericParameters: genericParameters,
+                    type: .record(ret)
+                )
             ]
-        case .resolved(.protocol),
-             .unresolved:
-            break
+        case .protocol,
+             .genericParameter:
+            return
         }
     }
 }

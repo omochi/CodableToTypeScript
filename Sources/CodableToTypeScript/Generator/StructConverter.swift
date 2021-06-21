@@ -50,10 +50,20 @@ final class StructConverter {
                 fieldType: try st.genericArguments()[1]
             )
             return .dictionary(element)
-        } else {
-            let typeName = typeMap.map(name: fieldType.name)
-            return .named(typeName)
         }
+
+        var name: String = fieldType.name
+        if let mappedName = typeMap[fieldType.name] {
+            name = mappedName
+        } else {
+            if let _ = fieldType.enum {
+                name += "JSON"
+            }
+        }
+
+        let args = try fieldType.genericArguments().map { $0.name }
+
+        return .named(name, genericArguments: args)
     }
 
 }

@@ -21,10 +21,12 @@ final class EnumConverter {
         let jsonTypeName = type.name + "JSON"
         let taggedTypeName = type.name
         let taggedType = Self.makeTaggedType(jsonType: jsonType)
+        let genericParameters = type.genericParameters.map { $0.name }
         let decodeFunc = Self.makeDecodeFunc(
             taggedName: taggedTypeName,
             jsonName: jsonTypeName,
-            jsonType: jsonType
+            jsonType: jsonType,
+            genericParameters: genericParameters
         )
         return Value(
             jsonTypeName: jsonTypeName,
@@ -101,7 +103,21 @@ final class EnumConverter {
 
     }
 
-    static func makeDecodeFunc(taggedName: String, jsonName: String, jsonType: TSUnionType) -> String {
+    static func makeDecodeFunc(
+        taggedName: String,
+        jsonName: String,
+        jsonType: TSUnionType,
+        genericParameters: [String]
+    ) -> String {
+        let genericSignature: String
+        if genericParameters.isEmpty {
+            genericSignature = ""
+        } else {
+            genericSignature = "<" +
+                genericParameters.joined(separator: ", ") +
+                ">"
+        }
+
         let caseElements = self.caseElements(from: jsonType)
 
         func ifCase(_ ce: TSRecordType.Field, _ i: Int) -> String {
@@ -130,8 +146,16 @@ final class EnumConverter {
             return str
         }
 
+        let title = [
+            "export function ",
+            "\(taggedName)Decode\(genericSignature)(",
+            "json: \(jsonName)\(genericSignature)",
+            "): ",
+            "\(taggedName)\(genericSignature)"
+        ].joined()
+
         return """
-export function \(taggedName)Decode(json: \(jsonName)): \(taggedName) {
+\(title) {
 \(lines: caseElements.enumerated(), { (i, ce) in
     ifCase(ce, i)
 })

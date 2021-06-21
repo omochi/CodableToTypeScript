@@ -16,7 +16,7 @@ public struct TypeMap {
 
     public var table: [String: String]
 
-    public func map(name: String) -> String {
-        table[name] ?? name
+    public subscript(name: String) -> String? {
+        table[name]
     }
 }

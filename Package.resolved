@@ -11,20 +11,11 @@
         }
       },
       {
-        "package": "SwiftSyntax",
-        "repositoryURL": "https://github.com/apple/swift-syntax",
-        "state": {
-          "branch": null,
-          "revision": "2fff9fc25cdc059379b6bd309377cfab45d8520c",
-          "version": "0.50400.0"
-        }
-      },
-      {
         "package": "SwiftTypeReader",
         "repositoryURL": "https://github.com/omochi/SwiftTypeReader",
         "state": {
           "branch": "main",
-          "revision": "26da7c2580b7134fd2a447c6a00c5a5b121cd0a4",
+          "revision": "540ab46ec5baa0d7bfcf09106b63f22dadcb6d7b",
           "version": null
         }
       }
