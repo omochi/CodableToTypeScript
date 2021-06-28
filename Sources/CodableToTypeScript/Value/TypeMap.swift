@@ -17,6 +17,11 @@ public struct TypeMap {
     public var table: [String: String]
 
     public subscript(name: String) -> String? {
-        table[name]
+        get {
+            table[name]
+        }
+        set {
+            table[name] = newValue
+        }
     }
 }
