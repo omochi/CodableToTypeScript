@@ -74,6 +74,17 @@ enum E {
 """)
     }
 
+    func testTranspileString() throws {
+        try assertTranspile("""
+enum E: String, Codable {
+    case aaa
+    case bbb
+}
+""","""
+"aaa" | "bbb"
+""")
+    }
+
     private func assertTranspile(
         _ source: String,
         _ expected: String,

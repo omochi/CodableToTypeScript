@@ -87,6 +87,22 @@ export function EDecode<T>(json: EJSON<T>): E<T>
         )
     }
 
+    func testStringRawValueEnum() throws {
+        try assertGenerate(
+            source: """
+enum E: String, Codable {
+    case aaa
+    case iii
+}
+""",
+            type: "E",
+            expecteds: [
+                """
+export type E = "aaa" | "iii";
+""",
+            ]
+        )
+    }
 
     private func assertGenerate(
         source: String,
