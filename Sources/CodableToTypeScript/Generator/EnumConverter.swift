@@ -9,14 +9,19 @@ final class EnumConverter {
     }
 
     struct Value {
-        var jsonTypeName: String
-        var jsonType: TSUnionType
-        var taggedTypeName: String
-        var taggedType: TSUnionType
-        var decodeFunc: String
+        var typeDecls: [(typeName: String, type: TSUnionType)]
+        var decodeFunc: String?
     }
 
     func convert(type: EnumType) throws -> Value {
+        if try Self.isStringRawValueType(type: type) {
+            let unionType = try transpile(type: type)
+            return Value(
+                typeDecls: [(type.name, unionType)],
+                decodeFunc: nil
+            )
+        }
+
         let jsonType = try transpile(type: type)
         let jsonTypeName = type.name + "JSON"
         let taggedTypeName = type.name
@@ -29,10 +34,10 @@ final class EnumConverter {
             genericParameters: genericParameters
         )
         return Value(
-            jsonTypeName: jsonTypeName,
-            jsonType: jsonType,
-            taggedTypeName: taggedTypeName,
-            taggedType: taggedType,
+            typeDecls: [
+                (jsonTypeName, jsonType),
+                (taggedTypeName, taggedType),
+            ],
             decodeFunc: decodeFunc
         )
     }
@@ -40,12 +45,22 @@ final class EnumConverter {
     func transpile(type: EnumType) throws -> TSUnionType {
         var itemTypes: [TSType] = []
 
-        for ce in type.caseElements {
-            let record = try transpile(caseElement: ce)
-            itemTypes.append(.record(record))
+        if try Self.isStringRawValueType(type: type) {
+            for ce in type.caseElements {
+                itemTypes.append(.stringLiteral(ce.name))
+            }
+        } else {
+            for ce in type.caseElements {
+                let record = try transpile(caseElement: ce)
+                itemTypes.append(.record(record))
+            }
         }
 
         return TSUnionType(itemTypes)
+    }
+
+    static func isStringRawValueType(type: EnumType) throws -> Bool {
+        try type.inheritedTypes().first?.name == "String"
     }
 
     private func transpile(caseElement: CaseElement) throws -> TSRecordType {
