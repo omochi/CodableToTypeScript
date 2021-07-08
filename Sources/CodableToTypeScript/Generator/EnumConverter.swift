@@ -58,7 +58,7 @@ final class EnumConverter {
         }
 
         let jsonType = try transpile(type: type)
-        let jsonTypeName = type.name + "JSON"
+        let jsonTypeName = try Self.transpiledName(type: type)
         let taggedTypeName = type.name
         let taggedType = Self.makeTaggedType(jsonType: jsonType)
         let genericParameters = type.genericParameters.map { $0.name }
@@ -97,6 +97,14 @@ final class EnumConverter {
 
     static func isStringRawValueType(type: EnumType) throws -> Bool {
         try type.inheritedTypes().first?.name == "String"
+    }
+
+    static func transpiledName(type: EnumType) throws -> String {
+        if try isStringRawValueType(type: type) {
+            return type.name
+        } else {
+            return type.name + "JSON"
+        }
     }
 
     private func transpile(caseElement: CaseElement) throws -> TSRecordType {
