@@ -8,17 +8,52 @@ final class EnumConverter {
         self.typeMap = typeMap
     }
 
-    struct Value {
-        var typeDecls: [(typeName: String, type: TSUnionType)]
-        var decodeFunc: String?
+    enum Value {
+        case stringRawValue(
+                typeName: String, type: TSUnionType
+             )
+        case associatedValue(
+                jsonTypeName: String,
+                jsonType: TSUnionType,
+                taggedTypeName: String,
+                taggedType: TSUnionType,
+                decodeFunc: String
+             )
+
+        var typeDecls: [TSTypeDecl] {
+            switch self {
+            case .stringRawValue(typeName: let typeName, type: let type):
+                return [.init(name: typeName, type: .union(type))]
+            case .associatedValue(
+                    jsonTypeName: let jsonTypeName, jsonType: let jsonType,
+                    taggedTypeName: let taggedTypeName,
+                    taggedType: let taggedType,
+                    decodeFunc: _):
+                return [
+                    .init(name: jsonTypeName, type: .union(jsonType)),
+                    .init(name: taggedTypeName, type: .union(taggedType))
+                ]
+            }
+        }
+
+        var customDecls: [String] {
+            switch self {
+            case .stringRawValue: return []
+            case .associatedValue(
+                    jsonTypeName: _, jsonType: _,
+                    taggedTypeName: _, taggedType: _,
+                    decodeFunc: let decodeFunc):
+                return [decodeFunc]
+            }
+        }
     }
 
     func convert(type: EnumType) throws -> Value {
         if try Self.isStringRawValueType(type: type) {
             let unionType = try transpile(type: type)
-            return Value(
-                typeDecls: [(type.name, unionType)],
-                decodeFunc: nil
+            return .stringRawValue(
+                typeName: type.name,
+                type: unionType
             )
         }
 
@@ -33,11 +68,12 @@ final class EnumConverter {
             jsonType: jsonType,
             genericParameters: genericParameters
         )
-        return Value(
-            typeDecls: [
-                (jsonTypeName, jsonType),
-                (taggedTypeName, taggedType),
-            ],
+
+        return .associatedValue(
+            jsonTypeName: jsonTypeName,
+            jsonType: jsonType,
+            taggedTypeName: taggedTypeName,
+            taggedType: taggedType,
             decodeFunc: decodeFunc
         )
     }

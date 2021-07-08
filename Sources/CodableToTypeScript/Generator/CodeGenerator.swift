@@ -78,14 +78,12 @@ private final class Impl {
             let ret = try EnumConverter(typeMap: typeMap).convert(type: type)
             code.decls += ret.typeDecls.map {
                 .typeDecl(
-                    name: $0.typeName,
+                    name: $0.name,
                     genericParameters: genericParameters,
-                    type: .union($0.type)
+                    type: $0.type
                 )
             }
-            if let decodeFunc = ret.decodeFunc {
-                code.decls += [.custom(decodeFunc)]
-            }
+            code.decls += ret.customDecls.map { .custom($0) }
         case .struct(let type):
             let genericParameters = type.genericParameters.map { $0.name }
             let ret = try StructConverter(typeMap: typeMap).convert(type: type)

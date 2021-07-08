@@ -1,7 +1,7 @@
 public struct TSTypeDecl: PrettyPrintable {
     public init(
         name: String,
-        genericParameters: [String],
+        genericParameters: [String] = [],
         type: TSType
     ) {
         self.name = name
