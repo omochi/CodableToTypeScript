@@ -69,13 +69,44 @@ export function EDecode(json: EJSON): E {
 """)
     }
 
+    func testEnumInStruct() throws {
+        try assertGenerate(
+            source: """
+enum E1 {
+    case a
+}
+
+enum E2: String {
+    case a
+}
+
+struct S {
+    var x: E1
+    var y: E2
+}
+""",
+            type: "S",
+            expected: """
+import {
+    E1JSON,
+    E2
+} from "..";
+
+export type S = {
+    x: E1JSON;
+    y: E2;
+};
+
+""")
+    }
+
     private func assertGenerate(
-        source: String, expected: String,
+        source: String, type: String? = nil, expected: String,
         file: StaticString = #file, line: UInt = #line
     ) throws {
         let tsCode = try Utils.generate(
             source: source,
-            type: { (_) in true },
+            type: { type ?? $0.name == $0.name },
             file: file, line: line
         )
         XCTAssertEqual(tsCode.description, expected)

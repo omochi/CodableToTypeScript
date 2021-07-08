@@ -56,7 +56,7 @@ final class StructConverter {
         if let mappedName = typeMap[type.name] {
             name = mappedName
         } else {
-            if let _ = type.enum {
+            if let enumType = type.enum, try !EnumConverter.isStringRawValueType(type: enumType) {
                 name += "JSON"
             }
         }
