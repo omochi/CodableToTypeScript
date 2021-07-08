@@ -58,6 +58,21 @@ export type S1 = {
         XCTAssertEqual(e.description, expected)
     }
 
+    func testLinedUnion() {
+        let e: TSType = .union([
+            .stringLiteral("a"),
+            .stringLiteral("b"),
+            .stringLiteral("c")
+        ], splitLines: true)
+
+        let expected = """
+"a" |
+"b" |
+"c"
+"""
+        XCTAssertEqual(e.description, expected)
+    }
+
     func testImport() {
         let imp = TSImportDecl(names: ["A", "B", "C"], from: "..")
 

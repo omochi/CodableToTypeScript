@@ -28,12 +28,11 @@ public final class PrettyPrinter {
         value.print(printer: self)
     }
 
-    public func writeLine(_ text: String, newLine: Bool = true) {
+    public func writeLine(_ text: String) {
         write(text)
-        if newLine {
-            output += "\n"
-            needsIndent = true
-        }
+
+        output += "\n"
+        needsIndent = true
     }
 
     public func push() {

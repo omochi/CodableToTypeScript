@@ -79,20 +79,23 @@ final class EnumConverter {
     }
 
     func transpile(type: EnumType) throws -> TSUnionType {
+        let splitLines: Bool
         var itemTypes: [TSType] = []
 
         if try Self.isStringRawValueType(type: type) {
+            splitLines = true
             for ce in type.caseElements {
                 itemTypes.append(.stringLiteral(ce.name))
             }
         } else {
+            splitLines = false
             for ce in type.caseElements {
                 let record = try transpile(caseElement: ce)
                 itemTypes.append(.record(record))
             }
         }
 
-        return TSUnionType(itemTypes)
+        return TSUnionType(itemTypes, splitLines: splitLines)
     }
 
     static func isStringRawValueType(type: EnumType) throws -> Bool {

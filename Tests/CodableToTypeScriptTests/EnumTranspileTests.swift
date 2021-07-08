@@ -81,7 +81,8 @@ enum E: String, Codable {
     case bbb
 }
 ""","""
-"aaa" | "bbb"
+"aaa" |
+"bbb"
 """)
     }
 

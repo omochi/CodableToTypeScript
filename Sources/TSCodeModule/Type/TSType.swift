@@ -25,8 +25,8 @@ public indirect enum TSType: PrettyPrintable {
         .record(TSRecordType(fields))
     }
 
-    public static func union(_ items: [TSType]) -> TSType {
-        .union(TSUnionType(items))
+    public static func union(_ items: [TSType], splitLines: Bool = false) -> TSType {
+        .union(TSUnionType(items, splitLines: splitLines))
     }
 
     public static func array(_ element: TSType) -> TSType {

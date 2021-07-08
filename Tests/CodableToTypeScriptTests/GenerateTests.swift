@@ -98,7 +98,8 @@ enum E: String, Codable {
             type: "E",
             expecteds: [
                 """
-export type E = "aaa" | "iii";
+export type E = "aaa" |
+"iii";
 """,
             ]
         )
