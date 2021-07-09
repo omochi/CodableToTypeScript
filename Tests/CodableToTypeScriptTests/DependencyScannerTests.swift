@@ -28,4 +28,25 @@ struct S<T, U> {
 
         XCTAssertEqual(imp.names, ["A", "B", "C", "R"])
     }
+
+    func testDefaultStandardTypes() throws {
+        let tsCode = try Utils.generate(
+            source: """
+struct S {
+    var a: Int
+    var b: Bool
+    var c: String
+    var d: Double?
+}
+""",
+            type: { $0.name == "S" }
+        )
+
+        XCTAssertFalse(tsCode.decls.contains { (x) in
+            switch x {
+            case .importDecl: return true
+            default: return false
+            }
+        })
+    }
 }
