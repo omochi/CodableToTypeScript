@@ -7,9 +7,9 @@ public struct CodeGenerator {
         "void",
         "null",
         "undefined",
+        "boolean",
         "number",
         "string",
-        "boolean",
     ]
 
     public var typeMap: TypeMap
