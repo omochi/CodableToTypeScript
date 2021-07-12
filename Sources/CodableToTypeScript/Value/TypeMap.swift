@@ -1,27 +1,42 @@
-public struct TypeMap {
-    public static var `default`: TypeMap {
-        TypeMap([
-            "Void": "void",
-            "Bool": "boolean",
-            "Int": "number",
-            "Float": "number",
-            "Double": "number",
-            "String": "string"
-        ])
-    }
+import SwiftTypeReader
 
-    public init(_ table: [String : String] = [:]) {
-        self.table = table
+public struct TypeMap {
+    public static let `default` = TypeMap()
+
+    public static let defaultTable: [String: String] = [
+        "Void": "void",
+        "Bool": "boolean",
+        "Int": "number",
+        "Float": "number",
+        "Double": "number",
+        "String": "string"
+    ]
+
+    public init(
+        table: [String : String]? = nil,
+        closure: ((TypeSpecifier) -> String?)? = nil
+    ) {
+        self.table = table ?? Self.defaultTable
+        self.closure = closure
     }
 
     public var table: [String: String]
 
-    public subscript(name: String) -> String? {
-        get {
-            table[name]
+    public var closure: ((TypeSpecifier) -> String?)?
+
+    public func map(specifier: TypeSpecifier) -> String? {
+        if let type = closure?(specifier) {
+            return type
         }
-        set {
-            table[name] = newValue
+
+        let element = specifier.lastElement
+
+        let name = element.name
+
+        if let type = table[name] {
+            return type
         }
+
+        return nil
     }
 }

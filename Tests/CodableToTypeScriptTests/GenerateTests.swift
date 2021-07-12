@@ -105,14 +105,41 @@ export type E = "aaa" |
         )
     }
 
+    func testNestedTypeProperty() throws {
+        let typeMap = TypeMap { (specifier) in
+            if specifier.lastElement.name == "ID" {
+                return "string"
+            }
+
+            return nil
+        }
+
+        try assertGenerate(
+            source: """
+struct S {
+    var a: A.ID
+}
+""",
+            type: "S",
+            typeMap: typeMap,
+            expecteds: ["""
+export type S = {
+    a: string;
+};
+"""]
+        )
+    }
+
     private func assertGenerate(
         source: String,
         type: String,
+        typeMap: TypeMap? = nil,
         expecteds: [String],
         file: StaticString = #file, line: UInt = #line
     ) throws {
         let tsCode = try Utils.generate(
             source: source,
+            typeMap: typeMap,
             type: { $0.name == type },
             file: file, line: line
         )

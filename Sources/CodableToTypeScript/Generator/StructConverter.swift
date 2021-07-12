@@ -52,13 +52,16 @@ final class StructConverter {
             return .dictionary(element)
         }
 
-        var name: String = type.name
-        if let mappedName = typeMap[type.name] {
+        let specifier = type.asSpecifier()
+
+        let name: String
+
+        if let mappedName = typeMap.map(specifier: specifier) {
             name = mappedName
+        } else if let enumType = type.enum {
+            name = try EnumConverter.transpiledName(type: enumType)
         } else {
-            if let enumType = type.enum {
-                name = try EnumConverter.transpiledName(type: enumType)
-            }
+            name = specifier.lastElement.name
         }
 
         let args = try type.genericArguments().map {

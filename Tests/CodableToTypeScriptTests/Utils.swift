@@ -6,6 +6,7 @@ import XCTest
 enum Utils {
     static func generate(
         source: String,
+        typeMap: TypeMap? = nil,
         type: (SType) -> Bool,
         file: StaticString = #file,
         line: UInt = #line
@@ -15,6 +16,6 @@ enum Utils {
             result.module.types.first(where: type),
             file: file, line: line
         )
-        return try CodeGenerator(typeMap: .default)(type: swType)
+        return try CodeGenerator(typeMap: typeMap ?? .default)(type: swType)
     }
 }
