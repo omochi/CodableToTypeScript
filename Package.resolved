@@ -1,25 +1,23 @@
 {
-  "object": {
-    "pins": [
-      {
-        "package": "BinarySwiftSyntax",
-        "repositoryURL": "https://github.com/omochi/BinarySwiftSyntax",
-        "state": {
-          "branch": "main",
-          "revision": "09f048537e6ad197f68fa9eab5070c59ccc64851",
-          "version": null
-        }
-      },
-      {
-        "package": "SwiftTypeReader",
-        "repositoryURL": "https://github.com/omochi/SwiftTypeReader",
-        "state": {
-          "branch": "main",
-          "revision": "6cf0758394136cb68b0b5d1ef79f5a964e8d0ce8",
-          "version": null
-        }
+  "pins" : [
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-syntax",
+      "state" : {
+        "branch" : "0.50600.1",
+        "revision" : "0b6c22b97f8e9320bca62e82cdbee601cf37ad3f"
       }
-    ]
-  },
-  "version": 1
+    },
+    {
+      "identity" : "swifttypereader",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/omochi/SwiftTypeReader",
+      "state" : {
+        "branch" : "main",
+        "revision" : "e0742623f626103e97086e90366d8000b58f5295"
+      }
+    }
+  ],
+  "version" : 2
 }
