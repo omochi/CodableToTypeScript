@@ -70,5 +70,4 @@ final class StructConverter {
 
         return .named(name, genericArguments: args)
     }
-
 }

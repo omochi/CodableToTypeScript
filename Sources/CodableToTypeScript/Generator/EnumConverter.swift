@@ -17,7 +17,7 @@ final class EnumConverter {
                 jsonType: TSUnionType,
                 taggedTypeName: String,
                 taggedType: TSUnionType,
-                decodeFunc: String
+                decodeFunc: TSFunctionDecl
              )
 
         var typeDecls: [TSTypeDecl] {
@@ -36,14 +36,14 @@ final class EnumConverter {
             }
         }
 
-        var customDecls: [String] {
+        var customDecls: [TSDecl] {
             switch self {
             case .stringRawValue: return []
             case .associatedValue(
                     jsonTypeName: _, jsonType: _,
                     taggedTypeName: _, taggedType: _,
                     decodeFunc: let decodeFunc):
-                return [decodeFunc]
+                return [.functionDecl(decodeFunc)]
             }
         }
     }
@@ -170,7 +170,7 @@ final class EnumConverter {
         jsonName: String,
         jsonType: TSUnionType,
         genericParameters: [String]
-    ) -> String {
+    ) -> TSFunctionDecl {
         let genericSignature: String
         if genericParameters.isEmpty {
             genericSignature = ""
@@ -182,7 +182,7 @@ final class EnumConverter {
 
         let caseElements = self.caseElements(from: jsonType)
 
-        func ifCase(_ ce: TSRecordType.Field, _ i: Int) -> String {
+        func ifCase(_ ce: TSRecordType.Field, _ i: Int) -> [String] {
             let open: String
             if i == 0 {
                 open = "if"
@@ -190,41 +190,38 @@ final class EnumConverter {
                 open = "} else if"
             }
 
+            var strs: [String] = """
+\(open) ("\(ce.name)" in json) {
+    return { "kind": "\(ce.name)", \(ce.name): json.\(ce.name) };
+""".components(separatedBy: "\n")
 
-            var str = """
-    \(open) ("\(ce.name)" in json) {
-        return { "kind": "\(ce.name)", \(ce.name): json.\(ce.name) };
-"""
 
             if i == caseElements.count - 1 {
-                str += "\n"
-                str += """
-    } else {
-        throw new Error("unknown kind");
-    }
-"""
+                strs += """
+} else {
+    throw new Error("unknown kind");
+}
+""".components(separatedBy: "\n")
             }
 
-            return str
+            return strs
         }
 
-        let title = [
-            "export function ",
+        let signature = [
             "\(taggedName)Decode\(genericSignature)(",
             "json: \(jsonName)\(genericSignature)",
             "): ",
             "\(taggedName)\(genericSignature)"
         ].joined()
 
-        return """
-\(title) {
-\(lines: caseElements.enumerated(), { (i, ce) in
-    ifCase(ce, i)
-})
-}
 
-"""
+        let body = caseElements.enumerated().flatMap { (i, ce) in
+            ifCase(ce, i)
+        }
 
-
+        return TSFunctionDecl(
+            signature: signature,
+            body: body
+        )
     }
 }

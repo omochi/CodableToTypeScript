@@ -85,7 +85,7 @@ struct S {
     var y: E2
 }
 """,
-            type: "S",
+            typeSelector: .name("S"),
             expected: """
 import {
     E1JSON,
@@ -101,12 +101,14 @@ export type S = {
     }
 
     private func assertGenerate(
-        source: String, type: String? = nil, expected: String,
+        source: String,
+        typeSelector: TypeSelector? = nil,
+        expected: String,
         file: StaticString = #file, line: UInt = #line
     ) throws {
         let tsCode = try Utils.generate(
             source: source,
-            type: { type ?? $0.name == $0.name },
+            typeSelector: typeSelector ?? .first(file: file, line: line),
             file: file, line: line
         )
         XCTAssertEqual(tsCode.description, expected)
