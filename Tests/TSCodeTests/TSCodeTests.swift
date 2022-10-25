@@ -86,4 +86,34 @@ import {
 """
         XCTAssertEqual(imp.description, expected)
     }
+
+    func testNamespace() {
+        let b: TSType = .record([
+            .init(name: "x", type: .named("string"))
+        ])
+
+        let ns = TSNamespaceDecl(
+            name: "A",
+            decls: [
+                .typeDecl(name: "B", type: b)
+            ]
+        )
+
+        let code = TSCode(
+            decls: [
+                .namespaceDecl(ns)
+            ]
+        )
+
+        let expected = """
+export namespace A {
+    export type B = {
+        x: string;
+    };
+}
+
+"""
+
+        XCTAssertEqual(code.description, expected)
+    }
 }

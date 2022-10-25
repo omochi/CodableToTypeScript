@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-syntax",
       "state" : {
-        "branch" : "0.50600.1",
-        "revision" : "0b6c22b97f8e9320bca62e82cdbee601cf37ad3f"
+        "revision" : "0b6c22b97f8e9320bca62e82cdbee601cf37ad3f",
+        "version" : "0.50600.1"
       }
     },
     {
@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/omochi/SwiftTypeReader",
       "state" : {
-        "branch" : "main",
-        "revision" : "e0742623f626103e97086e90366d8000b58f5295"
+        "revision" : "780ad8eb05a37fc5697159f16a2011f15cc24c54",
+        "version" : "1.1.0"
       }
     }
   ],

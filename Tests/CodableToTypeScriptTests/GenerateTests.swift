@@ -10,7 +10,7 @@ struct S<T> {
     var a: T
 }
 """,
-            type: "S",
+            typeSelector: .name("S"),
             expecteds: ["""
 export type S<T> = {
     a: T;
@@ -30,7 +30,7 @@ struct S {
     var a: E
 }
 """,
-            type: "S",
+            typeSelector: .name("S"),
             expecteds: ["""
 export type S = {
     a: EJSON;
@@ -46,7 +46,7 @@ struct S1<T> {
     var a: S2<T>
 }
 """,
-            type: "S1",
+            typeSelector: .name("S1"),
             expecteds: ["""
 export type S1<T> = {
     a: S2<T>;
@@ -62,7 +62,7 @@ enum E<T> {
     case a(T)
 }
 """,
-            type: "E",
+            typeSelector: .name("E"),
             expecteds: [
                 """
 export type EJSON<T> = {
@@ -95,7 +95,7 @@ enum E: String, Codable {
     case iii
 }
 """,
-            type: "E",
+            typeSelector: .name("E"),
             expecteds: [
                 """
 export type E = "aaa" |
@@ -120,7 +120,7 @@ struct S {
     var a: A.ID
 }
 """,
-            type: "S",
+            typeSelector: .name("S"),
             typeMap: typeMap,
             expecteds: ["""
 export type S = {
@@ -130,17 +130,107 @@ export type S = {
         )
     }
 
+    func testNestedType() throws {
+        try assertGenerate(
+            source: """
+struct A {
+    struct B {
+        var a: Int
+    }
+}
+""",
+            typeSelector: .init { (module) in
+                try XCTUnwrap(
+                    module.getType(name: "A")?.get(name: "B")
+                )
+            },
+            expecteds: ["""
+export namespace A {
+    export type B = {
+        a: number;
+    };
+}
+"""]
+        )
+
+        try assertGenerate(
+            source: """
+enum A {
+    enum B {
+        case c
+    }
+}
+""",
+            typeSelector: .init { (module) in
+                try XCTUnwrap(
+                    module.getType(name: "A")?.get(name: "B")
+                )
+            },
+            expecteds: ["""
+export namespace A {
+    export type BJSON
+""", """
+export namespace A {
+    export type B
+""", """
+export namespace A {
+    export function BDecode(json: BJSON): B
+"""
+            ]
+        )
+
+        try assertGenerate(
+            source: """
+struct A {
+    struct B {
+        struct C {
+            var a: Int
+        }
+    }
+}
+""",
+            typeSelector: .init { (module) in
+                try XCTUnwrap(
+                    module.getType(name: "A")?.get(name: "B")?.get(name: "C")
+                )
+            },
+            expecteds: ["""
+export namespace A {
+    export namespace B {
+        export type C
+"""]
+        )
+    }
+
+    // TODO
+    func _testNestedTypeRef() throws {
+        try assertGenerate(
+            source: """
+struct A {
+    struct B {}
+}
+
+struct C {
+    var b: A.B
+}
+""",
+            typeSelector: .name("C"),
+            expecteds: []
+        )
+    }
+
     private func assertGenerate(
         source: String,
-        type: String,
+        typeSelector: TypeSelector,
         typeMap: TypeMap? = nil,
         expecteds: [String],
-        file: StaticString = #file, line: UInt = #line
+        file: StaticString = #file,
+        line: UInt = #line
     ) throws {
         let tsCode = try Utils.generate(
             source: source,
             typeMap: typeMap,
-            type: { $0.name == type },
+            typeSelector: typeSelector,
             file: file, line: line
         )
         let actual = tsCode.description

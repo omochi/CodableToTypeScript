@@ -16,7 +16,7 @@ struct S<T, U> {
     var st: R<U>
 }
 """,
-            type: { $0.name == "S" }
+            typeSelector: .name("S")
         )
 
         let imp = try XCTUnwrap(tsCode.decls.compactMap { (x) -> TSImportDecl? in
@@ -39,7 +39,7 @@ struct S {
     var d: Double?
 }
 """,
-            type: { $0.name == "S" }
+            typeSelector: .name("S")
         )
 
         XCTAssertFalse(tsCode.decls.contains { (x) in

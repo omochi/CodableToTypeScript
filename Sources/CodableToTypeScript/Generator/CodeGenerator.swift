@@ -75,26 +75,30 @@ private final class Impl {
         }
         switch type {
         case .enum(let type):
+            let ns = NamespaceBuilder(location: type.location)
             let genericParameters = type.genericParameters.map { $0.name }
             let ret = try EnumConverter(typeMap: typeMap).convert(type: type)
-            code.decls += ret.typeDecls.map {
+            var decls: [TSDecl] = []
+            decls += ret.typeDecls.map {
                 .typeDecl(
                     name: $0.name,
                     genericParameters: genericParameters,
                     type: $0.type
                 )
             }
-            code.decls += ret.customDecls.map { .custom($0) }
+            decls += ret.customDecls
+            code.decls += ns.build(decls: decls)
         case .struct(let type):
+            let ns = NamespaceBuilder(location: type.location)
             let genericParameters = type.genericParameters.map { $0.name }
             let ret = try StructConverter(typeMap: typeMap).convert(type: type)
-            code.decls += [
+            code.decls += ns.build(decls: [
                 .typeDecl(
                     name: type.name,
                     genericParameters: genericParameters,
                     type: .record(ret)
                 )
-            ]
+            ])
         case .protocol,
              .genericParameter:
             return

@@ -11,7 +11,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/omochi/SwiftTypeReader", branch: "main"),
+        .package(url: "https://github.com/omochi/SwiftTypeReader", .upToNextMinor(from: "1.1.0")),
     ],
     targets: [
         .target(
@@ -22,13 +22,15 @@ let package = Package(
         ),
         .testTarget(
             name: "TSCodeTests",
-            dependencies: ["TSCodeModule"]
+            dependencies: [
+                .target(name: "TSCodeModule")
+            ]
         ),
         .target(
             name: "CodableToTypeScript",
             dependencies: [
-                "TestUtils",
-                "TSCodeModule",
+                .target(name: "TestUtils"),
+                .target(name: "TSCodeModule"),
                 .product(name: "SwiftTypeReader", package: "SwiftTypeReader")
             ]
         ),
