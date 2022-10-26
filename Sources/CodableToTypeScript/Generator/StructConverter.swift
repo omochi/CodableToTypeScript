@@ -1,14 +1,35 @@
 import SwiftTypeReader
 import TSCodeModule
 
-final class StructConverter {
-    private let typeMap: TypeMap
+struct StructConverter {
+    struct Result {
+        var typeDecl: TSTypeDecl
+        var namespaceDecl: TSNamespaceDecl?
 
-    init(typeMap: TypeMap) {
-        self.typeMap = typeMap
+        var decls: [TSDecl] {
+            var decls: [TSDecl] = [
+                .typeDecl(typeDecl)
+            ]
+
+            if let d = namespaceDecl {
+                decls.append(.namespaceDecl(d))
+            }
+
+            return decls
+        }
     }
 
-    func convert(type: StructType) throws -> TSRecordType {
+    init(
+        converter: TypeConverter
+    ) {
+        self.converter = converter
+    }
+
+    private var converter: TypeConverter
+
+    private var typeMap: TypeMap { converter.typeMap }
+
+    func convert(type: StructType) throws -> Result {
         var fields: [TSRecordType.Field] = []
 
         for property in type.storedProperties {
@@ -21,7 +42,16 @@ final class StructConverter {
             )
         }
 
-        return TSRecordType(fields)
+        let typeDecl = TSTypeDecl(
+            name: type.name,
+            genericParameters: type.genericParameters.map { $0.name },
+            type: .record(TSRecordType(fields))
+        )
+
+        return Result(
+            typeDecl: typeDecl,
+            namespaceDecl: try converter.convertNestedDecls(type: .struct(type))
+        )
     }
 
     static func transpile(typeMap: TypeMap, type: SType) throws -> TSType {

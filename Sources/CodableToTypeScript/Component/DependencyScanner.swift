@@ -4,31 +4,30 @@ import TSCodeModule
 struct DependencyScanner {
     var standardTypes: Set<String>
 
-    func callAsFunction(code: TSCode) -> [String] {
+    func callAsFunction(decls: [TSDecl]) -> [String] {
         Impl(
             standardTypes: standardTypes,
-            code: code
+            decls: decls
         ).run()
     }
 }
 
 private final class Impl {
-    let code: TSCode
-
     init(
         standardTypes: Set<String>,
-        code: TSCode
+        decls: [TSDecl]
     ) {
         self.standardTypes = standardTypes
-        self.code = code
+        self.decls = decls
     }
 
     let standardTypes: Set<String>
+    let decls: [TSDecl]
     var ignores: Set<String> = []
     var deps: Set<String> = []
 
     func run() -> [String] {
-        for decl in code.decls {
+        for decl in decls {
             switch decl {
             case .typeDecl(let decl):
                 stackIgnores {

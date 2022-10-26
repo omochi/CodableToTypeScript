@@ -3,6 +3,9 @@ import XCTest
 import SwiftTypeReader
 
 final class GenerateTests: XCTestCase {
+    // MARK: DEBUG
+    var prints: Bool = false
+
     func testGenericStruct() throws {
         try assertGenerate(
             source: """
@@ -130,7 +133,7 @@ export type S = {
         )
     }
 
-    func testNestedType() throws {
+    func testNestedStructType() throws {
         try assertGenerate(
             source: """
 struct A {
@@ -139,12 +142,11 @@ struct A {
     }
 }
 """,
-            typeSelector: .init { (module) in
-                try XCTUnwrap(
-                    module.getType(name: "A")?.get(name: "B")
-                )
-            },
+            typeSelector: .name("A"),
             expecteds: ["""
+export type A = {
+};
+""", """
 export namespace A {
     export type B = {
         a: number;
@@ -152,33 +154,9 @@ export namespace A {
 }
 """]
         )
-
-        try assertGenerate(
-            source: """
-enum A {
-    enum B {
-        case c
     }
-}
-""",
-            typeSelector: .init { (module) in
-                try XCTUnwrap(
-                    module.getType(name: "A")?.get(name: "B")
-                )
-            },
-            expecteds: ["""
-export namespace A {
-    export type BJSON
-""", """
-export namespace A {
-    export type B
-""", """
-export namespace A {
-    export function BDecode(json: BJSON): B
-"""
-            ]
-        )
 
+    func testDoubleNestedType() throws {
         try assertGenerate(
             source: """
 struct A {
@@ -189,16 +167,37 @@ struct A {
     }
 }
 """,
-            typeSelector: .init { (module) in
-                try XCTUnwrap(
-                    module.getType(name: "A")?.get(name: "B")?.get(name: "C")
-                )
-            },
+            typeSelector: .name("A"),
             expecteds: ["""
 export namespace A {
+""", """
     export namespace B {
+""", """
         export type C
 """]
+        )
+    }
+
+    func testNestedEnumType() throws {
+        try assertGenerate(
+            source: """
+enum A {
+    enum B {
+        case c
+    }
+}
+""",
+            typeSelector: .name("A"),
+            expecteds: ["""
+export namespace A {
+""", """
+    export type BJSON
+""", """
+    export type B
+""", """
+    export function BDecode(json: BJSON): B
+"""
+            ]
         )
     }
 
@@ -234,6 +233,9 @@ struct C {
             file: file, line: line
         )
         let actual = tsCode.description
+        if prints {
+            print(actual)
+        }
         for expected in expecteds {
             if !actual.contains(expected) {
                 XCTFail("\(actual) does not contain \(expected)")
