@@ -40,4 +40,64 @@ struct TypeConverter {
             decls: nestedDecls
         )
     }
+
+    func transpileTypeReference(_ type: SType) throws -> TSType {
+        let (unwrappedFieldType, isWrapped) = try Utils.unwrapOptional(type, limit: nil)
+        if isWrapped {
+            let wrapped = try transpileTypeReference(
+                unwrappedFieldType
+            )
+            return .union([wrapped, .named("null")])
+        } else if let st = type.struct,
+                  st.name == "Array",
+                  try st.genericArguments().count >= 1
+        {
+            let element = try transpileTypeReference(
+                try st.genericArguments()[0]
+            )
+            return .array(element)
+        } else if let st = type.struct,
+                  st.name == "Dictionary",
+                  try st.genericArguments().count >= 2
+        {
+            let element = try transpileTypeReference(
+                try st.genericArguments()[1]
+            )
+            return .dictionary(element)
+        }
+
+        if let mappedName = typeMap.map(specifier: type.asSpecifier()) {
+            let args = try type.genericArguments().map {
+                try transpileTypeReference($0)
+            }
+            return .named(mappedName, genericArguments: args)
+        }
+
+        var specifier = type.asSpecifier()
+        _ = specifier.removeModuleElement()
+
+        var type: TSType = .named(try transpileTypeReferenceLastPart(type))
+
+        for element in specifier.elements.reversed().dropFirst() {
+            type = .nested(namespace: element.name, type: type)
+        }
+
+        return type
+    }
+
+    private func transpileTypeReferenceLastPart(_ type: SType) throws -> TSNamedType {
+        let name: String = try {
+            if let enumType = type.enum {
+                return try EnumConverter.transpiledName(type: enumType)
+            } else {
+                return type.name
+            }
+        }()
+
+        let args = try type.genericArguments().map {
+            try transpileTypeReference($0)
+        }
+
+        return .init(name, genericArguments: args)
+    }
 }

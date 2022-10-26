@@ -1,5 +1,6 @@
 public indirect enum TSType: PrettyPrintable {
     case named(TSNamedType)
+    case nested(TSNestedType)
     case record(TSRecordType)
     case union(TSUnionType)
     case array(TSArrayType)
@@ -9,6 +10,7 @@ public indirect enum TSType: PrettyPrintable {
     public func print(printer: PrettyPrinter) {
         switch self {
         case .named(let t): t.print(printer: printer)
+        case .nested(let t): t.print(printer: printer)
         case .record(let t): t.print(printer: printer)
         case .union(let t): t.print(printer: printer)
         case .array(let t): t.print(printer: printer)
@@ -19,6 +21,10 @@ public indirect enum TSType: PrettyPrintable {
 
     public static func named(_ name: String, genericArguments: [TSType] = []) -> TSType {
         .named(TSNamedType(name, genericArguments: genericArguments))
+    }
+
+    public static func nested(namespace: String, type: TSType) -> TSType {
+        .nested(TSNestedType(namespace: namespace, type: type))
     }
 
     public static func record(_ fields: [TSRecordType.Field]) -> TSType {

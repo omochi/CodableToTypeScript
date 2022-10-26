@@ -61,6 +61,8 @@ private final class Impl {
             for arg in t.genericArguments {
                 process(type: arg)
             }
+        case .nested(let t):
+            add(dep: t.namespace)
         case .record(let t):
             for field in t.fields {
                 process(type: field.type)
