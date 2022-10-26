@@ -1,7 +1,7 @@
 public struct TSNamedType: PrettyPrintable {
     public init(
         _ name: String,
-        genericArguments: [TSType]
+        genericArguments: [TSType] = []
     ) {
         self.name = name
         self.genericArguments = genericArguments

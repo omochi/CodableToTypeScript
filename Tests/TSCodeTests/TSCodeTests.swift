@@ -116,4 +116,13 @@ export namespace A {
 
         XCTAssertEqual(code.description, expected)
     }
+
+    func testNestedType() {
+        let t: TSNestedType = .init(
+            namespace: "A",
+            type: .named("B")
+        )
+
+        XCTAssertEqual(t.description, "A.B")
+    }
 }

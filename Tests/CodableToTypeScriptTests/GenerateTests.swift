@@ -201,8 +201,7 @@ export namespace A {
         )
     }
 
-    // TODO
-    func _testNestedTypeRef() throws {
+    func testNestedTypeRef() throws {
         try assertGenerate(
             source: """
 struct A {
@@ -214,7 +213,15 @@ struct C {
 }
 """,
             typeSelector: .name("C"),
-            expecteds: []
+            expecteds: ["""
+import {
+    A
+} from "..";
+""", """
+export type C = {
+    b: A.B;
+};
+"""]
         )
     }
 
