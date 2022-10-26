@@ -1,8 +1,8 @@
 import XCTest
-@testable import CodableToTypeScript
 import SwiftTypeReader
 import TestUtils
 import TSCodeModule
+@testable import struct CodableToTypeScript.EnumConverter
 
 final class EnumTranspileTests: XCTestCase {
     func testTranspile() throws {
@@ -94,7 +94,9 @@ enum E: String, Codable {
     ) throws {
         let result = try Reader().read(source: source)
         let swType = try XCTUnwrap(result.module.types.compactMap { $0.enum }.first)
-        let tsType = try EnumConverter(typeMap: .default).transpile(type: swType)
+        let tsType = try EnumConverter(
+            converter: .init(typeMap: .default)
+        ).transpile(type: swType)
         XCTAssertEqual(tsType.description, expected, file: file, line: line)
     }
 }

@@ -1,59 +1,91 @@
 import SwiftTypeReader
 import TSCodeModule
 
-final class EnumConverter {
-    private let typeMap: TypeMap
-
-    init(typeMap: TypeMap) {
-        self.typeMap = typeMap
+struct EnumConverter {
+    init(converter: TypeConverter) {
+        self.converter = converter
     }
 
-    enum Value {
+    private var converter: TypeConverter
+    private var typeMap: TypeMap { converter.typeMap }
+
+    enum TypeResult {
         case stringRawValue(
-                typeName: String, type: TSUnionType
-             )
+            typeDecl: TSTypeDecl
+        )
+
         case associatedValue(
-                jsonTypeName: String,
-                jsonType: TSUnionType,
-                taggedTypeName: String,
-                taggedType: TSUnionType,
-                decodeFunc: TSFunctionDecl
-             )
+            jsonTypeDecl: TSTypeDecl,
+            taggedTypeDecl: TSTypeDecl,
+            decodeFunc: TSFunctionDecl
+        )
 
-        var typeDecls: [TSTypeDecl] {
+        case never(
+            typeDecl: TSTypeDecl
+        )
+
+        var decls: [TSDecl] {
             switch self {
-            case .stringRawValue(typeName: let typeName, type: let type):
-                return [.init(name: typeName, type: .union(type))]
+            case .stringRawValue(typeDecl: let typeDecl):
+                return [.typeDecl(typeDecl)]
             case .associatedValue(
-                    jsonTypeName: let jsonTypeName, jsonType: let jsonType,
-                    taggedTypeName: let taggedTypeName,
-                    taggedType: let taggedType,
-                    decodeFunc: _):
+                jsonTypeDecl: let jsonTypeDecl,
+                taggedTypeDecl: let taggedTypeDecl,
+                decodeFunc: let decodeFunc
+            ):
                 return [
-                    .init(name: jsonTypeName, type: .union(jsonType)),
-                    .init(name: taggedTypeName, type: .union(taggedType))
+                    .typeDecl(jsonTypeDecl),
+                    .typeDecl(taggedTypeDecl),
+                    .functionDecl(decodeFunc)
                 ]
-            }
-        }
-
-        var customDecls: [TSDecl] {
-            switch self {
-            case .stringRawValue: return []
-            case .associatedValue(
-                    jsonTypeName: _, jsonType: _,
-                    taggedTypeName: _, taggedType: _,
-                    decodeFunc: let decodeFunc):
-                return [.functionDecl(decodeFunc)]
+            case .never(typeDecl: let typeDecl):
+                return [.typeDecl(typeDecl)]
             }
         }
     }
 
-    func convert(type: EnumType) throws -> Value {
+    struct Result {
+        var type: TypeResult
+        var namespaceDecl: TSNamespaceDecl?
+
+        var decls: [TSDecl] {
+            var decls: [TSDecl] = type.decls
+            if let d = namespaceDecl {
+                decls.append(.namespaceDecl(d))
+            }
+            return decls
+        }
+    }
+
+    func convert(type: EnumType) throws -> Result {
+        let typeResult = try convertType(type: type)
+
+        return Result(
+            type: typeResult,
+            namespaceDecl: try converter.convertNestedDecls(type: .enum(type))
+        )
+    }
+
+    private func convertType(type: EnumType) throws -> TypeResult {
         if try Self.isStringRawValueType(type: type) {
             let unionType = try transpile(type: type)
             return .stringRawValue(
-                typeName: type.name,
-                type: unionType
+                typeDecl: .init(
+                    name: type.name, type: .union(unionType)
+                )
+            )
+        }
+
+
+        let genericParameters = type.genericParameters.map { $0.name }
+
+        if type.caseElements.isEmpty {
+            return .never(
+                typeDecl: .init(
+                    name: type.name,
+                    genericParameters: genericParameters,
+                    type: .named("never")
+                )
             )
         }
 
@@ -61,7 +93,7 @@ final class EnumConverter {
         let jsonTypeName = try Self.transpiledName(type: type)
         let taggedTypeName = type.name
         let taggedType = Self.makeTaggedType(jsonType: jsonType)
-        let genericParameters = type.genericParameters.map { $0.name }
+
         let decodeFunc = Self.makeDecodeFunc(
             taggedName: taggedTypeName,
             jsonName: jsonTypeName,
@@ -70,10 +102,16 @@ final class EnumConverter {
         )
 
         return .associatedValue(
-            jsonTypeName: jsonTypeName,
-            jsonType: jsonType,
-            taggedTypeName: taggedTypeName,
-            taggedType: taggedType,
+            jsonTypeDecl: .init(
+                name: jsonTypeName,
+                genericParameters: genericParameters,
+                type: .union(jsonType)
+            ),
+            taggedTypeDecl: .init(
+                name: taggedTypeName,
+                genericParameters: genericParameters,
+                type: .union(taggedType)
+            ),
             decodeFunc: decodeFunc
         )
     }
