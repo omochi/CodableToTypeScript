@@ -4,7 +4,7 @@ import SwiftTypeReader
 
 final class GenerateTests: XCTestCase {
     // MARK: DEBUG
-    var prints: Bool = true
+    var prints: Bool = false
 
     func testGenericStruct() throws {
         try assertGenerate(
