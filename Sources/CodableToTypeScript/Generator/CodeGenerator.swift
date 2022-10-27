@@ -27,8 +27,19 @@ public struct CodeGenerator {
         self.importFrom = importFrom
     }
 
+    @available(*, deprecated, message: "Use `generateTypeDeclarationFile`")
     public func callAsFunction(type: SType) throws -> TSCode {
-        var decls = try TypeConverter(typeMap: typeMap).convert(type: type)
+        try generateTypeDeclarationFile(type: type)
+    }
+
+    private func typeConverter() -> TypeConverter {
+        return TypeConverter(typeMap: typeMap)
+    }
+
+    public func generateTypeDeclarationFile(
+        type: SType
+    ) throws -> TSCode {
+        var decls = try typeConverter().convert(type: type)
 
         let deps = DependencyScanner(standardTypes: standardTypes)(decls: decls)
         if !deps.isEmpty {
@@ -37,5 +48,11 @@ public struct CodeGenerator {
         }
 
         return TSCode(decls: decls)
+    }
+
+    public func transpileTypeReference(
+        type: SType
+    ) throws -> TSType {
+        return try typeConverter().transpileTypeReference(type)
     }
 }

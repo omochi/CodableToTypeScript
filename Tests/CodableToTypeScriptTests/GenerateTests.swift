@@ -225,6 +225,24 @@ export type C = {
         )
     }
 
+    func testTranspileUnresolvedRef() throws {
+        try assertGenerate(
+            source: """
+struct Q {
+    var id: ID
+    var ids: [ID]
+}
+""",
+            typeSelector: .name("Q"),
+            expecteds: ["""
+export type Q = {
+    id: ID;
+    ids: ID[];
+};
+"""]
+        )
+    }
+
     private func assertGenerate(
         source: String,
         typeSelector: TypeSelector,

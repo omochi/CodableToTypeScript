@@ -100,6 +100,26 @@ export type S = {
 """)
     }
 
+    func testTranspileTypeReference() throws {
+        let modules = Modules()
+        let module = try SwiftTypeReader.Reader(modules: modules).read(source: """
+struct S {
+    var ids: [ID]
+}
+"""
+        ).module
+
+        let s = try XCTUnwrap(module.getType(name: "S"))
+        let idsSwift = try XCTUnwrap(s.struct?.storedProperties[safe: 0]?.type())
+
+        XCTAssertEqual(idsSwift.description, "Swift.Array<ID>")
+
+        let gen = CodeGenerator(typeMap: .default)
+        let idsTS = try gen.transpileTypeReference(type: idsSwift)
+
+        XCTAssertEqual(idsTS.description, "ID[]")
+    }
+
     private func assertGenerate(
         source: String,
         typeSelector: TypeSelector? = nil,

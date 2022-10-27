@@ -13,6 +13,7 @@ enum Utils {
     ) throws -> TSCode {
         let result = try Reader().read(source: source)
         let swType = try typeSelector(module: result.module)
-        return try CodeGenerator(typeMap: typeMap ?? .default)(type: swType)
+        let gen = CodeGenerator(typeMap: typeMap ?? .default)
+        return try gen.generateTypeDeclarationFile(type: swType)
     }
 }
