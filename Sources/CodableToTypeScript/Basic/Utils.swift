@@ -37,8 +37,9 @@ enum Utils {
         var type = type
         var i = 0
         while let st = type.struct,
-           st.name == "Optional",
-           try st.genericArguments().count > 0
+              st.module?.name == "Swift",
+              st.name == "Optional",
+              try st.genericArguments().count > 0
         {
             if let limit = limit,
                i >= limit

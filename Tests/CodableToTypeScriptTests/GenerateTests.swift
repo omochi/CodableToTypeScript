@@ -4,7 +4,7 @@ import SwiftTypeReader
 
 final class GenerateTests: XCTestCase {
     // MARK: DEBUG
-    var prints: Bool = false
+    var prints: Bool = true
 
     func testGenericStruct() throws {
         try assertGenerate(
@@ -220,6 +220,24 @@ import {
 """, """
 export type C = {
     b: A.B;
+};
+"""]
+        )
+    }
+
+    func testTranspileUnresolvedRef() throws {
+        try assertGenerate(
+            source: """
+struct Q {
+    var id: ID
+    var ids: [ID]
+}
+""",
+            typeSelector: .name("Q"),
+            expecteds: ["""
+export type Q = {
+    id: ID;
+    ids: ID[];
 };
 """]
         )

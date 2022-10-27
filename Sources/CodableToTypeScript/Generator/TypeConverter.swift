@@ -49,6 +49,7 @@ struct TypeConverter {
             )
             return .union([wrapped, .named("null")])
         } else if let st = type.struct,
+                  st.module?.name == "Swift",
                   st.name == "Array",
                   try st.genericArguments().count >= 1
         {
@@ -57,6 +58,7 @@ struct TypeConverter {
             )
             return .array(element)
         } else if let st = type.struct,
+                  st.module?.name == "Swift",
                   st.name == "Dictionary",
                   try st.genericArguments().count >= 2
         {
