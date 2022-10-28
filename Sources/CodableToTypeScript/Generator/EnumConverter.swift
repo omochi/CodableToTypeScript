@@ -17,7 +17,7 @@ struct EnumConverter {
 
         if try converter.hasJSONType(type: .enum(type)) {
             jsonDecl = try transpile(type: type, kind: .json)
-            decodeFunc = generateDecodeFunc(type: type)
+            decodeFunc = try generateDecodeFunc(type: type)
         }
 
         return .init(
@@ -29,10 +29,10 @@ struct EnumConverter {
     }
 
     func transpile(type: EnumType, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
-        let genericParameters = type.genericParameters.map { $0.name }
+        let genericParameters = converter.transpileGenericParameters(type: .enum(type))
 
         if type.caseElements.isEmpty {
-            return .init(
+            return TSTypeDecl(
                 name: converter.transpiledName(of: .enum(type), kind: kind.toNameKind()),
                 genericParameters: genericParameters,
                 type: .named("never")
@@ -119,7 +119,7 @@ struct EnumConverter {
         }
     }
 
-    func generateDecodeFunc(type: EnumType) -> TSFunctionDecl {
+    func generateDecodeFunc(type: EnumType) throws -> TSFunctionDecl {
         func ifCase(index: Int, caseElement ce: CaseElement) -> [String] {
             let open: String
             if index == 0 {
@@ -145,25 +145,29 @@ struct EnumConverter {
             return strs
         }
 
-        let genericSignature = converter.genericSignature(type: .enum(type))
+        let genericParameters = converter.transpileGenericParameters(type: .enum(type))
+        let genericArguments: [TSType] = genericParameters.items.map { .named($0) }
 
         let typeName = converter.transpiledName(of: .enum(type), kind: .type)
         let jsonName = converter.transpiledName(of: .enum(type), kind: .json)
+        let funcName = converter.transpiledName(of: .enum(type), kind: .decode)
 
-        let signature = [
-            converter.transpiledName(of: .enum(type), kind: .decode),
-            genericSignature,
-            "(json: \(jsonName)\(genericSignature)): ",
-            "\(typeName)\(genericSignature)"
-        ].joined()
-
+        var parameters: [TSFunctionParameter] = [
+            .init(
+                name: "json",
+                type: .named(jsonName, genericArguments: genericArguments)
+            )
+        ]
 
         let body = type.caseElements.enumerated().flatMap { (i, ce) in
             ifCase(index: i, caseElement: ce)
         }
 
         return TSFunctionDecl(
-            signature: signature,
+            name: funcName,
+            genericParameters: genericParameters,
+            parameters: parameters,
+            returnType: .named(typeName, genericArguments: genericArguments),
             body: body
         )
     }

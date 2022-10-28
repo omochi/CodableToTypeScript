@@ -32,7 +32,7 @@ private final class Impl {
             case .typeDecl(let decl):
                 stackIgnores {
                     ignores.insert(decl.name)
-                    for p in decl.genericParameters {
+                    for p in decl.genericParameters.items {
                         ignores.insert(p)
                     }
 

@@ -17,7 +17,7 @@ public enum TSDecl: PrettyPrintable {
 
     public static func typeDecl(
         name: String,
-        genericParameters: [String] = [],
+        genericParameters: TSGenericParameters = .init(),
         type: TSType
     ) -> TSDecl {
         .typeDecl(TSTypeDecl(name: name, genericParameters: genericParameters, type: type))

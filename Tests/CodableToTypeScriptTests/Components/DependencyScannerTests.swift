@@ -12,9 +12,13 @@ struct S<T, U> {
     var b: number
     var c: [B]
     var t: T
-    var sc: S<C>
-    var st: R<U>
+    var xc: X<C>
+    var xu: X<U>
+    var yc: Y<C>
+    var yu: Y<U>
 }
+
+struct X<T> {}
 """
         )
 
@@ -25,7 +29,7 @@ struct S<T, U> {
             }
         }.first)
 
-        XCTAssertEqual(imp.names, ["A", "B", "C", "R"])
+        XCTAssertEqual(imp.names, ["A", "B", "C", "X", "Y"])
     }
 
     func testDefaultStandardTypes() throws {

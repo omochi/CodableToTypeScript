@@ -1,7 +1,7 @@
 public struct TSTypeDecl: PrettyPrintable {
     public init(
         name: String,
-        genericParameters: [String] = [],
+        genericParameters: TSGenericParameters = .init(),
         type: TSType
     ) {
         self.name = name
@@ -10,17 +10,13 @@ public struct TSTypeDecl: PrettyPrintable {
     }
 
     public var name: String
-    public var genericParameters: [String]
+    public var genericParameters: TSGenericParameters
     public var type: TSType
 
     public func print(printer: PrettyPrinter) {
-        var name = name
-        if !genericParameters.isEmpty {
-            name += "<"
-            name += genericParameters.joined(separator: ", ")
-            name += ">"
-        }
-        printer.write("export type \(name) = ")
+        printer.write("export type \(name)")
+        genericParameters.print(printer: printer)
+        printer.write(" = ")
         printer.write(type)
         printer.writeLine(";")
     }

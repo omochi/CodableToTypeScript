@@ -46,7 +46,7 @@ struct StructConverter {
 
         return TSTypeDecl(
             name: converter.transpiledName(of: .struct(type), kind: kind.toNameKind()),
-            genericParameters: type.genericParameters.map { $0.name },
+            genericParameters: converter.transpileGenericParameters(type: .struct(type)),
             type: .record(TSRecordType(fields))
         )
     }
@@ -54,15 +54,16 @@ struct StructConverter {
     private func generateDecodeFunc(type: StructType) throws -> TSFunctionDecl {
         let typeName = converter.transpiledName(of: .struct(type), kind: .type)
         let jsonName = converter.transpiledName(of: .struct(type), kind: .json)
+        let funcName = converter.transpiledName(of: .struct(type), kind: .decode)
 
-        let genericSignature = converter.genericSignature(type: .struct(type))
-
-        let signature = [
-            converter.transpiledName(of: .struct(type), kind: .decode),
-            genericSignature,
-            "(json: \(jsonName)\(genericSignature)): ",
-            "\(typeName)\(genericSignature)"
-        ].joined()
+        let genericParameters = converter.transpileGenericParameters(type: .struct(type))
+        let genericArguments: [TSType] = genericParameters.items.map { .named($0) }
+        var parameters: [TSFunctionParameter] = [
+            .init(
+                name: "json",
+                type: .named(jsonName, genericArguments: genericArguments)
+            )
+        ]
 
         var body: [String] = ["""
 return {
@@ -98,7 +99,10 @@ return {
         )
 
         return TSFunctionDecl(
-            signature: signature,
+            name: funcName,
+            genericParameters: genericParameters,
+            parameters: parameters,
+            returnType: .named(typeName, genericArguments: genericArguments),
             body: body
         )
     }

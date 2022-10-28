@@ -201,16 +201,12 @@ struct TypeConverter {
         return .named(name, genericArguments: args)
     }
 
-    func genericSignature(type: SType) -> String {
-        guard let type = type.regular else { return "" }
+    func transpileGenericParameters(type: SType) -> TSGenericParameters {
+        guard let type = type.regular else { return .init() }
 
-        if type.genericParameters.isEmpty {
-            return ""
-        }
-
-        return "<" +
-            type.genericParameters.map { $0.name }.joined(separator: ", ") +
-        ">"
+        return TSGenericParameters(
+            items: type.genericParameters.map { $0.name }
+        )
     }
 
     func isStringRawValueType(type: SType) throws -> Bool {

@@ -17,7 +17,7 @@ export type S_JSON
         )
     }
 
-    func testHavingEnum() throws {
+    func testEnumInStruct() throws {
         try assertGenerate(
             source: """
 enum E {

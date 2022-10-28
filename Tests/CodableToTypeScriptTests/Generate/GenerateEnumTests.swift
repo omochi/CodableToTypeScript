@@ -138,7 +138,7 @@ enum E {
         )
     }
 
-    func testStringRawValue4Case() throws {
+    func testStringRawValueCase() throws {
         try assertGenerate(
             source: """
 enum E: String {
@@ -174,7 +174,9 @@ enum E: String {
 }
 """,
             expecteds: ["""
-export type E = "a" | "b" | "c" |
+export type E = "a" |
+"b" |
+"c" |
 "d"
 """]
         )
