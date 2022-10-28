@@ -36,8 +36,7 @@ struct A {
 }
 """,
             expecteds: ["""
-export type A = {
-};
+export type A = {};
 """, """
 export type A_B = {
     a: number;

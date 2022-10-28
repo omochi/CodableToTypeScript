@@ -64,9 +64,15 @@ export type E_JSON = {
 """, """
 export function E_decode(json: E_JSON): E {
     if ("a" in json) {
-        return { "kind": "a", a: json.a };
+        return {
+            "kind": "a",
+            a: json.a
+        };
     } else if ("b" in json) {
-        return { "kind": "b", b: json.b };
+        return {
+            "kind": "b",
+            b: json.b
+        };
     } else {
         throw new Error("unknown kind");
     }
@@ -93,15 +99,28 @@ struct S {
             typeSelector: .name("S"),
             expecteds: ["""
 import {
-    E1JSON,
-    E2
+    E1,
+    E1_JSON,
+    E2,
+    E2_JSON
 } from "..";
-
+""", """
 export type S = {
-    x: E1JSON;
+    x: E1;
     y: E2;
 };
-
+""", """
+export type S_JSON = {
+    x: E1_JSON;
+    y: E2_JSON;
+};
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        x: E1_decode(json.x),
+        y: json.y
+    };
+}
 """]
         )
     }

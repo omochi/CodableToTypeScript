@@ -108,41 +108,44 @@ struct EnumConverter {
         )
     }
 
-    private func caseElements(from jsonType: TSUnionType) -> [TSRecordType.Field] {
-        jsonType.items.compactMap { (item) in
-            guard case .record(let record) = item,
-                  let field = record.fields.first else {
-                return nil
-            }
-
-            return field
-        }
-    }
-
     func generateDecodeFunc(type: EnumType) throws -> TSFunctionDecl {
-        func ifCase(index: Int, caseElement ce: CaseElement) -> [String] {
-            let open: String
-            if index == 0 {
-                open = "if"
-            } else {
-                open = "} else if"
-            }
+        func condCode(caseElement ce: CaseElement) -> TSExpr {
+            return .infixOperator(
+                .stringLiteral(ce.name),
+                "in",
+                .identifier("json")
+            )
+        }
 
-            var strs: [String] = """
-\(open) ("\(ce.name)" in json) {
-    return { "kind": "\(ce.name)", \(ce.name): json.\(ce.name) };
-""".components(separatedBy: "\n")
+        func thenCode(caseElement ce: CaseElement) -> TSStmt {
+            let fields: [TSObjectField] = [
+                .init(
+                    name: .stringLiteral("kind"),
+                    value: .stringLiteral(ce.name)
+                ),
+                .init(
+                    name: .identifier(ce.name),
+                    value: .memberAccess(
+                        base: .identifier("json"),
+                        name: ce.name
+                    )
+                )
+            ]
 
+            return .block([
+                .return(.object(fields))
+            ])
+        }
 
-            if index == type.caseElements.count - 1 {
-                strs += """
-} else {
-    throw new Error("unknown kind");
-}
-""".components(separatedBy: "\n")
-            }
-
-            return strs
+        func lastElseCode() -> TSStmt {
+            return .block([
+                .throw(.new(
+                    callee: .identifier("Error"),
+                    arguments: [
+                        .stringLiteral("unknown kind")
+                    ]
+                ))
+            ])
         }
 
         let genericParameters = converter.transpileGenericParameters(type: .enum(type))
@@ -159,8 +162,43 @@ struct EnumConverter {
             )
         ]
 
-        let body = type.caseElements.enumerated().flatMap { (i, ce) in
-            ifCase(index: i, caseElement: ce)
+        var topStmt: TSStmt?
+
+        func appendElse(stmt: TSStmt) {
+            if case .if(let top) = topStmt {
+                topStmt = .if(appendElse(stmt: stmt, to: top))
+            } else {
+                topStmt = stmt
+            }
+        }
+
+        func appendElse(stmt: TSStmt, to ifStmt: TSIfStmt) -> TSIfStmt {
+            var ifStmt = ifStmt
+
+            if case .if(let nextIf) = ifStmt.else {
+                ifStmt.else = .if(appendElse(stmt: stmt, to: nextIf))
+            } else {
+                ifStmt.else = stmt
+            }
+
+            return ifStmt
+        }
+
+        for ce in type.caseElements {
+            let ifSt = TSIfStmt(
+                condition: condCode(caseElement: ce),
+                then: thenCode(caseElement: ce),
+                else: nil
+            )
+
+            appendElse(stmt: .if(ifSt))
+        }
+
+        appendElse(stmt: lastElseCode())
+
+        var stmts: [TSStmt] = []
+        if let top = topStmt {
+            stmts.append(top)
         }
 
         return TSFunctionDecl(
@@ -168,9 +206,7 @@ struct EnumConverter {
             genericParameters: genericParameters,
             parameters: parameters,
             returnType: .named(typeName, genericArguments: genericArguments),
-            body: [
-                .custom(body.joined(separator: "\n"))
-            ]
+            stmts: stmts
         )
     }
 }

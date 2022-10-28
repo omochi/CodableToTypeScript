@@ -68,10 +68,10 @@ struct StructConverter {
         var fields: [TSObjectField] = []
 
         for field in type.storedProperties {
-            var expr: TSExpr = .memberAccess(.init(
+            var expr: TSExpr = .memberAccess(
                 base: .identifier("json"),
                 name: field.name
-            ))
+            )
 
             let fieldType = try field.type()
             if try converter.hasJSONType(type: fieldType) {
@@ -97,12 +97,8 @@ struct StructConverter {
             genericParameters: genericParameters,
             parameters: parameters,
             returnType: .named(typeName, genericArguments: genericArguments),
-            body: [
-                .return(
-                    .object(
-                        .init(fields: fields)
-                    )
-                )
+            stmts: [
+                .return(.object(fields))
             ]
         )
     }

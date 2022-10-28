@@ -1,4 +1,4 @@
-public struct TSReturnExpr: PrettyPrintable {
+public struct TSExprStmt: PrettyPrintable {
     public var expr: TSExpr
 
     public init(_ expr: TSExpr) {
@@ -6,7 +6,7 @@ public struct TSReturnExpr: PrettyPrintable {
     }
 
     public func print(printer: PrettyPrinter) {
-        printer.write("return ")
         expr.print(printer: printer)
+        printer.writeLine(";")
     }
 }

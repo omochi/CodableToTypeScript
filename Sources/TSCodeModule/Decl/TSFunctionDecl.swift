@@ -4,20 +4,20 @@ public struct TSFunctionDecl: PrettyPrintable {
         genericParameters: TSGenericParameters = .init(),
         parameters: [TSFunctionParameter],
         returnType: TSType?,
-        body: [TSExpr]
+        stmts: [TSStmt]
     ) {
         self.name = name
         self.genericParameters = genericParameters
         self.parameters = parameters
         self.returnType = returnType
-        self.body = body
+        self.stmts = stmts
     }
 
     public var name: String
     public var genericParameters: TSGenericParameters
     public var parameters: [TSFunctionParameter]
     public var returnType: TSType?
-    public var body: [TSExpr]
+    public var stmts: [TSStmt]
 
     public func print(printer: PrettyPrinter) {
         printer.write("export function \(name)")
@@ -56,9 +56,8 @@ public struct TSFunctionDecl: PrettyPrintable {
 
         printer.writeLine(" {")
         printer.nest {
-            for expr in body {
-                expr.print(printer: printer)
-                printer.writeLine(";")
+            for stmt in stmts {
+                stmt.print(printer: printer)
             }
         }
         printer.writeLine("}")
