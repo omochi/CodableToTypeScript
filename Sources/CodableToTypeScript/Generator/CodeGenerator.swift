@@ -47,7 +47,7 @@ public struct CodeGenerator {
             decls.insert(.importDecl(importDecl), at: 0)
         }
 
-        return TSCode(decls: decls)
+        return TSCode(decls.map { .decl($0) })
     }
 
     public func transpileTypeReference(

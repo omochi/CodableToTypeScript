@@ -17,7 +17,7 @@ struct EnumConverter {
 
         if try converter.hasJSONType(type: .enum(type)) {
             jsonDecl = try transpile(type: type, kind: .json)
-            decodeFunc = try generateDecodeFunc(type: type)
+            decodeFunc = try DecodeFunc(enumConverter: self, type: type).generate()
         }
 
         return .init(
@@ -108,8 +108,13 @@ struct EnumConverter {
         )
     }
 
-    func generateDecodeFunc(type: EnumType) throws -> TSFunctionDecl {
-        func condCode(caseElement ce: CaseElement) -> TSExpr {
+    struct DecodeFunc {
+        var enumConverter: EnumConverter
+        var converter: TypeConverter { enumConverter.converter }
+
+        var type: EnumType
+
+        private func condCode(caseElement ce: CaseElement) -> TSExpr {
             return .infixOperator(
                 .stringLiteral(ce.name),
                 "in",
@@ -117,7 +122,30 @@ struct EnumConverter {
             )
         }
 
-        func thenCode(caseElement ce: CaseElement) -> TSStmt {
+        private func decodeCaseObject(
+            caseElement ce: CaseElement,
+            json: TSExpr
+        ) throws -> TSExpr {
+            var fields: [TSObjectField] = []
+
+            for (i, av) in ce.associatedValues.enumerated() {
+                let fieldName = Utils.label(of: av, i)
+                let (fieldType, isOptional) = try Utils.unwrapOptional(try av.type(), limit: 1)
+
+                var value: TSExpr = .memberAccess(base: json, name: fieldName)
+
+//                converter.hasJSONType(type: )
+
+                fields.append(.init(
+                    name: .identifier(fieldName),
+                    value: value
+                ))
+            }
+
+            return .object(fields)
+        }
+
+        private func thenCode(caseElement ce: CaseElement) throws -> TSStmt {
             let fields: [TSObjectField] = [
                 .init(
                     name: .stringLiteral("kind"),
@@ -125,88 +153,94 @@ struct EnumConverter {
                 ),
                 .init(
                     name: .identifier(ce.name),
-                    value: .memberAccess(
-                        base: .identifier("json"),
-                        name: ce.name
+                    value: try decodeCaseObject(
+                        caseElement: ce,
+                        json: .memberAccess(
+                            base: .identifier("json"),
+                            name: ce.name
+                        )
                     )
                 )
             ]
 
             return .block([
-                .return(.object(fields))
+                .stmt(.return(.object(fields)))
             ])
         }
 
-        func lastElseCode() -> TSStmt {
+        private func lastElseCode() -> TSStmt {
             return .block([
-                .throw(.new(
+                .stmt(.throw(.new(
                     callee: .identifier("Error"),
                     arguments: [
                         .stringLiteral("unknown kind")
                     ]
-                ))
+                )))
             ])
         }
 
-        let genericParameters = converter.transpileGenericParameters(type: .enum(type))
-        let genericArguments: [TSType] = genericParameters.items.map { .named($0) }
+        func generate() throws -> TSFunctionDecl {
+            let genericParameters = converter.transpileGenericParameters(type: .enum(type))
+            let genericArguments: [TSType] = genericParameters.items.map { .named($0) }
 
-        let typeName = converter.transpiledName(of: .enum(type), kind: .type)
-        let jsonName = converter.transpiledName(of: .enum(type), kind: .json)
-        let funcName = converter.transpiledName(of: .enum(type), kind: .decode)
+            let typeName = converter.transpiledName(of: .enum(type), kind: .type)
+            let jsonName = converter.transpiledName(of: .enum(type), kind: .json)
+            let funcName = converter.transpiledName(of: .enum(type), kind: .decode)
 
-        let parameters: [TSFunctionParameter] = [
-            .init(
-                name: "json",
-                type: .named(jsonName, genericArguments: genericArguments)
-            )
-        ]
+            let parameters: [TSFunctionParameter] = [
+                .init(
+                    name: "json",
+                    type: .named(jsonName, genericArguments: genericArguments)
+                )
+            ]
 
-        var topStmt: TSStmt?
+            var topStmt: TSStmt?
 
-        func appendElse(stmt: TSStmt) {
-            if case .if(let top) = topStmt {
-                topStmt = .if(appendElse(stmt: stmt, to: top))
-            } else {
-                topStmt = stmt
-            }
-        }
-
-        func appendElse(stmt: TSStmt, to ifStmt: TSIfStmt) -> TSIfStmt {
-            var ifStmt = ifStmt
-
-            if case .if(let nextIf) = ifStmt.else {
-                ifStmt.else = .if(appendElse(stmt: stmt, to: nextIf))
-            } else {
-                ifStmt.else = stmt
+            func appendElse(stmt: TSStmt) {
+                if case .if(let top) = topStmt {
+                    topStmt = .if(appendElse(stmt: stmt, to: top))
+                } else {
+                    topStmt = stmt
+                }
             }
 
-            return ifStmt
-        }
+            func appendElse(stmt: TSStmt, to ifStmt: TSIfStmt) -> TSIfStmt {
+                var ifStmt = ifStmt
 
-        for ce in type.caseElements {
-            let ifSt = TSIfStmt(
-                condition: condCode(caseElement: ce),
-                then: thenCode(caseElement: ce),
-                else: nil
+                if case .if(let nextIf) = ifStmt.else {
+                    ifStmt.else = .if(appendElse(stmt: stmt, to: nextIf))
+                } else {
+                    ifStmt.else = stmt
+                }
+
+                return ifStmt
+            }
+
+            for ce in type.caseElements {
+                let ifSt = TSIfStmt(
+                    condition: condCode(caseElement: ce),
+                    then: try thenCode(caseElement: ce),
+                    else: nil
+                )
+
+                appendElse(stmt: .if(ifSt))
+            }
+
+            appendElse(stmt: lastElseCode())
+
+            var stmts: [TSStmt] = []
+            if let top = topStmt {
+                stmts.append(top)
+            }
+
+            return TSFunctionDecl(
+                name: funcName,
+                genericParameters: genericParameters,
+                parameters: parameters,
+                returnType: .named(typeName, genericArguments: genericArguments),
+                stmts: stmts
             )
-
-            appendElse(stmt: .if(ifSt))
         }
-
-        appendElse(stmt: lastElseCode())
-
-        var stmts: [TSStmt] = []
-        if let top = topStmt {
-            stmts.append(top)
-        }
-
-        return TSFunctionDecl(
-            name: funcName,
-            genericParameters: genericParameters,
-            parameters: parameters,
-            returnType: .named(typeName, genericArguments: genericArguments),
-            stmts: stmts
-        )
     }
+
 }

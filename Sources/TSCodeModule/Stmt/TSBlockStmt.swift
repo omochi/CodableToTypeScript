@@ -1,15 +1,15 @@
 public struct TSBlockStmt: PrettyPrintable {
-    public var stmts: [TSStmt]
+    public var items: [TSBlockItem]
 
-    public init(_ stmts: [TSStmt]) {
-        self.stmts = stmts
+    public init(_ items: [TSBlockItem]) {
+        self.items = items
     }
 
     public func print(printer: PrettyPrinter) {
         printer.writeLine("{")
         printer.nest {
-            for stmt in stmts {
-                stmt.print(printer: printer)
+            for item in items {
+                item.print(printer: printer)
             }
         }
         printer.write("}")

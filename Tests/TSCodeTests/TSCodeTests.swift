@@ -12,11 +12,9 @@ final class TSCodeTests: XCTestCase {
             .init(name: "a", type: s2, isOptional: true)
         ])
 
-        let code = TSCode(
-            decls: [
-                .typeDecl(name: "S1", type: s1)
-            ]
-        )
+        let code = TSCode([
+            .decl(.typeDecl(name: "S1", type: s1))
+        ])
 
         let expected = """
 export type S1 = {
@@ -97,11 +95,9 @@ import {
             ]
         )
 
-        let code = TSCode(
-            decls: [
-                .namespaceDecl(ns)
-            ]
-        )
+        let code = TSCode([
+            .decl(.namespaceDecl(ns))
+        ])
 
         let expected = """
 export namespace A {
