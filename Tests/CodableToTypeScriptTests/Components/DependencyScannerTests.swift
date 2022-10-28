@@ -24,7 +24,7 @@ struct X<T> {}
 
         let imp = try XCTUnwrap(tsCode.items.compactMap { (x) -> TSImportDecl? in
             switch x {
-            case .decl(.importDecl(let d)): return d
+            case .decl(.import(let d)): return d
             default: return nil
             }
         }.first)
@@ -41,13 +41,12 @@ struct S {
     var c: String
     var d: Double?
 }
-""",
-            typeSelector: .name("S")
+"""
         )
 
         XCTAssertFalse(tsCode.items.contains { (x) in
             switch x {
-            case .decl(.importDecl): return true
+            case .decl(.import): return true
             default: return false
             }
         })

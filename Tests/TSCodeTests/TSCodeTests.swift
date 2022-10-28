@@ -13,7 +13,7 @@ final class TSCodeTests: XCTestCase {
         ])
 
         let code = TSCode([
-            .decl(.typeDecl(name: "S1", type: s1))
+            .decl(.type(name: "S1", type: s1))
         ])
 
         let expected = """
@@ -91,12 +91,12 @@ import {
         let ns = TSNamespaceDecl(
             name: "A",
             decls: [
-                .typeDecl(name: "B", type: b)
+                .type(name: "B", type: b)
             ]
         )
 
         let code = TSCode([
-            .decl(.namespaceDecl(ns))
+            .decl(.namespace(ns))
         ])
 
         let expected = """

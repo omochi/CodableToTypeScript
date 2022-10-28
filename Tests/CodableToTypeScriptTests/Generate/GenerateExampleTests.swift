@@ -64,14 +64,21 @@ export type E_JSON = {
 """, """
 export function E_decode(json: E_JSON): E {
     if ("a" in json) {
+        const j = json.a;
         return {
-            "kind": "a",
-            a: json.a
+            kind: "a",
+            a: {
+                x: j.x,
+                y: j.y
+            }
         };
     } else if ("b" in json) {
+        const j = json.b;
         return {
-            "kind": "b",
-            b: json.b
+            kind: "b",
+            b: {
+                _0: j._0
+            }
         };
     } else {
         throw new Error("unknown kind");

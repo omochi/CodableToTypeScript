@@ -134,7 +134,12 @@ struct EnumConverter {
 
                 var value: TSExpr = .memberAccess(base: json, name: fieldName)
 
-//                converter.hasJSONType(type: )
+                if try converter.hasJSONType(type: fieldType) {
+                    let decode = converter.transpiledName(of: fieldType, kind: .decode)
+                    value = .call(
+                        callee: .identifier(decode), arguments: [value]
+                    )
+                }
 
                 fields.append(.init(
                     name: .identifier(fieldName),
@@ -146,24 +151,30 @@ struct EnumConverter {
         }
 
         private func thenCode(caseElement ce: CaseElement) throws -> TSStmt {
+            let varDecl = TSVarDecl(
+                mode: "const", name: "j",
+                initializer: .memberAccess(
+                    base: .identifier("json"),
+                    name: ce.name
+                )
+            )
+
             let fields: [TSObjectField] = [
                 .init(
-                    name: .stringLiteral("kind"),
+                    name: .identifier("kind"),
                     value: .stringLiteral(ce.name)
                 ),
                 .init(
                     name: .identifier(ce.name),
                     value: try decodeCaseObject(
                         caseElement: ce,
-                        json: .memberAccess(
-                            base: .identifier("json"),
-                            name: ce.name
-                        )
+                        json: .identifier("j")
                     )
                 )
             ]
 
             return .block([
+                .decl(.var(varDecl)),
                 .stmt(.return(.object(fields)))
             ])
         }

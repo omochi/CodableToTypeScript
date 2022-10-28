@@ -29,7 +29,7 @@ private final class Impl {
     func run() -> [String] {
         for decl in decls {
             switch decl {
-            case .typeDecl(let decl):
+            case .type(let decl):
                 stackIgnores {
                     ignores.insert(decl.name)
                     for p in decl.genericParameters.items {

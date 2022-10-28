@@ -53,15 +53,15 @@ struct TypeConverter {
 
         var decls: [TSDecl] {
             var decls: [TSDecl] = [
-                .typeDecl(typeDecl)
+                .type(typeDecl)
             ]
 
             if let decl = jsonDecl {
-                decls.append(.typeDecl(decl))
+                decls.append(.type(decl))
             }
 
             if let decl = decodeFunc {
-                decls.append(.functionDecl(decl))
+                decls.append(.function(decl))
             }
 
             decls += nestedTypeDecls

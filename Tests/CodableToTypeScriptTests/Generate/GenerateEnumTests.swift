@@ -31,14 +31,18 @@ export type E_JSON = {
 ""","""
 export function E_decode(json: E_JSON): E {
     if ("a" in json) {
+        const j = json.a;
         return {
-            "kind": "a",
-            a: json.a
+            kind: "a",
+            a: {}
         };
     } else if ("b" in json) {
+        const j = json.b;
         return {
-            "kind": "b",
-            b: json.b
+            kind: "b",
+            b: {
+                _0: j._0
+            }
         };
     } else {
         throw new Error("unknown kind");
@@ -185,6 +189,61 @@ export type E = "a" |
 "c" |
 "d"
 """]
+        )
+    }
+
+    func testAssociatedValueDecode() throws {
+        try assertGenerate(
+            source: """
+enum K {
+    case a
+}
+
+struct S {
+    var k: K
+}
+
+struct C {}
+
+enum E {
+    case k(K)
+    case s(S)
+    case c(C)
+}
+""",
+            typeSelector: .name("E"),
+            expecteds: ["""
+export function E_decode(json: E_JSON): E {
+    if ("k" in json) {
+        const j = json.k;
+        return {
+            kind: "k",
+            k: {
+                _0: K_decode(j._0)
+            }
+        };
+    } else if ("s" in json) {
+        const j = json.s;
+        return {
+            kind: "s",
+            s: {
+                _0: S_decode(j._0)
+            }
+        };
+    } else if ("c" in json) {
+        const j = json.c;
+        return {
+            kind: "c",
+            c: {
+                _0: j._0
+            }
+        };
+    } else {
+        throw new Error("unknown kind");
+    }
+}
+"""
+            ]
         )
     }
 }

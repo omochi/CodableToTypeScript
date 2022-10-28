@@ -43,8 +43,7 @@ public struct CodeGenerator {
 
         let deps = DependencyScanner(standardTypes: standardTypes)(decls: decls)
         if !deps.isEmpty {
-            let importDecl = TSImportDecl(names: deps, from: importFrom)
-            decls.insert(.importDecl(importDecl), at: 0)
+            decls.insert(.import(names: deps, from: importFrom), at: 0)
         }
 
         return TSCode(decls.map { .decl($0) })
