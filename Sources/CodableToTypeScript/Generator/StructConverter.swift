@@ -97,8 +97,8 @@ struct StructConverter {
             genericParameters: genericParameters,
             parameters: parameters,
             returnType: .named(typeName, genericArguments: genericArguments),
-            stmts: [
-                .return(.object(fields))
+            items: [
+                .stmt(.return(.object(fields)))
             ]
         )
     }

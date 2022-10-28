@@ -4,7 +4,7 @@ public enum TSDecl: PrettyPrintable {
     case namespace(TSNamespaceDecl)
     case type(TSTypeDecl)
     case `var`(TSVarDecl)
-    case custom(String)
+    case custom(TSCustomDecl)
 
     public func print(printer r: PrettyPrinter) {
         switch self {
@@ -13,7 +13,7 @@ public enum TSDecl: PrettyPrintable {
         case .namespace(let d): d.print(printer: r)
         case .type(let d): d.print(printer: r)
         case .var(let d): d.print(printer: r)
-        case .custom(let text): r.write(text)
+        case .custom(let d): d.print(printer: r)
         }
     }
 
@@ -31,5 +31,9 @@ public enum TSDecl: PrettyPrintable {
 
     public static func `var`(mode: String, name: String, initializer: TSExpr? = nil) -> TSDecl {
         .var(TSVarDecl(mode: mode, name: name, initializer: initializer))
+    }
+
+    public static func custom(_ text: String) -> TSDecl {
+        .custom(TSCustomDecl(text))
     }
 }

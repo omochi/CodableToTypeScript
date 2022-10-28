@@ -239,9 +239,9 @@ struct EnumConverter {
 
             appendElse(stmt: lastElseCode())
 
-            var stmts: [TSStmt] = []
+            var items: [TSBlockItem] = []
             if let top = topStmt {
-                stmts.append(top)
+                items.append(.stmt(top))
             }
 
             return TSFunctionDecl(
@@ -249,7 +249,7 @@ struct EnumConverter {
                 genericParameters: genericParameters,
                 parameters: parameters,
                 returnType: .named(typeName, genericArguments: genericArguments),
-                stmts: stmts
+                items: items
             )
         }
     }

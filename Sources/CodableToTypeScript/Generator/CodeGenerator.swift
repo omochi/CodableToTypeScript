@@ -41,7 +41,8 @@ public struct CodeGenerator {
     ) throws -> TSCode {
         var decls = try typeConverter().convert(type: type)
 
-        let deps = DependencyScanner(standardTypes: standardTypes)(decls: decls)
+        let deps = DependencyScanner(standardTypes: standardTypes)
+            .scan(code: TSCode(decls.map { .decl($0) }))
         if !deps.isEmpty {
             decls.insert(.import(names: deps, from: importFrom), at: 0)
         }

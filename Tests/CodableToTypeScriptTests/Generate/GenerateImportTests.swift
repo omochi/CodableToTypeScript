@@ -3,9 +3,9 @@ import XCTest
 import SwiftTypeReader
 import TSCodeModule
 
-final class DependencyScannerTests: XCTestCase {
+final class GenerateImportTests: GenerateTestCaseBase {
     func testGenericStruct() throws {
-        let tsCode = try Utils.generate(
+        try assertGenerate(
             source: """
 struct S<T, U> {
     var a: A?
@@ -19,17 +19,9 @@ struct S<T, U> {
 }
 
 struct X<T> {}
-"""
+""",
+            typeSelector: .name("S")
         )
-
-        let imp = try XCTUnwrap(tsCode.items.compactMap { (x) -> TSImportDecl? in
-            switch x {
-            case .decl(.import(let d)): return d
-            default: return nil
-            }
-        }.first)
-
-        XCTAssertEqual(imp.names, ["A", "B", "C", "X", "Y"])
     }
 
     func testDefaultStandardTypes() throws {
