@@ -19,6 +19,8 @@ public final class PrettyPrinter {
 
     public private(set) var line: Int = 1
 
+    public var smallNumber: Int = 3
+
     public init() {}
 
     public func write(_ text: String) {

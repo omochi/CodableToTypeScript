@@ -58,52 +58,52 @@ struct StructConverter {
 
         let genericParameters = converter.transpileGenericParameters(type: .struct(type))
         let genericArguments: [TSType] = genericParameters.items.map { .named($0) }
-        var parameters: [TSFunctionParameter] = [
+        let parameters: [TSFunctionParameter] = [
             .init(
                 name: "json",
                 type: .named(jsonName, genericArguments: genericArguments)
             )
         ]
 
-        var body: [String] = ["""
-return {
-"""
-        ]
+        var fields: [TSObjectField] = []
 
-        for (index, field) in type.storedProperties.enumerated() {
-            var expr = "json.\(field.name)"
+        for field in type.storedProperties {
+            var expr: TSExpr = .memberAccess(.init(
+                base: .identifier("json"),
+                name: field.name
+            ))
 
             let fieldType = try field.type()
             if try converter.hasJSONType(type: fieldType) {
                 let decode = converter.transpiledName(of: fieldType, kind: .decode)
-                expr = "\(decode)(\(expr))"
+
+                expr = .call(
+                    callee: .identifier(decode),
+                    arguments: [expr]
+                )
             }
 
-            let comma: String = {
-                if index < type.storedProperties.count - 1 {
-                    return ","
-                } else {
-                    return ""
-                }
-            }()
-
-
-            body.append("""
-    \(field.name): \(expr)\(comma)
-""")
+            fields.append(
+                .init(
+                    name: .identifier(field.name),
+                    value: expr
+                )
+            )
         }
 
-        body.append("""
-};
-"""
-        )
 
         return TSFunctionDecl(
             name: funcName,
             genericParameters: genericParameters,
             parameters: parameters,
             returnType: .named(typeName, genericArguments: genericArguments),
-            body: body
+            body: [
+                .return(
+                    .object(
+                        .init(fields: fields)
+                    )
+                )
+            ]
         )
     }
 

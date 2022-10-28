@@ -152,7 +152,7 @@ struct EnumConverter {
         let jsonName = converter.transpiledName(of: .enum(type), kind: .json)
         let funcName = converter.transpiledName(of: .enum(type), kind: .decode)
 
-        var parameters: [TSFunctionParameter] = [
+        let parameters: [TSFunctionParameter] = [
             .init(
                 name: "json",
                 type: .named(jsonName, genericArguments: genericArguments)
@@ -168,7 +168,9 @@ struct EnumConverter {
             genericParameters: genericParameters,
             parameters: parameters,
             returnType: .named(typeName, genericArguments: genericArguments),
-            body: body
+            body: [
+                .custom(body.joined(separator: "\n"))
+            ]
         )
     }
 }
