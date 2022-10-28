@@ -7,7 +7,7 @@ enum Utils {
     static func generate(
         source: String,
         typeMap: TypeMap? = nil,
-        typeSelector: TypeSelector,
+        typeSelector: TypeSelector = .first(file: #file, line: #line),
         file: StaticString = #file,
         line: UInt = #line
     ) throws -> TSCode {

@@ -2,7 +2,76 @@ import SwiftTypeReader
 import TSCodeModule
 
 struct TypeConverter {
+    struct TypeInfoKey: Hashable {
+        var location: Location
+        var name: String
+
+        init(location: Location, name: String) {
+            self.location = location
+            self.name = name
+        }
+
+        init(type: RegularType) {
+            self.init(
+                location: type.location,
+                name: type.name
+            )
+        }
+    }
+
+    struct TypeInfo {
+        var hasJSONType: Bool?
+    }
+
+    final class Cache {
+        init() {}
+
+        private var types: [TypeInfoKey: TypeInfo] = [:]
+
+        func get(for type: RegularType) -> TypeInfo {
+            let key = TypeInfoKey(type: type)
+            return types[key] ?? .init()
+        }
+
+        func set(_ info: TypeInfo, for type: RegularType) {
+            let key = TypeInfoKey(type: type)
+            types[key] = info
+        }
+
+        func modify(for type: RegularType, body: (inout TypeInfo) -> Void) {
+            var info = get(for: type)
+            body(&info)
+            set(info, for: type)
+        }
+    }
+
+    struct TypeResult {
+        var typeDecl: TSTypeDecl
+        var jsonDecl: TSTypeDecl?
+        var decodeFunc: TSFunctionDecl?
+        var nestedTypeDecls: [TSDecl]
+
+        var decls: [TSDecl] {
+            var decls: [TSDecl] = [
+                .typeDecl(typeDecl)
+            ]
+
+            if let decl = jsonDecl {
+                decls.append(.typeDecl(decl))
+            }
+
+            if let decl = decodeFunc {
+                decls.append(.functionDecl(decl))
+            }
+
+            decls += nestedTypeDecls
+
+            return decls
+        }
+    }
+
     var typeMap: TypeMap
+    private let cache = Cache()
 
     func convert(type: SType) throws -> [TSDecl] {
         guard let type = type.regular else {
@@ -22,30 +91,76 @@ struct TypeConverter {
         }
     }
 
-    func convertNestedDecls(type: SType) throws -> TSNamespaceDecl? {
+    func convertNestedTypeDecls(type: SType) throws -> [TSDecl] {
+        var decls: [TSDecl] = []
+
         guard let type = type.regular else {
-            return nil
+            return decls
         }
 
-        var nestedDecls: [TSDecl] = []
         if !type.types.isEmpty {
             for nestedType in type.types {
-                nestedDecls += try self.convert(type: nestedType)
+                decls += try self.convert(type: nestedType)
             }
         }
-        if nestedDecls.isEmpty { return nil }
 
-        return TSNamespaceDecl(
-            name: type.name,
-            decls: nestedDecls
-        )
+        return decls
     }
 
-    func transpileTypeReference(_ type: SType) throws -> TSType {
+    func transpiledName(of type: SType, kind: NameKind) -> String {
+        var path = namePath(type: type)
+        switch kind {
+        case .type: break
+        case .json:
+            switch type.regular {
+            case .struct,
+                .enum:
+                path.items.append("JSON")
+            default:
+                break
+            }
+        case .decode:
+            path.items.append("decode")
+        }
+        return path.convert()
+    }
+
+    private func namePath(type: SType) -> NamePath {
+        var specifier = type.asSpecifier()
+        _ = specifier.removeModuleElement()
+
+        var parts: [String] = []
+        for element in specifier.elements {
+            parts.append(element.name)
+        }
+
+        return NamePath(parts)
+    }
+
+    enum TypeKind {
+        case type
+        case json
+
+        func toNameKind() -> NameKind {
+            switch self {
+            case .type: return .type
+            case .json: return .json
+            }
+        }
+    }
+
+    enum NameKind {
+        case type
+        case json
+        case decode
+    }
+
+    func transpileTypeReference(_ type: SType, kind: TypeKind) throws -> TSType {
         let (unwrappedFieldType, isWrapped) = try Utils.unwrapOptional(type, limit: nil)
         if isWrapped {
             let wrapped = try transpileTypeReference(
-                unwrappedFieldType
+                unwrappedFieldType,
+                kind: kind
             )
             return .union([wrapped, .named("null")])
         } else if let st = type.struct,
@@ -54,7 +169,8 @@ struct TypeConverter {
                   try st.genericArguments().count >= 1
         {
             let element = try transpileTypeReference(
-                try st.genericArguments()[0]
+                try st.genericArguments()[0],
+                kind: kind
             )
             return .array(element)
         } else if let st = type.struct,
@@ -63,43 +179,77 @@ struct TypeConverter {
                   try st.genericArguments().count >= 2
         {
             let element = try transpileTypeReference(
-                try st.genericArguments()[1]
+                try st.genericArguments()[1],
+                kind: kind
             )
             return .dictionary(element)
         }
 
         if let mappedName = typeMap.map(specifier: type.asSpecifier()) {
             let args = try type.genericArguments().map {
-                try transpileTypeReference($0)
+                try transpileTypeReference($0, kind: kind)
             }
             return .named(mappedName, genericArguments: args)
         }
 
-        var specifier = type.asSpecifier()
-        _ = specifier.removeModuleElement()
-
-        var type: TSType = .named(try transpileTypeReferenceLastPart(type))
-
-        for element in specifier.elements.reversed().dropFirst() {
-            type = .nested(namespace: element.name, type: type)
-        }
-
-        return type
-    }
-
-    private func transpileTypeReferenceLastPart(_ type: SType) throws -> TSNamedType {
-        let name: String = try {
-            if let enumType = type.enum {
-                return try EnumConverter.transpiledName(type: enumType)
-            } else {
-                return type.name
-            }
-        }()
+        let name = transpiledName(of: type, kind: kind.toNameKind())
 
         let args = try type.genericArguments().map {
-            try transpileTypeReference($0)
+            try transpileTypeReference($0, kind: kind)
         }
 
-        return .init(name, genericArguments: args)
+        return .named(name, genericArguments: args)
+    }
+
+    func genericSignature(type: SType) -> String {
+        guard let type = type.regular else { return "" }
+
+        if type.genericParameters.isEmpty {
+            return ""
+        }
+
+        return "<" +
+            type.genericParameters.map { $0.name }.joined(separator: ", ") +
+        ">"
+    }
+
+    func isStringRawValueType(type: SType) throws -> Bool {
+        guard let type = type.regular else { return false }
+        return try type.inheritedTypes().first?.name == "String"
+    }
+
+    func hasJSONType(type: SType) throws -> Bool {
+        guard let type = type.regular else { return false }
+
+        if let cache = cache.get(for: type).hasJSONType {
+            return cache
+        }
+
+        let result = try _hasJSONType(type: type)
+        cache.modify(for: type) { $0.hasJSONType = result }
+        return result
+    }
+
+    private func _hasJSONType(type: RegularType) throws -> Bool {
+        if let _ = typeMap.map(specifier: type.asSpecifier()) {
+            /*
+             mapped type doesn't have decoder
+             */
+            return false
+        }
+
+        switch type {
+        case .enum(let type):
+            if type.caseElements.isEmpty { return false }
+            if try isStringRawValueType(type: .enum(type)) { return false }
+            return true
+        case .struct(let type):
+            for field in type.storedProperties {
+                if try hasJSONType(type: try field.type()) { return true }
+            }
+            return false
+        case .genericParameter, .protocol:
+            return false
+        }
     }
 }

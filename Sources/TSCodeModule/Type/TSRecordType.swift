@@ -20,6 +20,11 @@ public struct TSRecordType: PrettyPrintable {
     public var fields: [Field]
 
     public func print(printer p: PrettyPrinter) {
+        if fields.isEmpty {
+            p.write("{}")
+            return
+        }
+
         p.writeLine("{")
         p.nest {
             for field in fields {

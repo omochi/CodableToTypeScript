@@ -15,8 +15,7 @@ struct S<T, U> {
     var sc: S<C>
     var st: R<U>
 }
-""",
-            typeSelector: .name("S")
+"""
         )
 
         let imp = try XCTUnwrap(tsCode.decls.compactMap { (x) -> TSImportDecl? in

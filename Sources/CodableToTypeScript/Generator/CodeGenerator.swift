@@ -53,6 +53,9 @@ public struct CodeGenerator {
     public func transpileTypeReference(
         type: SType
     ) throws -> TSType {
-        return try typeConverter().transpileTypeReference(type)
+        return try typeConverter().transpileTypeReference(
+            type,
+            kind: .type
+        )
     }
 }

@@ -17,6 +17,8 @@ public final class PrettyPrinter {
 
     private var needsIndent: Bool = true
 
+    public private(set) var line: Int = 1
+
     public init() {}
 
     public func write(_ text: String) {
@@ -33,6 +35,7 @@ public final class PrettyPrinter {
 
         output += "\n"
         needsIndent = true
+        line += 1
     }
 
     public func push() {

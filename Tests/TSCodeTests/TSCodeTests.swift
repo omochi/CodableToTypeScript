@@ -46,12 +46,10 @@ export type S1 = {
         let expected = """
 {
     kind: "a";
-    a: {
-    };
+    a: {};
 } | {
     kind: "b";
-    b: {
-    };
+    b: {};
 }
 """
 
@@ -63,7 +61,7 @@ export type S1 = {
             .stringLiteral("a"),
             .stringLiteral("b"),
             .stringLiteral("c")
-        ], splitLines: true)
+        ])
 
         let expected = """
 "a" |

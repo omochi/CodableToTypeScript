@@ -1,10 +1,12 @@
 import XCTest
-@testable import CodableToTypeScript
+import TestUtils
+import CodableToTypeScript
 import SwiftTypeReader
 
-final class CodableToTypeScriptTests: XCTestCase {
+final class GenerateExampleTests: GenerateTestCaseBase {
     func testStruct() throws {
-        try assertGenerate(source: """
+        try assertGenerate(
+            source: """
 struct S {
     var x: Int
     var o1: Int?
@@ -13,7 +15,8 @@ struct S {
     var a1: [Int?]
     var d1: [String: Int]
 }
-""", expected: """
+""",
+            expecteds: ["""
 export type S = {
     x: number;
     o1?: number;
@@ -23,26 +26,18 @@ export type S = {
     d1: { [key: string]: number; };
 };
 
-""")
+"""]
+        )
     }
 
     func testEnum() throws {
-        try assertGenerate(source: """
+        try assertGenerate(
+            source: """
 enum E {
     case a(x: Int, y: Int)
     case b([String])
-""", expected: """
-export type EJSON = {
-    a: {
-        x: number;
-        y: number;
-    };
-} | {
-    b: {
-        _0: string[];
-    };
-};
-
+""",
+            expecteds: ["""
 export type E = {
     kind: "a";
     a: {
@@ -55,8 +50,19 @@ export type E = {
         _0: string[];
     };
 };
-
-export function EDecode(json: EJSON): E {
+""", """
+export type E_JSON = {
+    a: {
+        x: number;
+        y: number;
+    };
+} | {
+    b: {
+        _0: string[];
+    };
+};
+""", """
+export function E_decode(json: E_JSON): E {
     if ("a" in json) {
         return { "kind": "a", a: json.a };
     } else if ("b" in json) {
@@ -65,8 +71,7 @@ export function EDecode(json: EJSON): E {
         throw new Error("unknown kind");
     }
 }
-
-""")
+"""])
     }
 
     func testEnumInStruct() throws {
@@ -86,7 +91,7 @@ struct S {
 }
 """,
             typeSelector: .name("S"),
-            expected: """
+            expecteds: ["""
 import {
     E1JSON,
     E2
@@ -97,7 +102,8 @@ export type S = {
     y: E2;
 };
 
-""")
+"""]
+        )
     }
 
     func testTranspileTypeReference() throws {
@@ -118,19 +124,5 @@ struct S {
         let idsTS = try gen.transpileTypeReference(type: idsSwift)
 
         XCTAssertEqual(idsTS.description, "ID[]")
-    }
-
-    private func assertGenerate(
-        source: String,
-        typeSelector: TypeSelector? = nil,
-        expected: String,
-        file: StaticString = #file, line: UInt = #line
-    ) throws {
-        let tsCode = try Utils.generate(
-            source: source,
-            typeSelector: typeSelector ?? .first(file: file, line: line),
-            file: file, line: line
-        )
-        XCTAssertEqual(tsCode.description, expected)
     }
 }
