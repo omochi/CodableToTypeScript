@@ -31,7 +31,6 @@ export type E_JSON = {
 ""","""
 export function E_decode(json: E_JSON): E {
     if ("a" in json) {
-        const j = json.a;
         return {
             kind: "a",
             a: {}

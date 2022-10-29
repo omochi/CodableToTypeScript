@@ -247,6 +247,9 @@ struct TypeConverter {
         if depth > 0 {
             return try hasEmptyDecoder(type: wrapped)
         }
+        if let (_, type) = try asArray(type: type) {
+            return try hasEmptyDecoder(type: type)
+        }
         
         guard let type = type.regular else { return true }
 
@@ -272,26 +275,29 @@ struct TypeConverter {
     }
 
     func generateDecodeFunctionAccess(type: SType) throws -> TSExpr {
-        let (_, optionalDepth) = try unwrapOptional(type: type, limit: nil)
-        if optionalDepth > 0 {
-            let paramType = try transpileTypeReference(type, kind: .json)
+        func makeClosure() throws -> TSExpr {
             let param = TSFunctionParameter(
                 name: "json",
-                type: paramType
+                type: try transpileTypeReference(type, kind: .json)
             )
-
-            let retType: TSType = try transpileTypeReference(type, kind: .type)
-
+            let ret = try transpileTypeReference(type, kind: .type)
             let expr = try generateValueDecodeExpression(
                 type: type,
                 expr: .identifier("json")
             )
-
             return .closure(TSClosureExpr(
                 parameters: [param],
-                returnType: retType,
+                returnType: ret,
                 items: [.stmt(.return(expr))]
             ))
+        }
+
+        let (_, optionalDepth) = try unwrapOptional(type: type, limit: nil)
+        if optionalDepth > 0 {
+            return try makeClosure()
+        }
+        if let (_, _) = try asArray(type: type) {
+            return try makeClosure()
         }
         return .identifier(decodeFunctionName(type: type))
     }
@@ -304,20 +310,21 @@ struct TypeConverter {
         "Optional_decode"
     }
 
+    var arrayDecodeFunctionName: String {
+        "Array_decode"
+    }
+
     func generateFieldDecodeExpression(
         type: SType,
         expr: TSExpr
     ) throws -> TSExpr {
         let (type, optionalDepth) = try unwrapOptional(type: type, limit: 1)
         if optionalDepth > 0 {
-            return .call(
+            if try hasEmptyDecoder(type: type) { return expr }
+            return try generateHigherOrderDecodeCall(
+                type: type,
                 callee: .identifier(optionalFieldDecodeFunctionName),
-                arguments: [
-                    TSFunctionArgument(expr),
-                    TSFunctionArgument(
-                        try generateDecodeFunctionAccess(type: type)
-                    )
-                ]
+                json: expr
             )
         }
 
@@ -332,14 +339,20 @@ struct TypeConverter {
     ) throws -> TSExpr {
         let (type, optionalDepth) = try unwrapOptional(type: type, limit: nil)
         if optionalDepth > 0 {
-            return .call(
+            if try hasEmptyDecoder(type: type) { return expr }
+            return try generateHigherOrderDecodeCall(
+                type: type,
                 callee: .identifier(optionalDecodeFunctionName),
-                arguments: [
-                    TSFunctionArgument(expr),
-                    TSFunctionArgument(
-                        try generateDecodeFunctionAccess(type: type)
-                    )
-                ]
+                json: expr
+            )
+        }
+
+        if let (_, type) = try asArray(type: type) {
+            if try hasEmptyDecoder(type: type) { return expr }
+            return try generateHigherOrderDecodeCall(
+                type: type,
+                callee: .identifier(arrayDecodeFunctionName),
+                json: expr
             )
         }
 
@@ -355,10 +368,26 @@ struct TypeConverter {
         )
     }
 
+    private func generateHigherOrderDecodeCall(
+        type: SType,
+        callee: TSExpr,
+        json: TSExpr
+    ) throws -> TSExpr {
+        return .call(
+            callee: callee,
+            arguments: [
+                TSFunctionArgument(json),
+                TSFunctionArgument(
+                    try generateDecodeFunctionAccess(type: type)
+                )
+            ]
+        )
+    }
+
     func unwrapOptional(type: SType, limit: Int?) throws -> (type: SType, depth: Int) {
         var type = type
         var depth = 0
-        while isOptional(type: type) {
+        while isStandardLibraryType(type: type, name: "Optional") {
             if let limit = limit,
                depth >= limit
             {
@@ -375,11 +404,18 @@ struct TypeConverter {
         return (type: type, depth: depth)
     }
 
-    func isOptional(type: SType) -> Bool {
+    func asArray(type: SType) throws -> (array: StructType, element: SType)? {
+        guard isStandardLibraryType(type: type, name: "Array"),
+              let array = type.struct,
+              let element = try array.genericArguments()[safe: 0] else { return nil }
+        return (array: array, element: element)
+    }
+
+    func isStandardLibraryType(type: SType, name: String) -> Bool {
         guard let type = type.regular else { return false }
 
         return type.location.elements == [.module(name: "Swift")] &&
-        type.name == "Optional"
+        type.name == name
     }
 
     func associatedValueLabel(value: AssociatedValue, index: Int) -> String {

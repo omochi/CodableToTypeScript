@@ -106,4 +106,117 @@ export function S_decode(json: S_JSON): S {
             ]
         )
     }
+
+    func testEmptyDecodeOptional() throws {
+        try assertGenerate(
+            source: """
+struct S {
+    var e1: Int?
+    var e2: Int??
+    var e3: Int???
+""",
+            typeSelector: .name("S"),
+            expecteds: ["""
+export function S_decode(json: S_JSON): S {
+    return {
+        e1: json.e1,
+        e2: json.e2,
+        e3: json.e3
+    };
+}
+"""
+            ]
+        )
+    }
+
+
+    func testDecodeArray() throws {
+        try assertGenerate(
+            source: """
+enum E { case a }
+
+struct S {
+    var e1: [E]
+    var e2: [[E]]
+    var e3: [[[E]]]
+}
+"""
+            ,
+            typeSelector: .name("S"),
+            expecteds: ["""
+export function S_decode(json: S_JSON): S {
+    return {
+        e1: Array_decode(json.e1, E_decode),
+        e2: Array_decode(json.e2, (json: E_JSON[]): E[] => {
+            return Array_decode(json, E_decode);
+        }),
+        e3: Array_decode(json.e3, (json: E_JSON[][]): E[][] => {
+            return Array_decode(json, (json: E_JSON[]): E[] => {
+                return Array_decode(json, E_decode);
+            });
+        })
+    };
+}
+"""]
+        )
+    }
+
+    func testEmptyDecodeArray() throws {
+        try assertGenerate(
+            source: """
+struct S {
+    var e1: [Int]
+    var e2: [[Int]]
+    var e3: [[[Int]]]
+}
+"""
+            ,
+            typeSelector: .name("S"),
+            expecteds: ["""
+export function S_decode(json: S_JSON): S {
+    return {
+        e1: json.e1,
+        e2: json.e2,
+        e3: json.e3
+    };
+}
+"""]
+        )
+    }
+
+    func testDecodeOptionalAndArray() throws {
+        try assertGenerate(
+            source: """
+enum E { case a }
+
+struct S {
+    var e1: [E]?
+    var e2: [E?]
+    var e3: [E]?
+    var e4: [E?]?
+}
+""",
+            typeSelector: .name("S"),
+            expecteds: ["""
+export function S_decode(json: S_JSON): S {
+    return {
+        e1: OptionalField_decode(json.e1, (json: E_JSON[]): E[] => {
+            return Array_decode(json, E_decode);
+        }),
+        e2: Array_decode(json.e2, (json: E_JSON | null): E | null => {
+            return Optional_decode(json, E_decode);
+        }),
+        e3: OptionalField_decode(json.e3, (json: E_JSON[]): E[] => {
+            return Array_decode(json, E_decode);
+        }),
+        e4: OptionalField_decode(json.e4, (json: (E_JSON | null)[]): (E | null)[] => {
+            return Array_decode(json, (json: E_JSON | null): E | null => {
+                return Optional_decode(json, E_decode);
+            });
+        })
+    };
+}
+"""]
+        )
+    }
 }
