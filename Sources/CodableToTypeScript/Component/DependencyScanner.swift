@@ -140,4 +140,9 @@ private final class NameCollector: TSTreeVisitor {
         names.insert(namespace.name)
         return false
     }
+
+    func visit(var: TSVarDecl) -> Bool {
+        names.insert(`var`.name)
+        return false
+    }
 }

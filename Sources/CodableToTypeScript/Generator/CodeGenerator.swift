@@ -11,6 +11,7 @@ public struct CodeGenerator {
         "boolean",
         "number",
         "string",
+        "Error"
     ]
 
     public var typeMap: TypeMap

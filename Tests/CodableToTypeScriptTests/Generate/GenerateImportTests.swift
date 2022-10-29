@@ -28,7 +28,7 @@ import {
     C,
     X,
     Y
-} from "..";
+}
 """
             ]
         )
@@ -45,6 +45,32 @@ struct S {
 }
 """,
             unexpecteds: ["import"]
+        )
+    }
+
+    func testDecodeInAssociatedValueImport() throws {
+        try assertGenerate(
+            source: """
+enum E { case a }
+
+struct S { var e: E }
+
+enum X {
+    case e(E)
+    case s(S)
+}
+""",
+            typeSelector: .name("X"),
+            expecteds: ["""
+import {
+    E,
+    E_JSON,
+    E_decode,
+    S,
+    S_JSON,
+    S_decode
+}
+"""]
         )
     }
 }
