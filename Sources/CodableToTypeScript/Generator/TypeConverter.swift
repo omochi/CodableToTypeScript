@@ -147,35 +147,22 @@ struct TypeConverter {
     }
 
     func transpileTypeReference(_ type: SType, kind: TypeKind) throws -> TSType {
-        let (unwrappedFieldType, isWrapped) = try Utils.unwrapOptional(type, limit: nil)
-        if isWrapped {
-            let wrapped = try transpileTypeReference(
-                unwrappedFieldType,
-                kind: kind
-            )
-            return .union([wrapped, .named("null")])
-        } else if let st = type.struct,
-                  st.module?.name == "Swift",
-                  st.name == "Array",
-                  try st.genericArguments().count >= 1
-        {
-            let element = try transpileTypeReference(
-                try st.genericArguments()[0],
-                kind: kind
-            )
-            return .array(element)
-        } else if let st = type.struct,
-                  st.module?.name == "Swift",
-                  st.name == "Dictionary",
-                  try st.genericArguments().count >= 2
-        {
-            let element = try transpileTypeReference(
-                try st.genericArguments()[1],
-                kind: kind
-            )
-            return .dictionary(element)
+        if let (wrapped, _) = try unwrapOptional(type: type, limit: nil) {
+            return .union([
+                try transpileTypeReference(wrapped, kind: kind),
+                .named("null")
+            ])
         }
-
+        if let (_, element) = try asArray(type: type) {
+            return .array(
+                try transpileTypeReference(element, kind: kind)
+            )
+        }
+        if let (_, value) = try asDictionary(type: type) {
+            return .dictionary(
+                try transpileTypeReference(value, kind: kind)
+            )
+        }
         if let mappedName = typeMap.map(specifier: type.asSpecifier()) {
             let args = try transpileGenericArguments(type: type)
             return .named(mappedName, genericArguments: args)
@@ -189,7 +176,13 @@ struct TypeConverter {
     }
 
     func transpileFieldTypeReference(type: SType, kind: TypeKind) throws -> (type: TSType, isOptionalField: Bool) {
-        let (type, optionalDepth) = try unwrapOptional(type: type, limit: 1)
+        var type = type
+        var isOptionalField = false
+        if let (wrapped, _) = try unwrapOptional(type: type, limit: 1) {
+            type = wrapped
+            isOptionalField = true
+        }
+
         var kind = kind
         switch kind {
         case .type: break
@@ -200,7 +193,7 @@ struct TypeConverter {
         }
         return (
             type: try transpileTypeReference(type, kind: kind),
-            isOptionalField: optionalDepth > 0
+            isOptionalField: isOptionalField
         )
     }
 
@@ -243,12 +236,14 @@ struct TypeConverter {
             return true
         }
 
-        let (wrapped, depth) = try unwrapOptional(type: type, limit: nil)
-        if depth > 0 {
+        if let (wrapped, _) = try unwrapOptional(type: type, limit: nil) {
             return try hasEmptyDecoder(type: wrapped)
         }
-        if let (_, type) = try asArray(type: type) {
-            return try hasEmptyDecoder(type: type)
+        if let (_, element) = try asArray(type: type) {
+            return try hasEmptyDecoder(type: element)
+        }
+        if let (_, value) = try asDictionary(type: type) {
+            return try hasEmptyDecoder(type: value)
         }
         
         guard let type = type.regular else { return true }
@@ -292,37 +287,31 @@ struct TypeConverter {
             ))
         }
 
-        let (_, optionalDepth) = try unwrapOptional(type: type, limit: nil)
-        if optionalDepth > 0 {
+        if let (_, _) = try unwrapOptional(type: type, limit: nil) {
             return try makeClosure()
         }
         if let (_, _) = try asArray(type: type) {
             return try makeClosure()
         }
+        if let (_, _) = try asDictionary(type: type) {
+            return try makeClosure()
+        }
         return .identifier(decodeFunctionName(type: type))
     }
 
-    var optionalFieldDecodeFunctionName: String {
-        "OptionalField_decode"
-    }
-
-    var optionalDecodeFunctionName: String {
-        "Optional_decode"
-    }
-
-    var arrayDecodeFunctionName: String {
-        "Array_decode"
-    }
+    let optionalFieldDecodeFunctionName = "OptionalField_decode"
+    let optionalDecodeFunctionName = "Optional_decode"
+    let arrayDecodeFunctionName = "Array_decode"
+    let dictionaryDecodeFunctionName = "Dictionary_decode"
 
     func generateFieldDecodeExpression(
         type: SType,
         expr: TSExpr
     ) throws -> TSExpr {
-        let (type, optionalDepth) = try unwrapOptional(type: type, limit: 1)
-        if optionalDepth > 0 {
-            if try hasEmptyDecoder(type: type) { return expr }
+        if let (wrapped, _) = try unwrapOptional(type: type, limit: 1) {
+            if try hasEmptyDecoder(type: wrapped) { return expr }
             return try generateHigherOrderDecodeCall(
-                type: type,
+                type: wrapped,
                 callee: .identifier(optionalFieldDecodeFunctionName),
                 json: expr
             )
@@ -337,21 +326,27 @@ struct TypeConverter {
         type: SType,
         expr: TSExpr
     ) throws -> TSExpr {
-        let (type, optionalDepth) = try unwrapOptional(type: type, limit: nil)
-        if optionalDepth > 0 {
-            if try hasEmptyDecoder(type: type) { return expr }
+        if let (wrapped, _) = try unwrapOptional(type: type, limit: nil) {
+            if try hasEmptyDecoder(type: wrapped) { return expr }
             return try generateHigherOrderDecodeCall(
-                type: type,
+                type: wrapped,
                 callee: .identifier(optionalDecodeFunctionName),
                 json: expr
             )
         }
-
-        if let (_, type) = try asArray(type: type) {
-            if try hasEmptyDecoder(type: type) { return expr }
+        if let (_, element) = try asArray(type: type) {
+            if try hasEmptyDecoder(type: element) { return expr }
             return try generateHigherOrderDecodeCall(
-                type: type,
+                type: element,
                 callee: .identifier(arrayDecodeFunctionName),
+                json: expr
+            )
+        }
+        if let (_, value) = try asDictionary(type: type) {
+            if try hasEmptyDecoder(type: value) { return expr }
+            return try generateHigherOrderDecodeCall(
+                type: value,
+                callee: .identifier(dictionaryDecodeFunctionName),
                 json: expr
             )
         }
@@ -384,24 +379,25 @@ struct TypeConverter {
         )
     }
 
-    func unwrapOptional(type: SType, limit: Int?) throws -> (type: SType, depth: Int) {
+    func unwrapOptional(type: SType, limit: Int?) throws -> (wrapped: SType, depth: Int)? {
         var type = type
         var depth = 0
-        while isStandardLibraryType(type: type, name: "Optional") {
+        while isStandardLibraryType(type: type, name: "Optional"),
+              let optional = type.struct,
+              let wrapped = try optional.genericArguments()[safe: 0]
+        {
             if let limit = limit,
                depth >= limit
             {
                 break
             }
 
-            let args = try type.genericArguments()
-            guard args.count == 1 else {
-                throw MessageError("invalid generic arguments")
-            }
-            type = args[0]
+            type = wrapped
             depth += 1
         }
-        return (type: type, depth: depth)
+
+        if depth == 0 { return nil }
+        return (wrapped: type, depth: depth)
     }
 
     func asArray(type: SType) throws -> (array: StructType, element: SType)? {
@@ -409,6 +405,13 @@ struct TypeConverter {
               let array = type.struct,
               let element = try array.genericArguments()[safe: 0] else { return nil }
         return (array: array, element: element)
+    }
+
+    func asDictionary(type: SType) throws -> (dictionary: StructType, value: SType)? {
+        guard isStandardLibraryType(type: type, name: "Dictionary"),
+              let dict = type.struct,
+              let value = try dict.genericArguments()[safe: 1] else { return nil }
+        return (dictionary: dict, value: value)
     }
 
     func isStandardLibraryType(type: SType, name: String) -> Bool {

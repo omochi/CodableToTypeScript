@@ -219,4 +219,32 @@ export function S_decode(json: S_JSON): S {
 """]
         )
     }
+
+    func testDecodeDictionary() throws {
+        try assertGenerate(
+            source: """
+enum E { case a }
+
+struct S {
+    var e1: [String: E]
+    var e2: [String: [E?]]
+    var e3: [String: Int]
+}
+""",
+            typeSelector: .name("S"),
+            expecteds: ["""
+export function S_decode(json: S_JSON): S {
+    return {
+        e1: Dictionary_decode(json.e1, E_decode),
+        e2: Dictionary_decode(json.e2, (json: (E_JSON | null)[]): (E | null)[] => {
+            return Array_decode(json, (json: E_JSON | null): E | null => {
+                return Optional_decode(json, E_decode);
+            });
+        }),
+        e3: json.e3
+    };
+}
+"""]
+        )
+    }
 }
