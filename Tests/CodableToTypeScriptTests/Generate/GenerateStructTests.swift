@@ -10,8 +10,23 @@ struct S {
     var b: String
 }
 """,
-            unexpecteds: ["""
-export type S_JSON
+            expecteds: ["""
+export type S = {
+    a: number;
+    b: string;
+};
+""", """
+export type S_JSON = {
+    a: number;
+    b: string;
+};
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        a: json.a,
+        b: json.b
+    };
+}
 """
             ]
         )

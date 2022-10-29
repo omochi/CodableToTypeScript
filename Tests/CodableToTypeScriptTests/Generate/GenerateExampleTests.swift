@@ -109,8 +109,7 @@ import {
     E1,
     E1_JSON,
     E1_decode,
-    E2,
-    E2_JSON
+    E2
 } from "..";
 """, """
 export type S = {
@@ -120,7 +119,7 @@ export type S = {
 """, """
 export type S_JSON = {
     x: E1_JSON;
-    y: E2_JSON;
+    y: E2;
 };
 """, """
 export function S_decode(json: S_JSON): S {

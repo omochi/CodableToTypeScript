@@ -12,13 +12,8 @@ struct EnumConverter {
     func convert(type: EnumType) throws -> TypeConverter.TypeResult {
         let typeDecl = try transpile(type: type, kind: .type)
 
-        var jsonDecl: TSTypeDecl?
-        var decodeFunc: TSFunctionDecl?
-
-        if try converter.hasJSONType(type: .enum(type)) {
-            jsonDecl = try transpile(type: type, kind: .json)
-            decodeFunc = try DecodeFunc(enumConverter: self, type: type).generate()
-        }
+        let jsonDecl = try transpile(type: type, kind: .json)
+        let decodeFunc = try DecodeFunc(enumConverter: self, type: type).generate()
 
         return .init(
             typeDecl: typeDecl,
@@ -98,12 +93,15 @@ struct EnumConverter {
         kind: TypeConverter.TypeKind
     ) throws -> TSRecordType.Field {
         let fieldName = Utils.label(of: av, index)
-        let (type, isOptional) = try Utils.unwrapOptional(try av.type(), limit: 1)
-        let fieldType = try converter.transpileTypeReference(type, kind: kind)
+        let (fieldType, isOptional) = try Utils.unwrapOptional(try av.type(), limit: 1)
+
+        let fieldTypeTS = try converter.transpileFieldTypeReference(
+            fieldType: fieldType, kind: kind
+        )
 
         return .init(
             name: fieldName,
-            type: fieldType,
+            type: fieldTypeTS,
             isOptional: isOptional
         )
     }
@@ -134,7 +132,7 @@ struct EnumConverter {
 
                 var value: TSExpr = .memberAccess(base: json, name: fieldName)
 
-                if try converter.hasJSONType(type: fieldType) {
+                if try !converter.hasEmptyDecoder(type: fieldType) {
                     let decode = converter.transpiledName(of: fieldType, kind: .decode)
                     value = .call(
                         callee: .identifier(decode),

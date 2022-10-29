@@ -62,9 +62,7 @@ export type S1 = {
         ])
 
         let expected = """
-"a" |
-"b" |
-"c"
+"a" | "b" | "c"
 """
         XCTAssertEqual(e.description, expected)
     }

@@ -15,13 +15,8 @@ struct StructConverter {
     func convert(type: StructType) throws -> TypeConverter.TypeResult {
         let typeDecl = try transpile(type: type, kind: .type)
 
-        var jsonDecl: TSTypeDecl?
-        var decodeFunc: TSFunctionDecl?
-
-        if try converter.hasJSONType(type: .struct(type)) {
-            jsonDecl = try transpile(type: type, kind: .json)
-            decodeFunc = try generateDecodeFunc(type: type)
-        }
+        let jsonDecl = try transpile(type: type, kind: .json)
+        let decodeFunc = try generateDecodeFunc(type: type)
 
         return .init(
             typeDecl: typeDecl,
@@ -36,11 +31,14 @@ struct StructConverter {
 
         for property in type.storedProperties {
             let fieldName = property.name
-            let (type, isOptional) = try Utils.unwrapOptional(try property.type(), limit: 1)
-            let fieldType = try converter.transpileTypeReference(type, kind: kind)
+            let (fieldType, isOptional) = try Utils.unwrapOptional(try property.type(), limit: 1)
+
+            let fieldTypeTS = try converter.transpileFieldTypeReference(
+                fieldType: fieldType, kind: kind
+            )
 
             fields.append(
-                .init(name: fieldName, type: fieldType, isOptional: isOptional)
+                .init(name: fieldName, type: fieldTypeTS, isOptional: isOptional)
             )
         }
 
@@ -76,7 +74,7 @@ struct StructConverter {
             )
 
             let fieldType = try field.type()
-            if try converter.hasJSONType(type: fieldType) {
+            if try !converter.hasEmptyDecoder(type: fieldType) {
                 let decode = converter.transpiledName(of: fieldType, kind: .decode)
 
                 expr = .call(

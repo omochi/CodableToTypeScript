@@ -71,6 +71,9 @@ private final class Impl: TSTreeVisitor {
     func visit(function: TSFunctionDecl) -> Bool {
         push()
         scope.knownNames.formUnion(
+            function.genericParameters.compactMap { $0.type.named?.name }
+        )
+        scope.knownNames.formUnion(
             function.parameters.map { $0.name }
         )
         return true

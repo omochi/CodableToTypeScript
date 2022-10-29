@@ -20,7 +20,7 @@ struct TypeConverter {
     }
 
     struct TypeInfo {
-        var hasJSONType: Bool?
+        var hasEmptyDecoder: Bool?
     }
 
     final class Cache {
@@ -47,23 +47,17 @@ struct TypeConverter {
 
     struct TypeResult {
         var typeDecl: TSTypeDecl
-        var jsonDecl: TSTypeDecl?
-        var decodeFunc: TSFunctionDecl?
+        var jsonDecl: TSTypeDecl
+        var decodeFunc: TSFunctionDecl
         var nestedTypeDecls: [TSDecl]
 
         var decls: [TSDecl] {
             var decls: [TSDecl] = [
-                .type(typeDecl)
+                .type(typeDecl),
+                .type(jsonDecl),
+                .function(decodeFunc)
             ]
-
-            if let decl = jsonDecl {
-                decls.append(.type(decl))
-            }
-
-            if let decl = decodeFunc {
-                decls.append(.function(decl))
-            }
-
+            
             decls += nestedTypeDecls
 
             return decls
@@ -197,6 +191,18 @@ struct TypeConverter {
         return .named(name, genericArguments: args)
     }
 
+    func transpileFieldTypeReference(fieldType: SType, kind: TypeKind) throws -> TSType {
+        var kind = kind
+        switch kind {
+        case .type: break
+        case .json:
+            if try hasEmptyDecoder(type: fieldType) {
+                kind = .type
+            }
+        }
+        return try transpileTypeReference(fieldType, kind: kind)
+    }
+
     func transpileGenericParameters(type: SType) -> [TSGenericParameter] {
         guard let type = type.regular else { return .init() }
 
@@ -216,38 +222,38 @@ struct TypeConverter {
         return try type.inheritedTypes().first?.name == "String"
     }
 
-    func hasJSONType(type: SType) throws -> Bool {
-        guard let type = type.regular else { return false }
+    func hasEmptyDecoder(type: SType) throws -> Bool {
+        guard let type = type.regular else { return true }
 
-        if let cache = cache.get(for: type).hasJSONType {
+        if let cache = cache.get(for: type).hasEmptyDecoder {
             return cache
         }
 
-        let result = try _hasJSONType(type: type)
-        cache.modify(for: type) { $0.hasJSONType = result }
+        let result = try _hasEmptyDecoder(type: type)
+        cache.modify(for: type) { $0.hasEmptyDecoder = result }
         return result
     }
 
-    private func _hasJSONType(type: RegularType) throws -> Bool {
+    private func _hasEmptyDecoder(type: RegularType) throws -> Bool {
         if let _ = typeMap.map(specifier: type.asSpecifier()) {
             /*
              mapped type doesn't have decoder
              */
-            return false
+            return true
         }
 
         switch type {
         case .enum(let type):
-            if type.caseElements.isEmpty { return false }
-            if try isStringRawValueType(type: .enum(type)) { return false }
-            return true
+            if type.caseElements.isEmpty { return true }
+            if try isStringRawValueType(type: .enum(type)) { return true }
+            return false
         case .struct(let type):
             for field in type.storedProperties {
-                if try hasJSONType(type: try field.type()) { return true }
+                if try !hasEmptyDecoder(type: try field.type()) { return false }
             }
-            return false
+            return true
         case .genericParameter, .protocol:
-            return false
+            return true
         }
     }
 }
