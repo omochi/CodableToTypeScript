@@ -1,18 +1,21 @@
 public struct TSFunctionParameter: PrettyPrintable {
     public var name: String
-    public var type: TSType
+    public var type: TSType?
 
     public init(
         name: String,
-        type: TSType
+        type: TSType?
     ) {
         self.name = name
         self.type = type
     }
 
     public func print(printer: PrettyPrinter) {
-        printer.write("\(name): ")
-        type.print(printer: printer)
+        printer.write("\(name)")
+        if let type = type {
+            printer.write(": ")
+            type.print(printer: printer)
+        }
     }
 }
 

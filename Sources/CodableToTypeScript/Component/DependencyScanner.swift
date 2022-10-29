@@ -96,6 +96,20 @@ private final class Impl: TSTreeVisitor {
         pop()
     }
 
+    func visit(closure: TSClosureExpr) -> Bool {
+        push()
+
+        scope.knownNames.formUnion(
+            closure.parameters.map { $0.name }
+        )
+
+        return true
+    }
+
+    func visitEnd(closure: TSClosureExpr) {
+        pop()
+    }
+
     func visit(identifier: TSIdentifierExpr) {
         check(identifier.name)
     }
@@ -144,7 +158,7 @@ private final class NameCollector: TSTreeVisitor {
         return false
     }
 
-    func visit(var: TSVarDecl) -> Bool {
+    func visit(`var`: TSVarDecl) -> Bool {
         names.insert(`var`.name)
         return false
     }

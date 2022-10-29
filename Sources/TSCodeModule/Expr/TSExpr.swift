@@ -1,5 +1,6 @@
 public indirect enum TSExpr: PrettyPrintable {
     case call(TSCallExpr)
+    case closure(TSClosureExpr)
     case identifier(TSIdentifierExpr)
     case infixOperator(TSInfixOperatorExpr)
     case memberAccess(TSMemberAccessExpr)
@@ -11,6 +12,7 @@ public indirect enum TSExpr: PrettyPrintable {
     public func print(printer r: PrettyPrinter) {
         switch self {
         case .call(let e): e.print(printer: r)
+        case .closure(let e): e.print(printer: r)
         case .identifier(let e): e.print(printer: r)
         case .infixOperator(let e): e.print(printer: r)
         case .memberAccess(let e): e.print(printer: r)

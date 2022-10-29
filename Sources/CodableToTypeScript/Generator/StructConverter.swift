@@ -30,20 +30,19 @@ struct StructConverter {
         var fields: [TSRecordType.Field] = []
 
         for property in type.storedProperties {
-            let fieldName = property.name
-            let (fieldType, isOptional) = try Utils.unwrapOptional(try property.type(), limit: 1)
-
-            let fieldTypeTS = try converter.transpileFieldTypeReference(
-                fieldType: fieldType, kind: kind
+            let (type, isOptionalField) = try converter.transpileFieldTypeReference(
+                type: try property.type(), kind: kind
             )
 
-            fields.append(
-                .init(name: fieldName, type: fieldTypeTS, isOptional: isOptional)
-            )
+            fields.append(.init(
+                name: property.name,
+                type: type,
+                isOptional: isOptionalField
+            ))
         }
 
         return TSTypeDecl(
-            name: converter.transpiledName(of: .struct(type), kind: kind.toNameKind()),
+            name: converter.transpiledName(of: .struct(type), kind: kind),
             genericParameters: converter.transpileGenericParameters(type: .struct(type)),
             type: .record(TSRecordType(fields))
         )
@@ -52,7 +51,7 @@ struct StructConverter {
     private func generateDecodeFunc(type: StructType) throws -> TSFunctionDecl {
         let typeName = converter.transpiledName(of: .struct(type), kind: .type)
         let jsonName = converter.transpiledName(of: .struct(type), kind: .json)
-        let funcName = converter.transpiledName(of: .struct(type), kind: .decode)
+        let funcName = converter.decodeFunctionName(type: .struct(type))
 
         let genericParameters = converter.transpileGenericParameters(type: .struct(type))
         let genericArguments: [TSGenericArgument] = genericParameters.map { (param) in
@@ -73,15 +72,9 @@ struct StructConverter {
                 name: field.name
             )
 
-            let fieldType = try field.type()
-            if try !converter.hasEmptyDecoder(type: fieldType) {
-                let decode = converter.transpiledName(of: fieldType, kind: .decode)
-
-                expr = .call(
-                    callee: .identifier(decode),
-                    arguments: [TSFunctionArgument(expr)]
-                )
-            }
+            expr = try converter.generateFieldDecodeExpression(
+                type: try field.type(), expr: expr
+            )
 
             fields.append(
                 .init(

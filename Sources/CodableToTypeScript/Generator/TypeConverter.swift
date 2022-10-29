@@ -3,18 +3,30 @@ import TSCodeModule
 
 struct TypeConverter {
     struct TypeInfoKey: Hashable {
-        var location: Location
+        var location: Location?
         var name: String
+        var genericArguments: [TypeInfoKey]
 
-        init(location: Location, name: String) {
+        init(
+            location: Location?,
+            name: String,
+            genericArguments: [TypeInfoKey]
+        ) {
             self.location = location
             self.name = name
+            self.genericArguments = genericArguments
         }
 
-        init(type: RegularType) {
+        init(type: SType) throws {
+            let location = type.regular?.location
+            let name = type.name
+            let genericArguments: [TypeInfoKey] = try type.genericArguments().map { (arg) in
+                try TypeInfoKey(type: arg)
+            }
             self.init(
-                location: type.location,
-                name: type.name
+                location: location,
+                name: name,
+                genericArguments: genericArguments
             )
         }
     }
@@ -28,20 +40,20 @@ struct TypeConverter {
 
         private var types: [TypeInfoKey: TypeInfo] = [:]
 
-        func get(for type: RegularType) -> TypeInfo {
-            let key = TypeInfoKey(type: type)
+        func get(for type: SType) throws -> TypeInfo {
+            let key = try TypeInfoKey(type: type)
             return types[key] ?? .init()
         }
 
-        func set(_ info: TypeInfo, for type: RegularType) {
-            let key = TypeInfoKey(type: type)
+        func set(_ info: TypeInfo, for type: SType) throws {
+            let key = try TypeInfoKey(type: type)
             types[key] = info
         }
 
-        func modify(for type: RegularType, body: (inout TypeInfo) -> Void) {
-            var info = get(for: type)
+        func modify(for type: SType, body: (inout TypeInfo) -> Void) throws {
+            var info = try get(for: type)
             body(&info)
-            set(info, for: type)
+            try set(info, for: type)
         }
     }
 
@@ -101,7 +113,7 @@ struct TypeConverter {
         return decls
     }
 
-    func transpiledName(of type: SType, kind: NameKind) -> String {
+    func transpiledName(of type: SType, kind: TypeKind) -> String {
         var path = namePath(type: type)
         switch kind {
         case .type: break
@@ -113,8 +125,6 @@ struct TypeConverter {
             default:
                 break
             }
-        case .decode:
-            path.items.append("decode")
         }
         return path.convert()
     }
@@ -134,19 +144,6 @@ struct TypeConverter {
     enum TypeKind {
         case type
         case json
-
-        func toNameKind() -> NameKind {
-            switch self {
-            case .type: return .type
-            case .json: return .json
-            }
-        }
-    }
-
-    enum NameKind {
-        case type
-        case json
-        case decode
     }
 
     func transpileTypeReference(_ type: SType, kind: TypeKind) throws -> TSType {
@@ -184,23 +181,27 @@ struct TypeConverter {
             return .named(mappedName, genericArguments: args)
         }
 
-        let name = transpiledName(of: type, kind: kind.toNameKind())
+        let name = transpiledName(of: type, kind: kind)
 
         let args = try transpileGenericArguments(type: type)
 
         return .named(name, genericArguments: args)
     }
 
-    func transpileFieldTypeReference(fieldType: SType, kind: TypeKind) throws -> TSType {
+    func transpileFieldTypeReference(type: SType, kind: TypeKind) throws -> (type: TSType, isOptionalField: Bool) {
+        let (type, optionalDepth) = try unwrapOptional(type: type, limit: 1)
         var kind = kind
         switch kind {
         case .type: break
         case .json:
-            if try hasEmptyDecoder(type: fieldType) {
+            if try hasEmptyDecoder(type: type) {
                 kind = .type
             }
         }
-        return try transpileTypeReference(fieldType, kind: kind)
+        return (
+            type: try transpileTypeReference(type, kind: kind),
+            isOptionalField: optionalDepth > 0
+        )
     }
 
     func transpileGenericParameters(type: SType) -> [TSGenericParameter] {
@@ -223,24 +224,31 @@ struct TypeConverter {
     }
 
     func hasEmptyDecoder(type: SType) throws -> Bool {
-        guard let type = type.regular else { return true }
+        guard let _ = type.regular else { return true }
 
-        if let cache = cache.get(for: type).hasEmptyDecoder {
+        if let cache = try cache.get(for: type).hasEmptyDecoder {
             return cache
         }
 
         let result = try _hasEmptyDecoder(type: type)
-        cache.modify(for: type) { $0.hasEmptyDecoder = result }
+        try cache.modify(for: type) { $0.hasEmptyDecoder = result }
         return result
     }
 
-    private func _hasEmptyDecoder(type: RegularType) throws -> Bool {
+    private func _hasEmptyDecoder(type: SType) throws -> Bool {
         if let _ = typeMap.map(specifier: type.asSpecifier()) {
             /*
              mapped type doesn't have decoder
              */
             return true
         }
+
+        let (wrapped, depth) = try unwrapOptional(type: type, limit: nil)
+        if depth > 0 {
+            return try hasEmptyDecoder(type: wrapped)
+        }
+        
+        guard let type = type.regular else { return true }
 
         switch type {
         case .enum(let type):
@@ -254,6 +262,131 @@ struct TypeConverter {
             return true
         case .genericParameter, .protocol:
             return true
+        }
+    }
+
+    func decodeFunctionName(type: SType) -> String {
+        var path = namePath(type: type)
+        path.items.append("decode")
+        return path.convert()
+    }
+
+    func generateDecodeFunctionAccess(type: SType) throws -> TSExpr {
+        let (_, optionalDepth) = try unwrapOptional(type: type, limit: nil)
+        if optionalDepth > 0 {
+            let paramType = try transpileTypeReference(type, kind: .json)
+            let param = TSFunctionParameter(
+                name: "json",
+                type: paramType
+            )
+
+            let retType: TSType = try transpileTypeReference(type, kind: .type)
+
+            let expr = try generateValueDecodeExpression(
+                type: type,
+                expr: .identifier("json")
+            )
+
+            return .closure(TSClosureExpr(
+                parameters: [param],
+                returnType: retType,
+                items: [.stmt(.return(expr))]
+            ))
+        }
+        return .identifier(decodeFunctionName(type: type))
+    }
+
+    var optionalFieldDecodeFunctionName: String {
+        "OptionalField_decode"
+    }
+
+    var optionalDecodeFunctionName: String {
+        "Optional_decode"
+    }
+
+    func generateFieldDecodeExpression(
+        type: SType,
+        expr: TSExpr
+    ) throws -> TSExpr {
+        let (type, optionalDepth) = try unwrapOptional(type: type, limit: 1)
+        if optionalDepth > 0 {
+            return .call(
+                callee: .identifier(optionalFieldDecodeFunctionName),
+                arguments: [
+                    TSFunctionArgument(expr),
+                    TSFunctionArgument(
+                        try generateDecodeFunctionAccess(type: type)
+                    )
+                ]
+            )
+        }
+
+        return try generateValueDecodeExpression(
+            type: type, expr: expr
+        )
+    }
+
+    func generateValueDecodeExpression(
+        type: SType,
+        expr: TSExpr
+    ) throws -> TSExpr {
+        let (type, optionalDepth) = try unwrapOptional(type: type, limit: nil)
+        if optionalDepth > 0 {
+            return .call(
+                callee: .identifier(optionalDecodeFunctionName),
+                arguments: [
+                    TSFunctionArgument(expr),
+                    TSFunctionArgument(
+                        try generateDecodeFunctionAccess(type: type)
+                    )
+                ]
+            )
+        }
+
+        if try hasEmptyDecoder(type: type) {
+            return expr
+        }
+
+        let decode = decodeFunctionName(type: type)
+
+        return .call(
+            callee: .identifier(decode),
+            arguments: [TSFunctionArgument(expr)]
+        )
+    }
+
+    func unwrapOptional(type: SType, limit: Int?) throws -> (type: SType, depth: Int) {
+        var type = type
+        var depth = 0
+        while isOptional(type: type) {
+            if let limit = limit,
+               depth >= limit
+            {
+                break
+            }
+
+            let args = try type.genericArguments()
+            guard args.count == 1 else {
+                throw MessageError("invalid generic arguments")
+            }
+            type = args[0]
+            depth += 1
+        }
+        return (type: type, depth: depth)
+    }
+
+    func isOptional(type: SType) -> Bool {
+        guard let type = type.regular else { return false }
+
+        return type.location.elements == [.module(name: "Swift")] &&
+        type.name == "Optional"
+    }
+
+    func associatedValueLabel(value: AssociatedValue, index: Int) -> String {
+        if let name = value.name {
+            return name
+        } else {
+            return "_\(index)"
         }
     }
 }

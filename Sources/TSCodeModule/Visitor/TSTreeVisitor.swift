@@ -41,6 +41,9 @@ public protocol TSTreeVisitor {
     func visit(call: TSCallExpr) -> Bool
     func visitEnd(call: TSCallExpr)
 
+    func visit(closure: TSClosureExpr) -> Bool
+    func visitEnd(closure: TSClosureExpr)
+
     func visit(identifier: TSIdentifierExpr)
 
     func visit(infixOperator: TSInfixOperatorExpr) -> Bool
@@ -175,6 +178,7 @@ extension TSTreeVisitor {
     public func visitImpl(expr: TSExpr) {
         switch expr {
         case .call(let e): visitImpl(call: e)
+        case .closure(let e): visitImpl(closure: e)
         case .identifier(let e): visit(identifier: e)
         case .infixOperator(let e): visitImpl(infixOperator: e)
         case .memberAccess(let e): visitImpl(memberAccess: e)
@@ -271,6 +275,17 @@ extension TSTreeVisitor {
             visitImpl(functionArguments: call.arguments)
         }
         visitEnd(call: call)
+    }
+
+    public func visitImpl(closure: TSClosureExpr) {
+        if visit(closure: closure) {
+            visitImpl(functionParameters: closure.parameters)
+            if let type = closure.returnType {
+                visitImpl(type: type)
+            }
+            visitImpl(items: closure.items)
+        }
+        visitEnd(closure: closure)
     }
 
     public func visitImpl(infixOperator: TSInfixOperatorExpr) {
@@ -374,7 +389,9 @@ extension TSTreeVisitor {
 
     public func visitImpl(functionParameter: TSFunctionParameter) {
         if visit(functionParameter: functionParameter) {
-            visitImpl(type: functionParameter.type)
+            if let type = functionParameter.type {
+                visitImpl(type: type)
+            }
         }
         visitEnd(functionParameter: functionParameter)
     }
@@ -466,6 +483,8 @@ extension TSTreeVisitor {
     public func visit(custom: TSCustomStmt) {}
     public func visit(call: TSCallExpr) -> Bool { true }
     public func visitEnd(call: TSCallExpr) {}
+    public func visit(closure: TSClosureExpr) -> Bool { true }
+    public func visitEnd(closure: TSClosureExpr) {}
     public func visit(identifier: TSIdentifierExpr) {}
     public func visit(infixOperator: TSInfixOperatorExpr) -> Bool { true }
     public func visitEnd(infixOperator: TSInfixOperatorExpr) {}
