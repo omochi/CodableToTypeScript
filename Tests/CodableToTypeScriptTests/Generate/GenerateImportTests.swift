@@ -20,12 +20,22 @@ struct S<T, U> {
 
 struct X<T> {}
 """,
-            typeSelector: .name("S")
+            typeSelector: .name("S"),
+            expecteds: ["""
+import {
+    A,
+    B,
+    C,
+    X,
+    Y
+} from "..";
+"""
+            ]
         )
     }
 
     func testDefaultStandardTypes() throws {
-        let tsCode = try Utils.generate(
+        try assertGenerate(
             source: """
 struct S {
     var a: Int
@@ -33,14 +43,8 @@ struct S {
     var c: String
     var d: Double?
 }
-"""
+""",
+            unexpecteds: ["import"]
         )
-
-        XCTAssertFalse(tsCode.items.contains { (x) in
-            switch x {
-            case .decl(.import): return true
-            default: return false
-            }
-        })
     }
 }

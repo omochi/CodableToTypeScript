@@ -186,27 +186,29 @@ struct TypeConverter {
         }
 
         if let mappedName = typeMap.map(specifier: type.asSpecifier()) {
-            let args = try type.genericArguments().map {
-                try transpileTypeReference($0, kind: kind)
-            }
+            let args = try transpileGenericArguments(type: type)
             return .named(mappedName, genericArguments: args)
         }
 
         let name = transpiledName(of: type, kind: kind.toNameKind())
 
-        let args = try type.genericArguments().map {
-            try transpileTypeReference($0, kind: kind)
-        }
+        let args = try transpileGenericArguments(type: type)
 
         return .named(name, genericArguments: args)
     }
 
-    func transpileGenericParameters(type: SType) -> TSGenericParameters {
+    func transpileGenericParameters(type: SType) -> [TSGenericParameter] {
         guard let type = type.regular else { return .init() }
 
-        return TSGenericParameters(
-            items: type.genericParameters.map { $0.name }
-        )
+        return type.genericParameters.map { (param) in
+            TSGenericParameter(.named(param.name))
+        }
+    }
+
+    func transpileGenericArguments(type: SType) throws -> [TSGenericArgument] {
+        return try type.genericArguments().map { (arg) in
+            TSGenericArgument(.named(arg.name))
+        }
     }
 
     func isStringRawValueType(type: SType) throws -> Bool {

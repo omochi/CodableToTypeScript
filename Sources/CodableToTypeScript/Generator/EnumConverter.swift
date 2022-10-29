@@ -137,7 +137,8 @@ struct EnumConverter {
                 if try converter.hasJSONType(type: fieldType) {
                     let decode = converter.transpiledName(of: fieldType, kind: .decode)
                     value = .call(
-                        callee: .identifier(decode), arguments: [value]
+                        callee: .identifier(decode),
+                        arguments: .init([.init(value)])
                     )
                 }
 
@@ -184,7 +185,7 @@ struct EnumConverter {
                 .stmt(.throw(.new(
                     callee: .identifier("Error"),
                     arguments: [
-                        .stringLiteral("unknown kind")
+                        TSFunctionArgument(.stringLiteral("unknown kind"))
                     ]
                 )))
             ])
@@ -192,7 +193,9 @@ struct EnumConverter {
 
         func generate() throws -> TSFunctionDecl {
             let genericParameters = converter.transpileGenericParameters(type: .enum(type))
-            let genericArguments: [TSType] = genericParameters.items.map { .named($0) }
+            let genericArguments: [TSGenericArgument] = genericParameters.map { (param) in
+                TSGenericArgument(param.type)
+            }
 
             let typeName = converter.transpiledName(of: .enum(type), kind: .type)
             let jsonName = converter.transpiledName(of: .enum(type), kind: .json)

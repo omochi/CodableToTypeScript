@@ -41,10 +41,13 @@ public struct CodeGenerator {
     ) throws -> TSCode {
         var decls = try typeConverter().convert(type: type)
 
-        let deps = DependencyScanner(standardTypes: standardTypes)
-            .scan(code: TSCode(decls.map { .decl($0) }))
+        let deps = scanDependency(
+            code: TSCode(decls.map { .decl($0) })
+        )
+
         if !deps.isEmpty {
-            decls.insert(.import(names: deps, from: importFrom), at: 0)
+            let imp = TSImportDecl(names: deps, from: importFrom)
+            decls.insert(.`import`(imp), at: 0)
         }
 
         return TSCode(decls.map { .decl($0) })
@@ -57,5 +60,10 @@ public struct CodeGenerator {
             type,
             kind: .type
         )
+    }
+
+    public func scanDependency(code: TSCode) -> [String] {
+        let scanner = DependencyScanner(knownNames: standardTypes)
+        return scanner.scan(code: code)
     }
 }

@@ -21,7 +21,7 @@ public indirect enum TSExpr: PrettyPrintable {
         }
     }
 
-    public static func call(callee: TSExpr, arguments: [TSExpr]) -> TSExpr {
+    public static func call(callee: TSExpr, arguments: [TSFunctionArgument]) -> TSExpr {
         .call(TSCallExpr(
             callee: callee, arguments: arguments
         ))
@@ -37,7 +37,7 @@ public indirect enum TSExpr: PrettyPrintable {
         ))
     }
 
-    public static func new(callee: TSExpr, arguments: [TSExpr]) -> TSExpr {
+    public static func new(callee: TSExpr, arguments: [TSFunctionArgument]) -> TSExpr {
         .new(TSNewExpr(
             callee: callee, arguments: arguments
         ))

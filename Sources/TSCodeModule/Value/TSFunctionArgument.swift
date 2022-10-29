@@ -1,27 +1,19 @@
-public struct TSFunctionParameter: PrettyPrintable {
-    public var name: String
-    public var type: TSType
+public struct TSFunctionArgument: PrettyPrintable {
+    public var expr: TSExpr
 
-    public init(
-        name: String,
-        type: TSType
-    ) {
-        self.name = name
-        self.type = type
+    public init(_ expr: TSExpr) {
+        self.expr = expr
     }
 
     public func print(printer: PrettyPrinter) {
-        printer.write("\(name): ")
-        type.print(printer: printer)
+        expr.print(printer: printer)
     }
 }
 
-extension [TSFunctionParameter] {
+extension [TSFunctionArgument] {
     public func print(printer: PrettyPrinter) {
         printer.write("(")
-
         let isBig = count > printer.smallNumber
-
         if isBig {
             printer.writeLine("")
             printer.push()
@@ -32,7 +24,11 @@ extension [TSFunctionParameter] {
 
             if index < count - 1 {
                 printer.write(",")
+                if !isBig {
+                    printer.write(" ")
+                }
             }
+
             if isBig {
                 printer.writeLine("")
             }
@@ -41,7 +37,6 @@ extension [TSFunctionParameter] {
         if isBig {
             printer.pop()
         }
-
         printer.write(")")
     }
 }

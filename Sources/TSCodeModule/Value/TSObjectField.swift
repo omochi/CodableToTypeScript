@@ -13,3 +13,15 @@ public struct TSObjectField: PrettyPrintable {
         value.print(printer: printer)
     }
 }
+
+extension [TSObjectField] {
+    public func print(printer: PrettyPrinter) {
+        for (index, item) in enumerated() {
+            item.print(printer: printer)
+            if index < count - 1 {
+                printer.write(",")
+            }
+            printer.writeLine("")
+        }
+    }
+}

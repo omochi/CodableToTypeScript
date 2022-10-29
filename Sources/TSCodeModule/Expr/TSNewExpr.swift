@@ -1,15 +1,15 @@
 public struct TSNewExpr: PrettyPrintable {
     public var callee: TSExpr
-    public var arguments: [TSExpr]
+    public var arguments: [TSFunctionArgument]
 
-    public init(callee: TSExpr, arguments: [TSExpr]) {
+    public init(callee: TSExpr, arguments: [TSFunctionArgument]) {
         self.callee = callee
         self.arguments = arguments
     }
 
     public func print(printer: PrettyPrinter) {
         printer.write("new ")
-        let call = TSCallExpr(callee: callee, arguments: arguments)
-        call.print(printer: printer)
+        callee.print(printer: printer)
+        arguments.print(printer: printer)
     }
 }

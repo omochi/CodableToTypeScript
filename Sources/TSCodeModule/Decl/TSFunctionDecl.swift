@@ -1,7 +1,7 @@
 public struct TSFunctionDecl: PrettyPrintable {
     public init(
         name: String,
-        genericParameters: TSGenericParameters = .init(),
+        genericParameters: [TSGenericParameter] = .init(),
         parameters: [TSFunctionParameter],
         returnType: TSType?,
         items: [TSBlockItem]
@@ -14,7 +14,7 @@ public struct TSFunctionDecl: PrettyPrintable {
     }
 
     public var name: String
-    public var genericParameters: TSGenericParameters
+    public var genericParameters: [TSGenericParameter]
     public var parameters: [TSFunctionParameter]
     public var returnType: TSType?
     public var items: [TSBlockItem]
@@ -22,32 +22,7 @@ public struct TSFunctionDecl: PrettyPrintable {
     public func print(printer: PrettyPrinter) {
         printer.write("export function \(name)")
         genericParameters.print(printer: printer)
-
-        printer.write("(")
-
-        let isBig = parameters.count > printer.smallNumber
-
-        if isBig {
-            printer.writeLine("")
-            printer.push()
-        }
-
-        for (index, parameter) in parameters.enumerated() {
-            parameter.print(printer: printer)
-
-            if index < parameters.count - 1 {
-                printer.write(",")
-            }
-            if isBig {
-                printer.writeLine("")
-            }
-        }
-
-        if isBig {
-            printer.pop()
-        }
-
-        printer.write(")")
+        parameters.print(printer: printer)
 
         if let returnType = returnType {
             printer.write(": ")
@@ -56,9 +31,7 @@ public struct TSFunctionDecl: PrettyPrintable {
 
         printer.writeLine(" {")
         printer.nest {
-            for item in items {
-                item.print(printer: printer)
-            }
+            items.print(printer: printer)
         }
         printer.writeLine("}")
     }

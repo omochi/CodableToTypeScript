@@ -108,6 +108,7 @@ struct S {
 import {
     E1,
     E1_JSON,
+    E1_decode,
     E2,
     E2_JSON
 } from "..";

@@ -13,13 +13,7 @@ public struct TSObjectExpr: PrettyPrintable {
 
         printer.writeLine("{")
         printer.nest {
-            for (index, field) in fields.enumerated() {
-                field.print(printer: printer)
-                if index < fields.count - 1 {
-                    printer.write(",")
-                }
-                printer.writeLine("")
-            }
+            fields.print(printer: printer)
         }
         printer.write("}")
     }

@@ -2,95 +2,142 @@ import SwiftTypeReader
 import TSCodeModule
 
 struct DependencyScanner {
-    var standardTypes: Set<String>
+    var knownNames: Set<String>
 
     func scan(code: TSCode) -> [String] {
         Impl(
-            standardTypes: standardTypes,
-            code: code
-        ).run()
+            knownNames: knownNames
+        ).run(code: code)
     }
 }
 
 private final class Impl: TSTreeVisitor {
-    init(
-        standardTypes: Set<String>,
-        code: TSCode
-    ) {
-        self.standardTypes = standardTypes
-        self.code = code
+    struct Scope {
+        var knownNames: Set<String>
     }
 
-    let standardTypes: Set<String>
-    let code: TSCode
-    var ignores: Set<String> = []
+    init(
+        knownNames: Set<String>
+    ) {
+        self.scopes = [
+            Scope(knownNames: knownNames)
+        ]
+    }
+
+    var scopes: [Scope]
     var deps: Set<String> = []
 
-    func run() -> [String] {
+    private var scope: Scope {
+        get { scopes.last! }
+        set { scopes[scopes.count - 1] = newValue }
+    }
+
+    func run(code: TSCode) -> [String] {
         walk(code: code)
 
         return deps.sorted { $0 < $1 }
     }
 
-//    func run2() -> [String] {
-//        for decl in decls {
-//            switch decl {
-//            case .type(let decl):
-//                stackIgnores {
-//                    ignores.insert(decl.name)
-//                    for p in decl.genericParameters.items {
-//                        ignores.insert(p)
-//                    }
-//
-//                    process(type: decl.type)
-//                }
-//            default:
-//                break
-//            }
-//        }
-//
-//        return deps.sorted { $0 < $1 }
-//    }
-
-    private func stackIgnores<R>(_ f: () throws -> R) rethrows -> R {
-        let ignores = self.ignores
-        defer {
-            self.ignores = ignores
-        }
-        return try f()
+    private func push() {
+        scopes.append(scope)
     }
 
-    private func process(type: TSType) {
-        switch type {
-        case .named(let t):
-            add(t.name)
-            for arg in t.genericArguments {
-                process(type: arg)
-            }
-        case .nested(let t):
-            add(t.namespace)
-        case .record(let t):
-            for field in t.fields {
-                process(type: field.type)
-            }
-        case .union(let t):
-            for item in t.items {
-                process(type: item)
-            }
-        case .array(let t):
-            process(type: t.element)
-        case .dictionary(let t):
-            process(type: t.element)
-        case .stringLiteral:
-            break
-        }
+    private func pop() {
+        scopes.removeLast()
     }
 
-    private func add(_ dep: String) {
-        guard !standardTypes.contains(dep),
-              !ignores.contains(dep) else {
+    private func check(_ dep: String) {
+        if scope.knownNames.contains(dep) {
             return
         }
+
         deps.insert(dep)
+    }
+
+    func visit(items: [TSBlockItem]) -> Bool {
+        let collector = NameCollector()
+        let names = collector.collect(items: items)
+
+        push()
+        scope.knownNames.formUnion(names)
+
+        return true
+    }
+
+    func visitEnd(items: [TSBlockItem]) {
+        pop()
+    }
+
+    func visit(function: TSFunctionDecl) -> Bool {
+        push()
+        scope.knownNames.formUnion(
+            function.parameters.map { $0.name }
+        )
+        return true
+    }
+
+    func visitEnd(function: TSFunctionDecl) {
+        pop()
+    }
+
+    func visit(type: TSTypeDecl) -> Bool {
+        push()
+
+        let paramNames = type.genericParameters.compactMap { $0.type.named?.name }
+        scope.knownNames.formUnion(paramNames)
+        
+        return true
+    }
+
+    func visitEnd(type: TSTypeDecl) {
+        pop()
+    }
+
+    func visit(identifier: TSIdentifierExpr) {
+        check(identifier.name)
+    }
+
+    func visit(named: TSNamedType) -> Bool {
+        check(named.name)
+        return true
+    }
+
+    func visit(nested: TSNestedType) -> Bool {
+        check(nested.namespace)
+        return false
+    }
+
+    func visit(objectField: TSObjectField) -> Bool {
+        visitImpl(expr: objectField.value)
+        return false
+    }
+}
+
+private final class NameCollector: TSTreeVisitor {
+    init() {}
+
+    private var names: Set<String> = []
+
+    func collect(items: [TSBlockItem]) -> Set<String> {
+        names.removeAll()
+        for item in items {
+            walk(item: item)
+        }
+        return names
+    }
+
+    func visit(type: TSTypeDecl) -> Bool {
+        names.insert(type.name)
+        return false
+    }
+
+    func visit(function: TSFunctionDecl) -> Bool {
+        names.insert(function.name)
+        return false
+    }
+
+    func visit(namespace: TSNamespaceDecl) -> Bool {
+        names.insert(namespace.name)
+        return false
     }
 }

@@ -19,7 +19,14 @@ public indirect enum TSType: PrettyPrintable {
         }
     }
 
-    public static func named(_ name: String, genericArguments: [TSType] = []) -> TSType {
+    public var named: TSNamedType? {
+        switch self {
+        case .named(let x): return x
+        default: return nil
+        }
+    }
+
+    public static func named(_ name: String, genericArguments: [TSGenericArgument] = []) -> TSType {
         .named(TSNamedType(name, genericArguments: genericArguments))
     }
 

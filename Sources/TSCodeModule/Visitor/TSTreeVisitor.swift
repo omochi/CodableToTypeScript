@@ -1,9 +1,12 @@
 public protocol TSTreeVisitor {
-    func walk(code: TSCode)
-    func walk(item: TSBlockItem)
+    func visit(code: TSCode) -> Bool
+    func visitEnd(code: TSCode)
 
     func visit(item: TSBlockItem) -> Bool
     func visitEnd(item: TSBlockItem)
+
+    func visit(items: [TSBlockItem]) -> Bool
+    func visitEnd(items: [TSBlockItem])
 
     func visit(function: TSFunctionDecl) -> Bool
     func visitEnd(function: TSFunctionDecl)
@@ -13,9 +16,11 @@ public protocol TSTreeVisitor {
     func visit(namespace: TSNamespaceDecl) -> Bool
     func visitEnd(namespace: TSNamespaceDecl)
 
-    func visit(type: TSTypeDecl)
+    func visit(type: TSTypeDecl) -> Bool
+    func visitEnd(type: TSTypeDecl)
 
-    func visit(`var`: TSVarDecl)
+    func visit(`var`: TSVarDecl) -> Bool
+    func visitEnd(`var`: TSVarDecl)
 
     func visit(custom: TSCustomDecl)
 
@@ -69,43 +74,95 @@ public protocol TSTreeVisitor {
     func visit(record: TSRecordType) -> Bool
     func visitEnd(record: TSRecordType)
 
+    func visit(recordField: TSRecordType.Field) -> Bool
+    func visitEnd(recordField: TSRecordType.Field)
+
     func visit(stringLiteral: TSStringLiteralType)
 
     func visit(union: TSUnionType) -> Bool
     func visitEnd(union: TSUnionType)
+
+    func visit(functionArgument: TSFunctionArgument) -> Bool
+    func visitEnd(functionArgument: TSFunctionArgument)
+
+    func visit(functionArguments: [TSFunctionArgument]) -> Bool
+    func visitEnd(functionArguments: [TSFunctionArgument])
+
+    func visit(functionParameter: TSFunctionParameter) -> Bool
+    func visitEnd(functionParameter: TSFunctionParameter)
+
+    func visit(functionParameters: [TSFunctionParameter]) -> Bool
+    func visitEnd(functionParameters: [TSFunctionParameter])
+
+    func visit(genericArgument: TSGenericArgument) -> Bool
+    func visitEnd(genericArgument: TSGenericArgument)
+
+    func visit(genericArguments: [TSGenericArgument]) -> Bool
+    func visitEnd(genericArguments: [TSGenericArgument])
+
+    func visit(genericParameter: TSGenericParameter) -> Bool
+    func visitEnd(genericParameter: TSGenericParameter)
+
+    func visit(genericParameters: [TSGenericParameter]) -> Bool
+    func visitEnd(genericParameters: [TSGenericParameter])
+
+    func visit(objectField: TSObjectField) -> Bool
+    func visitEnd(objectField: TSObjectField)
+
+    func visit(objectFields: [TSObjectField]) -> Bool
+    func visitEnd(objectFields: [TSObjectField])
 }
 
 extension TSTreeVisitor {
     public func walk(code: TSCode) {
-        for item in code.items {
-            walk(item: item)
-        }
+        visitImpl(code: code)
     }
 
     public func walk(item: TSBlockItem) {
         visitImpl(item: item)
     }
 
-    private func visitImpl(item: TSBlockItem) {
-        switch item {
-        case .decl(let decl): visitImpl(decl: decl)
-        case .stmt(let stmt): visitImpl(stmt: stmt)
-        case .expr(let expr): visitImpl(expr: expr)
+    // MARK: dispatchers
+
+    public func visitImpl(code: TSCode) {
+        if visit(code: code) {
+            visitImpl(items: code.items)
         }
+        visitEnd(code: code)
     }
 
-    private func visitImpl(decl: TSDecl) {
+    public func visitImpl(item: TSBlockItem) {
+        if visit(item: item) {
+            switch item {
+            case .decl(let decl): visitImpl(decl: decl)
+            case .stmt(let stmt): visitImpl(stmt: stmt)
+            case .expr(let expr): visitImpl(expr: expr)
+            }
+        }
+        visitEnd(item: item)
+    }
+
+    public func visitImpl(items: [TSBlockItem]) {
+        if visit(items: items) {
+            for item in items {
+                visitImpl(item: item)
+            }
+        }
+        visitEnd(items: items)
+    }
+
+    public func visitImpl(decl: TSDecl) {
         switch decl {
         case .function(let d): visitImpl(function: d)
         case .import(let d): visit(import: d)
         case .namespace(let d): visitImpl(namespace: d)
-        case .type(let d): visit(type: d)
-        case .var(let d): visit(var: d)
+        case .type(let d): visitImpl(type: d)
+        case .var(let d): visitImpl(var: d)
         case .custom(let d): visit(custom: d)
         }
     }
 
-    private func visitImpl(stmt: TSStmt) {
+    public func visitImpl(stmt: TSStmt) {
         switch stmt {
         case .block(let s): visitImpl(block: s)
         case .if(let s): visitImpl(if: s)
@@ -115,7 +172,7 @@ extension TSTreeVisitor {
         }
     }
 
-    private func visitImpl(expr: TSExpr) {
+    public func visitImpl(expr: TSExpr) {
         switch expr {
         case .call(let e): visitImpl(call: e)
         case .identifier(let e): visit(identifier: e)
@@ -128,7 +185,7 @@ extension TSTreeVisitor {
         }
     }
 
-    private func visitImpl(type: TSType) {
+    public func visitImpl(type: TSType) {
         switch type {
         case .array(let t): visitImpl(array: t)
         case .dictionary(let t): visitImpl(dictionary: t)
@@ -142,16 +199,16 @@ extension TSTreeVisitor {
 
     // MARK: single impls
 
-    private func visitImpl(function: TSFunctionDecl) {
+    public func visitImpl(function: TSFunctionDecl) {
         if visit(function: function) {
-            for item in function.items {
-                visitImpl(item: item)
-            }
+            visitImpl(genericParameters: function.genericParameters)
+            visitImpl(functionParameters: function.parameters)
+            visitImpl(items: function.items)
         }
         visitEnd(function: function)
     }
 
-    private func visitImpl(namespace: TSNamespaceDecl) {
+    public func visitImpl(namespace: TSNamespaceDecl) {
         if visit(namespace: namespace) {
             for decl in namespace.decls {
                 visitImpl(item: .decl(decl))
@@ -160,16 +217,31 @@ extension TSTreeVisitor {
         visitEnd(namespace: namespace)
     }
 
-    private func visitImpl(block: TSBlockStmt) {
-        if visit(block: block) {
-            for item in block.items {
-                visitImpl(item: item)
+    public func visitImpl(type: TSTypeDecl) {
+        if visit(type: type) {
+            visitImpl(genericParameters: type.genericParameters)
+            visitImpl(type: type.type)
+        }
+        visitEnd(type: type)
+    }
+
+    public func visitImpl(`var`: TSVarDecl) {
+        if visit(var: `var`) {
+            if let expr = `var`.initializer {
+                visitImpl(expr: expr)
             }
+        }
+        visitEnd(var: `var`)
+    }
+
+    public func visitImpl(block: TSBlockStmt) {
+        if visit(block: block) {
+            visitImpl(items: block.items)
         }
         visitEnd(block: block)
     }
 
-    private func visitImpl(if: TSIfStmt) {
+    public func visitImpl(if: TSIfStmt) {
         if visit(if: `if`) {
             visitImpl(stmt: `if`.then)
             if let s = `if`.else {
@@ -179,31 +251,29 @@ extension TSTreeVisitor {
         visitEnd(if: `if`)
     }
 
-    private func visitImpl(return: TSReturnStmt) {
+    public func visitImpl(return: TSReturnStmt) {
         if visit(return: `return`) {
             visitImpl(expr: `return`.expr)
         }
         visitEnd(return: `return`)
     }
 
-    private func visitImpl(throw: TSThrowStmt) {
+    public func visitImpl(throw: TSThrowStmt) {
         if visit(throw: `throw`) {
             visitImpl(expr: `throw`.expr)
         }
         visitEnd(throw: `throw`)
     }
 
-    private func visitImpl(call: TSCallExpr) {
+    public func visitImpl(call: TSCallExpr) {
         if visit(call: call) {
             visitImpl(expr: call.callee)
-            for arg in call.arguments {
-                visitImpl(expr: arg)
-            }
+            visitImpl(functionArguments: call.arguments)
         }
         visitEnd(call: call)
     }
 
-    private func visitImpl(infixOperator: TSInfixOperatorExpr) {
+    public func visitImpl(infixOperator: TSInfixOperatorExpr) {
         if visit(infixOperator: infixOperator) {
             visitImpl(expr: infixOperator.left)
             visitImpl(expr: infixOperator.right)
@@ -211,73 +281,73 @@ extension TSTreeVisitor {
         visitEnd(infixOperator: infixOperator)
     }
 
-    private func visitImpl(memberAccess: TSMemberAccessExpr) {
+    public func visitImpl(memberAccess: TSMemberAccessExpr) {
         if visit(memberAccess: memberAccess) {
             visitImpl(expr: memberAccess.base)
         }
         visitEnd(memberAccess: memberAccess)
     }
 
-    private func visitImpl(new: TSNewExpr) {
+    public func visitImpl(new: TSNewExpr) {
         if visit(new: new) {
             visitImpl(expr: new.callee)
-            for arg in new.arguments {
-                visitImpl(expr: arg)
-            }
+            visitImpl(functionArguments: new.arguments)
         }
         visitEnd(new: new)
     }
 
-    private func visitImpl(object: TSObjectExpr) {
+    public func visitImpl(object: TSObjectExpr) {
         if visit(object: object) {
-            for field in object.fields {
-                visitImpl(expr: field.name)
-                visitImpl(expr: field.value)
-            }
+            visitImpl(objectFields: object.fields)
         }
         visitEnd(object: object)
     }
 
-    private func visitImpl(array: TSArrayType) {
+    public func visitImpl(array: TSArrayType) {
         if visit(array: array) {
             visitImpl(type: array.element)
         }
         visitEnd(array: array)
     }
 
-    private func visitImpl(dictionary: TSDictionaryType) {
+    public func visitImpl(dictionary: TSDictionaryType) {
         if visit(dictionary: dictionary) {
             visitImpl(type: dictionary.element)
         }
         visitEnd(dictionary: dictionary)
     }
 
-    private func visitImpl(named: TSNamedType) {
+    public func visitImpl(named: TSNamedType) {
         if visit(named: named) {
-            for t in named.genericArguments {
-                visitImpl(type: t)
-            }
+            visitImpl(genericArguments: named.genericArguments)
         }
         visitEnd(named: named)
     }
 
-    private func visitImpl(nested: TSNestedType) {
+    public func visitImpl(nested: TSNestedType) {
         if visit(nested: nested) {
             visitImpl(type: nested.type)
         }
         visitEnd(nested: nested)
     }
 
-    private func visitImpl(record: TSRecordType) {
+    public func visitImpl(record: TSRecordType) {
         if visit(record: record) {
             for field in record.fields {
-                visitImpl(type: field.type)
+                visitImpl(recordField: field)
             }
         }
         visitEnd(record: record)
     }
 
-    private func visitImpl(union: TSUnionType) {
+    public func visitImpl(recordField: TSRecordType.Field) {
+        if visit(recordField: recordField) {
+            visitImpl(type: recordField.type)
+        }
+        visitEnd(recordField: recordField)
+    }
+
+    public func visitImpl(union: TSUnionType) {
         if visit(union: union) {
             for item in union.items {
                 visitImpl(type: item)
@@ -286,17 +356,104 @@ extension TSTreeVisitor {
         visitEnd(union: union)
     }
 
+    public func visitImpl(functionArgument: TSFunctionArgument) {
+        if visit(functionArgument: functionArgument) {
+            visitImpl(expr: functionArgument.expr)
+        }
+        visitEnd(functionArgument: functionArgument)
+    }
+
+    public func visitImpl(functionArguments: [TSFunctionArgument]) {
+        if visit(functionArguments: functionArguments) {
+            for item in functionArguments {
+                visitImpl(functionArgument: item)
+            }
+        }
+        visitEnd(functionArguments: functionArguments)
+    }
+
+    public func visitImpl(functionParameter: TSFunctionParameter) {
+        if visit(functionParameter: functionParameter) {
+            visitImpl(type: functionParameter.type)
+        }
+        visitEnd(functionParameter: functionParameter)
+    }
+
+    public func visitImpl(functionParameters: [TSFunctionParameter]) {
+        if visit(functionParameters: functionParameters) {
+            for item in functionParameters {
+                visitImpl(functionParameter: item)
+            }
+        }
+        visitEnd(functionParameters: functionParameters)
+    }
+
+    public func visitImpl(genericArgument: TSGenericArgument) {
+        if visit(genericArgument: genericArgument) {
+            visitImpl(type: genericArgument.type)
+        }
+        visitEnd(genericArgument: genericArgument)
+    }
+
+    public func visitImpl(genericArguments: [TSGenericArgument]) {
+        if visit(genericArguments: genericArguments) {
+            for item in genericArguments {
+                visitImpl(genericArgument: item)
+            }
+        }
+        visitEnd(genericArguments: genericArguments)
+    }
+
+    public func visitImpl(genericParameter: TSGenericParameter) {
+        if visit(genericParameter: genericParameter) {
+            visitImpl(type: genericParameter.type)
+        }
+        visitEnd(genericParameter: genericParameter)
+    }
+
+    public func visitImpl(genericParameters: [TSGenericParameter]) {
+        if visit(genericParameters: genericParameters) {
+            for item in genericParameters {
+                visitImpl(genericParameter: item)
+            }
+        }
+        visitEnd(genericParameters: genericParameters)
+    }
+
+    public func visitImpl(objectField: TSObjectField) {
+        if visit(objectField: objectField) {
+            visitImpl(expr: objectField.name)
+            visitImpl(expr: objectField.value)
+        }
+        visitEnd(objectField: objectField)
+    }
+
+    public func visitImpl(objectFields: [TSObjectField]) {
+        if visit(objectFields: objectFields) {
+            for item in objectFields {
+                visitImpl(objectField: item)
+            }
+        }
+        visitEnd(objectFields: objectFields)
+    }
+
     // MARK: default impl for user API
 
+    public func visit(code: TSCode) -> Bool { true }
+    public func visitEnd(code: TSCode) {}
     public func visit(item: TSBlockItem) -> Bool { true }
     public func visitEnd(item: TSBlockItem) {}
+    public func visit(items: [TSBlockItem]) -> Bool { true }
+    public func visitEnd(items: [TSBlockItem]) {}
     public func visit(function: TSFunctionDecl) -> Bool { true }
     public func visitEnd(function: TSFunctionDecl) {}
     public func visit(import: TSImportDecl) {}
     public func visit(namespace: TSNamespaceDecl) -> Bool { true }
     public func visitEnd(namespace: TSNamespaceDecl) {}
-    public func visit(type: TSTypeDecl) {}
-    public func visit(`var`: TSVarDecl) {}
+    public func visit(type: TSTypeDecl) -> Bool { true }
+    public func visitEnd(type: TSTypeDecl) {}
+    public func visit(`var`: TSVarDecl) -> Bool { true }
+    public func visitEnd(`var`: TSVarDecl) {}
     public func visit(custom: TSCustomDecl) {}
     public func visit(block: TSBlockStmt) -> Bool { true }
     public func visitEnd(block: TSBlockStmt) {}
@@ -330,7 +487,29 @@ extension TSTreeVisitor {
     public func visitEnd(nested: TSNestedType) {}
     public func visit(record: TSRecordType) -> Bool { true }
     public func visitEnd(record: TSRecordType) {}
+    public func visit(recordField: TSRecordType.Field) -> Bool { true }
+    public func visitEnd(recordField: TSRecordType.Field) {}
     public func visit(stringLiteral: TSStringLiteralType) {}
     public func visit(union: TSUnionType) -> Bool { true }
     public func visitEnd(union: TSUnionType) {}
+    public func visit(functionArgument: TSFunctionArgument) -> Bool { true }
+    public func visitEnd(functionArgument: TSFunctionArgument) {}
+    public func visit(functionArguments: [TSFunctionArgument]) -> Bool { true }
+    public func visitEnd(functionArguments: [TSFunctionArgument]) {}
+    public func visit(functionParameter: TSFunctionParameter) -> Bool { true }
+    public func visitEnd(functionParameter: TSFunctionParameter) {}
+    public func visit(functionParameters: [TSFunctionParameter]) -> Bool { true }
+    public func visitEnd(functionParameters: [TSFunctionParameter]) {}
+    public func visit(genericParameter: TSGenericParameter) -> Bool { true }
+    public func visitEnd(genericParameter: TSGenericParameter) {}
+    public func visit(genericParameters: [TSGenericParameter]) -> Bool { true }
+    public func visitEnd(genericParameters: [TSGenericParameter]) {}
+    public func visit(genericArgument: TSGenericArgument) -> Bool { true }
+    public func visitEnd(genericArgument: TSGenericArgument) {}
+    public func visit(genericArguments: [TSGenericArgument]) -> Bool { true }
+    public func visitEnd(genericArguments: [TSGenericArgument]) {}
+    public func visit(objectField: TSObjectField) -> Bool { true }
+    public func visitEnd(objectField: TSObjectField) {}
+    public func visit(objectFields: [TSObjectField]) -> Bool { true }
+    public func visitEnd(objectFields: [TSObjectField]) {}
 }

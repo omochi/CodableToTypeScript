@@ -15,3 +15,11 @@ public enum TSBlockItem: PrettyPrintable {
         }
     }
 }
+
+extension [TSBlockItem] {
+    public func print(printer: PrettyPrinter) {
+        for item in self {
+            item.print(printer: printer)
+        }
+    }
+}

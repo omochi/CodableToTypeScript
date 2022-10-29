@@ -57,7 +57,9 @@ struct StructConverter {
         let funcName = converter.transpiledName(of: .struct(type), kind: .decode)
 
         let genericParameters = converter.transpileGenericParameters(type: .struct(type))
-        let genericArguments: [TSType] = genericParameters.items.map { .named($0) }
+        let genericArguments: [TSGenericArgument] = genericParameters.map { (param) in
+            TSGenericArgument(param.type)
+        }
         let parameters: [TSFunctionParameter] = [
             .init(
                 name: "json",
@@ -79,7 +81,7 @@ struct StructConverter {
 
                 expr = .call(
                     callee: .identifier(decode),
-                    arguments: [expr]
+                    arguments: [TSFunctionArgument(expr)]
                 )
             }
 
