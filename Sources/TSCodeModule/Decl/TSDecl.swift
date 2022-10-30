@@ -17,6 +17,13 @@ public enum TSDecl: PrettyPrintable {
         }
     }
 
+    public var wantsTrailingNewline: Bool {
+        switch self {
+        case .`var`, .custom: return false
+        default: return true
+        }
+    }
+
     public static func type(
         name: String,
         genericParameters: [TSGenericParameter] = .init(),

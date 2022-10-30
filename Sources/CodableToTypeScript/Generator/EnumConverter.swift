@@ -24,7 +24,9 @@ struct EnumConverter {
     }
 
     func transpile(type: EnumType, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
-        let genericParameters = converter.transpileGenericParameters(type: .enum(type))
+        let genericParameters = converter.transpileGenericParameters(
+            type: .enum(type), kind: kind
+        )
 
         if type.caseElements.isEmpty {
             return TSTypeDecl(
@@ -174,21 +176,7 @@ struct EnumConverter {
         }
 
         func generate() throws -> TSFunctionDecl {
-            let genericParameters = converter.transpileGenericParameters(type: .enum(type))
-            let genericArguments: [TSGenericArgument] = genericParameters.map { (param) in
-                TSGenericArgument(param.type)
-            }
-
-            let typeName = converter.transpiledName(of: .enum(type), kind: .type)
-            let jsonName = converter.transpiledName(of: .enum(type), kind: .json)
-            let funcName = converter.decodeFunctionName(type: .enum(type))
-
-            let parameters: [TSFunctionParameter] = [
-                .init(
-                    name: "json",
-                    type: .named(jsonName, genericArguments: genericArguments)
-                )
-            ]
+            var decl = converter.decodeFunctionSignature(type: .enum(type))
 
             var topStmt: TSStmt?
 
@@ -224,18 +212,11 @@ struct EnumConverter {
 
             appendElse(stmt: lastElseCode())
 
-            var items: [TSBlockItem] = []
             if let top = topStmt {
-                items.append(.stmt(top))
+                decl.items.append(.stmt(top))
             }
 
-            return TSFunctionDecl(
-                name: funcName,
-                genericParameters: genericParameters,
-                parameters: parameters,
-                returnType: .named(typeName, genericArguments: genericArguments),
-                items: items
-            )
+            return decl
         }
     }
 

@@ -8,14 +8,16 @@ struct TypeSelector {
         try body(module)
     }
 
-    static func first(
+    static func last(
         file: StaticString = #file,
         line: UInt = #line
     ) -> TypeSelector {
-        predicate(
-            { (_) in true },
-            file: file, line: line
-        )
+        TypeSelector { (module) in
+            try XCTUnwrap(
+                module.types.last,
+                file: file, line: line
+            )
+        }
     }
 
     static func predicate(

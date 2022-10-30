@@ -1,12 +1,12 @@
 import XCTest
-@testable import CodableToTypeScript
-import SwiftTypeReader
-import TSCodeModule
+import CodableToTypeScript
 
 final class GenerateImportTests: GenerateTestCaseBase {
     func testGenericStruct() throws {
         try assertGenerate(
             source: """
+struct X<T> {}
+
 struct S<T, U> {
     var a: A?
     var b: number
@@ -17,10 +17,7 @@ struct S<T, U> {
     var yc: Y<C>
     var yu: Y<U>
 }
-
-struct X<T> {}
 """,
-            typeSelector: .name("S"),
             expecteds: ["""
 import {
     A,

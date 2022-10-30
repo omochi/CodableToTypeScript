@@ -35,7 +35,11 @@ extension [TSFunctionParameter] {
 
             if index < count - 1 {
                 printer.write(",")
+                if !isBig {
+                    printer.write(" ")
+                }
             }
+            
             if isBig {
                 printer.writeLine("")
             }

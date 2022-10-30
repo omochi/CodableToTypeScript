@@ -3,6 +3,27 @@ public enum TSBlockItem: PrettyPrintable {
     case stmt(TSStmt)
     case expr(TSExpr)
 
+    public var decl: TSDecl? {
+        switch self {
+        case .decl(let x): return x
+        default: return nil
+        }
+    }
+
+    public var stmt: TSStmt? {
+        switch self {
+        case .stmt(let x): return x
+        default: return nil
+        }
+    }
+
+    public var expr: TSExpr? {
+        switch self {
+        case .expr(let x): return x
+        default: return nil
+        }
+    }
+
     public func print(printer: PrettyPrinter) {
         switch self {
         case .decl(let x):
@@ -18,7 +39,14 @@ public enum TSBlockItem: PrettyPrintable {
 
 extension [TSBlockItem] {
     public func print(printer: PrettyPrinter) {
-        for item in self {
+        for (index, item) in enumerated() {
+            if index > 0,
+               let decl = self[index - 1].decl,
+               decl.wantsTrailingNewline
+            {
+                printer.writeLine("")
+            }
+
             item.print(printer: printer)
         }
     }

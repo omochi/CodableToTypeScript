@@ -1,29 +1,47 @@
 import XCTest
+import SwiftTypeReader
 import CodableToTypeScript
 
 class GenerateTestCaseBase: XCTestCase {
+    enum Prints {
+        case none
+        case one
+        case all
+    }
     // debug
-    var prints: Bool { true }
+    var prints: Prints { .one }
 
     func assertGenerate(
         source: String,
-        typeSelector: TypeSelector = .first(file: #file, line: #line),
+        typeSelector: TypeSelector = .last(file: #file, line: #line),
         typeMap: TypeMap? = nil,
         expecteds: [String] = [],
         unexpecteds: [String] = [],
         file: StaticString = #file,
         line: UInt = #line
     ) throws {
-        let tsCode = try Utils.generate(
-            source: source,
-            typeMap: typeMap,
-            typeSelector: typeSelector,
-            file: file, line: line
-        )
-        let actual = tsCode.description
-        if prints {
-            print(actual)
+        let result = try Reader().read(source: source)
+
+        let gen = CodeGenerator(typeMap: typeMap ?? .default)
+
+
+        if case .all = prints {
+            for swType in result.module.types {
+                print("// \(swType.name)")
+                let code = try gen.generateTypeDeclarationFile(type: swType)
+                print(code)
+            }
         }
+
+        let swType = try typeSelector(module: result.module)
+        let code = try gen.generateTypeDeclarationFile(type: swType)
+
+        if case .one = prints {
+            print(code)
+        }
+        
+        let actual = code.description
+
         for expected in expecteds {
             if !actual.contains(expected) {
                 XCTFail(

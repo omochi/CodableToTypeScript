@@ -1,117 +1,86 @@
 public protocol TSTreeVisitor {
     func visit(code: TSCode) -> Bool
     func visitEnd(code: TSCode)
-
     func visit(item: TSBlockItem) -> Bool
     func visitEnd(item: TSBlockItem)
-
     func visit(items: [TSBlockItem]) -> Bool
     func visitEnd(items: [TSBlockItem])
-
     func visit(function: TSFunctionDecl) -> Bool
     func visitEnd(function: TSFunctionDecl)
-
-    func visit(import: TSImportDecl)
-
+    func visit(import: TSImportDecl) -> Bool
+    func visitEnd(import: TSImportDecl)
     func visit(namespace: TSNamespaceDecl) -> Bool
     func visitEnd(namespace: TSNamespaceDecl)
-
     func visit(type: TSTypeDecl) -> Bool
     func visitEnd(type: TSTypeDecl)
-
     func visit(`var`: TSVarDecl) -> Bool
     func visitEnd(`var`: TSVarDecl)
-
-    func visit(custom: TSCustomDecl)
-
+    func visit(custom: TSCustomDecl) -> Bool
+    func visitEnd(custom: TSCustomDecl)
     func visit(block: TSBlockStmt) -> Bool
     func visitEnd(block: TSBlockStmt)
-
     func visit(if: TSIfStmt) -> Bool
     func visitEnd(if: TSIfStmt)
-
     func visit(return: TSReturnStmt) -> Bool
     func visitEnd(return: TSReturnStmt)
-
     func visit(throw: TSThrowStmt) -> Bool
     func visitEnd(throw: TSThrowStmt)
-
-    func visit(custom: TSCustomStmt)
-
+    func visit(custom: TSCustomStmt) -> Bool
+    func visitEnd(custom: TSCustomStmt)
     func visit(call: TSCallExpr) -> Bool
     func visitEnd(call: TSCallExpr)
-
     func visit(closure: TSClosureExpr) -> Bool
     func visitEnd(closure: TSClosureExpr)
-
-    func visit(identifier: TSIdentifierExpr)
-
+    func visit(identifier: TSIdentifierExpr) -> Bool
+    func visitEnd(identifier: TSIdentifierExpr)
     func visit(infixOperator: TSInfixOperatorExpr) -> Bool
     func visitEnd(infixOperator: TSInfixOperatorExpr)
-
     func visit(memberAccess: TSMemberAccessExpr) -> Bool
     func visitEnd(memberAccess: TSMemberAccessExpr)
-
     func visit(new: TSNewExpr) -> Bool
     func visitEnd(new: TSNewExpr)
-
     func visit(object: TSObjectExpr) -> Bool
     func visitEnd(object: TSObjectExpr)
-
-    func visit(stringLiteral: TSStringLiteralExpr)
-
-    func visit(custom: TSCustomExpr)
-
+    func visit(stringLiteral: TSStringLiteralExpr) -> Bool
+    func visitEnd(stringLiteral: TSStringLiteralExpr)
+    func visit(custom: TSCustomExpr) -> Bool
+    func visitEnd(custom: TSCustomExpr)
     func visit(array: TSArrayType) -> Bool
     func visitEnd(array: TSArrayType)
-
     func visit(dictionary: TSDictionaryType) -> Bool
     func visitEnd(dictionary: TSDictionaryType)
-
+    func visit(function: TSFunctionType) -> Bool
+    func visitEnd(function: TSFunctionType)
     func visit(named: TSNamedType) -> Bool
     func visitEnd(named: TSNamedType)
-
     func visit(nested: TSNestedType) -> Bool
     func visitEnd(nested: TSNestedType)
-
     func visit(record: TSRecordType) -> Bool
     func visitEnd(record: TSRecordType)
-
     func visit(recordField: TSRecordType.Field) -> Bool
     func visitEnd(recordField: TSRecordType.Field)
-
-    func visit(stringLiteral: TSStringLiteralType)
-
+    func visit(stringLiteral: TSStringLiteralType) -> Bool
+    func visitEnd(stringLiteral: TSStringLiteralType)
     func visit(union: TSUnionType) -> Bool
     func visitEnd(union: TSUnionType)
-
     func visit(functionArgument: TSFunctionArgument) -> Bool
     func visitEnd(functionArgument: TSFunctionArgument)
-
     func visit(functionArguments: [TSFunctionArgument]) -> Bool
     func visitEnd(functionArguments: [TSFunctionArgument])
-
     func visit(functionParameter: TSFunctionParameter) -> Bool
     func visitEnd(functionParameter: TSFunctionParameter)
-
     func visit(functionParameters: [TSFunctionParameter]) -> Bool
     func visitEnd(functionParameters: [TSFunctionParameter])
-
     func visit(genericArgument: TSGenericArgument) -> Bool
     func visitEnd(genericArgument: TSGenericArgument)
-
     func visit(genericArguments: [TSGenericArgument]) -> Bool
     func visitEnd(genericArguments: [TSGenericArgument])
-
     func visit(genericParameter: TSGenericParameter) -> Bool
     func visitEnd(genericParameter: TSGenericParameter)
-
     func visit(genericParameters: [TSGenericParameter]) -> Bool
     func visitEnd(genericParameters: [TSGenericParameter])
-
     func visit(objectField: TSObjectField) -> Bool
     func visitEnd(objectField: TSObjectField)
-
     func visit(objectFields: [TSObjectField]) -> Bool
     func visitEnd(objectFields: [TSObjectField])
 }
@@ -157,11 +126,11 @@ extension TSTreeVisitor {
     public func visitImpl(decl: TSDecl) {
         switch decl {
         case .function(let d): visitImpl(function: d)
-        case .import(let d): visit(import: d)
+        case .import(let d): visitImpl(import: d)
         case .namespace(let d): visitImpl(namespace: d)
         case .type(let d): visitImpl(type: d)
         case .var(let d): visitImpl(var: d)
-        case .custom(let d): visit(custom: d)
+        case .custom(let d): visitImpl(custom: d)
         }
     }
 
@@ -171,7 +140,7 @@ extension TSTreeVisitor {
         case .if(let s): visitImpl(if: s)
         case .return(let s): visitImpl(return: s)
         case .throw(let s): visitImpl(throw: s)
-        case .custom(let s): visit(custom: s)
+        case .custom(let s): visitImpl(custom: s)
         }
     }
 
@@ -179,13 +148,13 @@ extension TSTreeVisitor {
         switch expr {
         case .call(let e): visitImpl(call: e)
         case .closure(let e): visitImpl(closure: e)
-        case .identifier(let e): visit(identifier: e)
+        case .identifier(let e): visitImpl(identifier: e)
         case .infixOperator(let e): visitImpl(infixOperator: e)
         case .memberAccess(let e): visitImpl(memberAccess: e)
         case .new(let e): visitImpl(new: e)
         case .object(let e): visitImpl(object: e)
-        case .stringLiteral(let e): visit(stringLiteral: e)
-        case .custom(let e): visit(custom: e)
+        case .stringLiteral(let e): visitImpl(stringLiteral: e)
+        case .custom(let e): visitImpl(custom: e)
         }
     }
 
@@ -193,10 +162,11 @@ extension TSTreeVisitor {
         switch type {
         case .array(let t): visitImpl(array: t)
         case .dictionary(let t): visitImpl(dictionary: t)
+        case .function(let t): visitImpl(function: t)
         case .named(let t): visitImpl(named: t)
         case .nested(let t): visitImpl(nested: t)
         case .record(let t): visitImpl(record: t)
-        case .stringLiteral(let t): visit(stringLiteral: t)
+        case .stringLiteral(let t): visitImpl(stringLiteral: t)
         case .union(let t): visitImpl(union: t)
         }
     }
@@ -210,6 +180,11 @@ extension TSTreeVisitor {
             visitImpl(items: function.items)
         }
         visitEnd(function: function)
+    }
+
+    public func visitImpl(import: TSImportDecl) {
+        if visit(import: `import`) {}
+        visitEnd(import: `import`)
     }
 
     public func visitImpl(namespace: TSNamespaceDecl) {
@@ -236,6 +211,11 @@ extension TSTreeVisitor {
             }
         }
         visitEnd(var: `var`)
+    }
+
+    public func visitImpl(custom: TSCustomDecl) {
+        if visit(custom: custom) {}
+        visitEnd(custom: custom)
     }
 
     public func visitImpl(block: TSBlockStmt) {
@@ -269,6 +249,11 @@ extension TSTreeVisitor {
         visitEnd(throw: `throw`)
     }
 
+    public func visitImpl(custom: TSCustomStmt) {
+        if visit(custom: custom) {}
+        visitEnd(custom: custom)
+    }
+
     public func visitImpl(call: TSCallExpr) {
         if visit(call: call) {
             visitImpl(expr: call.callee)
@@ -286,6 +271,11 @@ extension TSTreeVisitor {
             visitImpl(items: closure.items)
         }
         visitEnd(closure: closure)
+    }
+
+    public func visitImpl(identifier: TSIdentifierExpr) {
+        if visit(identifier: identifier) {}
+        visitEnd(identifier: identifier)
     }
 
     public func visitImpl(infixOperator: TSInfixOperatorExpr) {
@@ -318,6 +308,16 @@ extension TSTreeVisitor {
         visitEnd(object: object)
     }
 
+    public func visitImpl(stringLiteral: TSStringLiteralExpr) {
+        if visit(stringLiteral: stringLiteral) {}
+        visitEnd(stringLiteral: stringLiteral)
+    }
+
+    public func visitImpl(custom: TSCustomExpr) {
+        if visit(custom: custom) {}
+        visitEnd(custom: custom)
+    }
+
     public func visitImpl(array: TSArrayType) {
         if visit(array: array) {
             visitImpl(type: array.element)
@@ -330,6 +330,14 @@ extension TSTreeVisitor {
             visitImpl(type: dictionary.element)
         }
         visitEnd(dictionary: dictionary)
+    }
+
+    public func visitImpl(function: TSFunctionType) {
+        if visit(function: function) {
+            visitImpl(functionParameters: function.parameters)
+            visitImpl(type: function.returnType)
+        }
+        visitEnd(function: function)
     }
 
     public func visitImpl(named: TSNamedType) {
@@ -353,6 +361,11 @@ extension TSTreeVisitor {
             }
         }
         visitEnd(record: record)
+    }
+
+    public func visitImpl(stringLiteral: TSStringLiteralType) {
+        if visit(stringLiteral: stringLiteral) { }
+        visitEnd(stringLiteral: stringLiteral)
     }
 
     public func visitImpl(recordField: TSRecordType.Field) {
@@ -423,7 +436,7 @@ extension TSTreeVisitor {
 
     public func visitImpl(genericParameter: TSGenericParameter) {
         if visit(genericParameter: genericParameter) {
-            visitImpl(type: genericParameter.type)
+            visitImpl(named: genericParameter.type)
         }
         visitEnd(genericParameter: genericParameter)
     }
@@ -464,14 +477,16 @@ extension TSTreeVisitor {
     public func visitEnd(items: [TSBlockItem]) {}
     public func visit(function: TSFunctionDecl) -> Bool { true }
     public func visitEnd(function: TSFunctionDecl) {}
-    public func visit(import: TSImportDecl) {}
+    public func visit(import: TSImportDecl) -> Bool { true }
+    public func visitEnd(import: TSImportDecl) {}
     public func visit(namespace: TSNamespaceDecl) -> Bool { true }
     public func visitEnd(namespace: TSNamespaceDecl) {}
     public func visit(type: TSTypeDecl) -> Bool { true }
     public func visitEnd(type: TSTypeDecl) {}
     public func visit(`var`: TSVarDecl) -> Bool { true }
     public func visitEnd(`var`: TSVarDecl) {}
-    public func visit(custom: TSCustomDecl) {}
+    public func visit(custom: TSCustomDecl) -> Bool { true }
+    public func visitEnd(custom: TSCustomDecl) {}
     public func visit(block: TSBlockStmt) -> Bool { true }
     public func visitEnd(block: TSBlockStmt) {}
     public func visit(if: TSIfStmt) -> Bool { true }
@@ -480,12 +495,14 @@ extension TSTreeVisitor {
     public func visitEnd(return: TSReturnStmt) {}
     public func visit(throw: TSThrowStmt) -> Bool { true }
     public func visitEnd(throw: TSThrowStmt) {}
-    public func visit(custom: TSCustomStmt) {}
+    public func visit(custom: TSCustomStmt) -> Bool { true }
+    public func visitEnd(custom: TSCustomStmt) {}
     public func visit(call: TSCallExpr) -> Bool { true }
     public func visitEnd(call: TSCallExpr) {}
     public func visit(closure: TSClosureExpr) -> Bool { true }
     public func visitEnd(closure: TSClosureExpr) {}
-    public func visit(identifier: TSIdentifierExpr) {}
+    public func visit(identifier: TSIdentifierExpr) -> Bool { true }
+    public func visitEnd(identifier: TSIdentifierExpr) {}
     public func visit(infixOperator: TSInfixOperatorExpr) -> Bool { true }
     public func visitEnd(infixOperator: TSInfixOperatorExpr) {}
     public func visit(memberAccess: TSMemberAccessExpr) -> Bool { true }
@@ -494,12 +511,16 @@ extension TSTreeVisitor {
     public func visitEnd(new: TSNewExpr) {}
     public func visit(object: TSObjectExpr) -> Bool { true }
     public func visitEnd(object: TSObjectExpr) {}
-    public func visit(stringLiteral: TSStringLiteralExpr) {}
-    public func visit(custom: TSCustomExpr) {}
+    public func visit(stringLiteral: TSStringLiteralExpr) -> Bool { true }
+    public func visitEnd(stringLiteral: TSStringLiteralExpr) {}
+    public func visit(custom: TSCustomExpr) -> Bool { true }
+    public func visitEnd(custom: TSCustomExpr) {}
     public func visit(array: TSArrayType) -> Bool { true }
     public func visitEnd(array: TSArrayType) {}
     public func visit(dictionary: TSDictionaryType) -> Bool { true }
     public func visitEnd(dictionary: TSDictionaryType) {}
+    public func visit(function: TSFunctionType) -> Bool { true }
+    public func visitEnd(function: TSFunctionType) {}
     public func visit(named: TSNamedType) -> Bool { true }
     public func visitEnd(named: TSNamedType) {}
     public func visit(nested: TSNestedType) -> Bool { true }
@@ -508,7 +529,8 @@ extension TSTreeVisitor {
     public func visitEnd(record: TSRecordType) {}
     public func visit(recordField: TSRecordType.Field) -> Bool { true }
     public func visitEnd(recordField: TSRecordType.Field) {}
-    public func visit(stringLiteral: TSStringLiteralType) {}
+    public func visit(stringLiteral: TSStringLiteralType) -> Bool { true }
+    public func visitEnd(stringLiteral: TSStringLiteralType) {}
     public func visit(union: TSUnionType) -> Bool { true }
     public func visitEnd(union: TSUnionType) {}
     public func visit(functionArgument: TSFunctionArgument) -> Bool { true }

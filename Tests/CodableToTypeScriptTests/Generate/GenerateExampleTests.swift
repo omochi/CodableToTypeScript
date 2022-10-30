@@ -103,7 +103,6 @@ struct S {
     var y: E2
 }
 """,
-            typeSelector: .name("S"),
             expecteds: ["""
 import {
     E1,

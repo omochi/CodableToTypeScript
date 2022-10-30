@@ -32,6 +32,20 @@ export function S_decode(json: S_JSON): S {
         )
     }
 
+    func testEmptyDecode() throws {
+        try assertGenerate(
+            source: """
+struct K {
+    var a: Int
+}
+struct S {
+    var k: K
+}
+""",
+            typeSelector: .name("S")
+        )
+    }
+
     func testEnumInStruct() throws {
         try assertGenerate(
             source: """

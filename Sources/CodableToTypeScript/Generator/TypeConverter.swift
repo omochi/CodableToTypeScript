@@ -120,7 +120,8 @@ struct TypeConverter {
         case .json:
             switch type.regular {
             case .struct,
-                .enum:
+                .enum,
+                .genericParameter:
                 path.items.append("JSON")
             default:
                 break
@@ -164,13 +165,21 @@ struct TypeConverter {
             )
         }
         if let mappedName = typeMap.map(specifier: type.asSpecifier()) {
-            let args = try transpileGenericArguments(type: type)
+            let args = try transpileGenericArguments(type: type, kind: kind)
             return .named(mappedName, genericArguments: args)
         }
 
-        let name = transpiledName(of: type, kind: kind)
+        let name: String = try {
+            var kind = kind
+            if kind == .json,
+               try hasEmptyDecoder(type: type)
+            {
+                kind = .type
+            }
+            return transpiledName(of: type, kind: kind)
+        }()
 
-        let args = try transpileGenericArguments(type: type)
+        let args = try transpileGenericArguments(type: type, kind: kind)
 
         return .named(name, genericArguments: args)
     }
@@ -182,32 +191,29 @@ struct TypeConverter {
             type = wrapped
             isOptionalField = true
         }
-
-        var kind = kind
-        switch kind {
-        case .type: break
-        case .json:
-            if try hasEmptyDecoder(type: type) {
-                kind = .type
-            }
-        }
         return (
             type: try transpileTypeReference(type, kind: kind),
             isOptionalField: isOptionalField
         )
     }
 
-    func transpileGenericParameters(type: SType) -> [TSGenericParameter] {
+    func transpileGenericParameter(type: SType, kind: TypeKind) -> TSGenericParameter {
+        let name = transpiledName(of: type, kind: kind)
+        return TSGenericParameter(.init(name))
+    }
+
+    func transpileGenericParameters(type: SType, kind: TypeKind) -> [TSGenericParameter] {
         guard let type = type.regular else { return .init() }
 
         return type.genericParameters.map { (param) in
-            TSGenericParameter(.named(param.name))
+            transpileGenericParameter(type: .genericParameter(param), kind: kind)
         }
     }
 
-    func transpileGenericArguments(type: SType) throws -> [TSGenericArgument] {
-        return try type.genericArguments().map { (arg) in
-            TSGenericArgument(.named(arg.name))
+    func transpileGenericArguments(type: SType, kind: TypeKind) throws -> [TSGenericArgument] {
+        return try type.genericArguments().map { (type) in
+            let type = try transpileTypeReference(type, kind: kind)
+            return TSGenericArgument(type)
         }
     }
 
@@ -258,15 +264,86 @@ struct TypeConverter {
                 if try !hasEmptyDecoder(type: try field.type()) { return false }
             }
             return true
-        case .genericParameter, .protocol:
+        case .genericParameter:
+            return false
+        case .protocol:
             return true
         }
     }
 
     func decodeFunctionName(type: SType) -> String {
+        if let type = type.genericParameter {
+            let param = transpileGenericParameter(type: .genericParameter(type), kind: .type)
+            return genericParameterDecodeFunctionName(type: param.type)
+        }
+
         var path = namePath(type: type)
         path.items.append("decode")
         return path.convert()
+    }
+
+    private func genericParameterDecodeFunctionName(type: TSNamedType) -> String {
+        return type.name + "_decode"
+    }
+
+    func decodeFunctionSignature(type: SType) -> TSFunctionDecl {
+        let typeName = transpiledName(of: type, kind: .type)
+        let jsonName = transpiledName(of: type, kind: .json)
+        let funcName = decodeFunctionName(type: type)
+
+        let typeParameters: [GenericParameterType] = type.regular?.genericParameters ?? []
+
+        var typeArgs: [TSGenericArgument] = []
+        var jsonArgs: [TSGenericArgument] = []
+
+        for param in typeParameters {
+            typeArgs.append(TSGenericArgument(
+                .named(param.name)
+            ))
+            jsonArgs.append(TSGenericArgument(
+                .named(transpiledName(of: .genericParameter(param), kind: .json))
+            ))
+        }
+
+        var genericParameters: [TSGenericParameter] = []
+        for param in typeParameters {
+            genericParameters.append(TSGenericParameter(.init(param.name)))
+        }
+        for param in typeParameters {
+            let name = transpiledName(of: .genericParameter(param), kind: .json)
+            genericParameters.append(TSGenericParameter(.init(name)))
+        }
+
+        var parameters: [TSFunctionParameter] = [
+            TSFunctionParameter(
+                name: "json",
+                type: .named(jsonName, genericArguments: jsonArgs)
+            )
+        ]
+        let returnType: TSType = .named(typeName, genericArguments: typeArgs)
+
+        for param in typeParameters {
+            let jsonName = transpiledName(of: .genericParameter(param), kind: .json)
+            let decodeType: TSType = .function(
+                parameters: [TSFunctionParameter(name: "json", type: .named(jsonName))],
+                returnType: .named(param.name)
+            )
+
+            let decodeName = genericParameterDecodeFunctionName(type: .init(param.name))
+
+            parameters.append(TSFunctionParameter(
+                name: decodeName,
+                type: decodeType
+            ))
+        }
+
+        return TSFunctionDecl(
+            name: funcName,
+            genericParameters: genericParameters,
+            parameters: parameters,
+            returnType: returnType,
+            items: []
+        )
     }
 
     func generateDecodeFunctionAccess(type: SType) throws -> TSExpr {
@@ -287,6 +364,9 @@ struct TypeConverter {
             ))
         }
 
+        if try hasEmptyDecoder(type: type) {
+            return .identifier(identityFunctionName)
+        }
         if let (_, _) = try unwrapOptional(type: type, limit: nil) {
             return try makeClosure()
         }
@@ -303,6 +383,7 @@ struct TypeConverter {
     let optionalDecodeFunctionName = "Optional_decode"
     let arrayDecodeFunctionName = "Array_decode"
     let dictionaryDecodeFunctionName = "Dictionary_decode"
+    let identityFunctionName = "identity"
 
     func generateFieldDecodeExpression(
         type: SType,
@@ -311,7 +392,7 @@ struct TypeConverter {
         if let (wrapped, _) = try unwrapOptional(type: type, limit: 1) {
             if try hasEmptyDecoder(type: wrapped) { return expr }
             return try generateHigherOrderDecodeCall(
-                type: wrapped,
+                types: [wrapped],
                 callee: .identifier(optionalFieldDecodeFunctionName),
                 json: expr
             )
@@ -329,7 +410,7 @@ struct TypeConverter {
         if let (wrapped, _) = try unwrapOptional(type: type, limit: nil) {
             if try hasEmptyDecoder(type: wrapped) { return expr }
             return try generateHigherOrderDecodeCall(
-                type: wrapped,
+                types: [wrapped],
                 callee: .identifier(optionalDecodeFunctionName),
                 json: expr
             )
@@ -337,7 +418,7 @@ struct TypeConverter {
         if let (_, element) = try asArray(type: type) {
             if try hasEmptyDecoder(type: element) { return expr }
             return try generateHigherOrderDecodeCall(
-                type: element,
+                types: [element],
                 callee: .identifier(arrayDecodeFunctionName),
                 json: expr
             )
@@ -345,7 +426,7 @@ struct TypeConverter {
         if let (_, value) = try asDictionary(type: type) {
             if try hasEmptyDecoder(type: value) { return expr }
             return try generateHigherOrderDecodeCall(
-                type: value,
+                types: [value],
                 callee: .identifier(dictionaryDecodeFunctionName),
                 json: expr
             )
@@ -355,28 +436,38 @@ struct TypeConverter {
             return expr
         }
 
-        let decode = decodeFunctionName(type: type)
+        let decode: TSExpr = .identifier(decodeFunctionName(type: type))
+
+        let typeArgs = try type.genericArguments()
+        if typeArgs.count > 0 {
+            return try generateHigherOrderDecodeCall(
+                types: typeArgs,
+                callee: decode,
+                json: expr
+            )
+        }
 
         return .call(
-            callee: .identifier(decode),
+            callee: decode,
             arguments: [TSFunctionArgument(expr)]
         )
     }
 
     private func generateHigherOrderDecodeCall(
-        type: SType,
+        types: [SType],
         callee: TSExpr,
         json: TSExpr
     ) throws -> TSExpr {
-        return .call(
-            callee: callee,
-            arguments: [
-                TSFunctionArgument(json),
-                TSFunctionArgument(
-                    try generateDecodeFunctionAccess(type: type)
-                )
-            ]
-        )
+        var args: [TSFunctionArgument] = [
+            TSFunctionArgument(json)
+        ]
+
+        for type in types {
+            let decode = try generateDecodeFunctionAccess(type: type)
+            args.append(TSFunctionArgument(decode))
+        }
+
+        return .call(callee: callee, arguments: args)
     }
 
     func unwrapOptional(type: SType, limit: Int?) throws -> (wrapped: SType, depth: Int)? {

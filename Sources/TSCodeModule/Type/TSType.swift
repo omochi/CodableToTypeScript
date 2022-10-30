@@ -1,21 +1,24 @@
 public indirect enum TSType: PrettyPrintable {
+    case array(TSArrayType)
+    case dictionary(TSDictionaryType)
+    case function(TSFunctionType)
     case named(TSNamedType)
     case nested(TSNestedType)
     case record(TSRecordType)
-    case union(TSUnionType)
-    case array(TSArrayType)
-    case dictionary(TSDictionaryType)
     case stringLiteral(TSStringLiteralType)
+    case union(TSUnionType)
+
 
     public func print(printer: PrettyPrinter) {
         switch self {
+        case .array(let t): t.print(printer: printer)
+        case .dictionary(let t): t.print(printer: printer)
+        case .function(let t): t.print(printer: printer)
         case .named(let t): t.print(printer: printer)
         case .nested(let t): t.print(printer: printer)
         case .record(let t): t.print(printer: printer)
-        case .union(let t): t.print(printer: printer)
-        case .array(let t): t.print(printer: printer)
-        case .dictionary(let t): t.print(printer: printer)
         case .stringLiteral(let t): t.print(printer: printer)
+        case .union(let t): t.print(printer: printer)
         }
     }
 
@@ -24,6 +27,18 @@ public indirect enum TSType: PrettyPrintable {
         case .named(let x): return x
         default: return nil
         }
+    }
+
+    public static func array(_ element: TSType) -> TSType {
+        .array(TSArrayType(element))
+    }
+
+    public static func dictionary(_ element: TSType) -> TSType {
+        .dictionary(TSDictionaryType(element))
+    }
+
+    public static func function(parameters: [TSFunctionParameter], returnType: TSType) -> TSType {
+        .function(TSFunctionType(parameters: parameters, returnType: returnType))
     }
 
     public static func named(_ name: String, genericArguments: [TSGenericArgument] = []) -> TSType {
@@ -38,19 +53,15 @@ public indirect enum TSType: PrettyPrintable {
         .record(TSRecordType(fields))
     }
 
+    public static func stringLiteral(_ value: String) -> TSType {
+        .stringLiteral(TSStringLiteralType(value))
+    }
+
     public static func union(_ items: [TSType]) -> TSType {
         .union(TSUnionType(items))
     }
 
-    public static func array(_ element: TSType) -> TSType {
-        .array(TSArrayType(element))
-    }
 
-    public static func dictionary(_ element: TSType) -> TSType {
-        .dictionary(TSDictionaryType(element))
-    }
 
-    public static func stringLiteral(_ value: String) -> TSType {
-        .stringLiteral(TSStringLiteralType(value))
-    }
+
 }

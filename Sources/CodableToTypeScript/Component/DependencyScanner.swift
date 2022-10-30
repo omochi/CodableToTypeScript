@@ -71,7 +71,7 @@ private final class Impl: TSTreeVisitor {
     func visit(function: TSFunctionDecl) -> Bool {
         push()
         scope.knownNames.formUnion(
-            function.genericParameters.compactMap { $0.type.named?.name }
+            function.genericParameters.map { $0.type.name }
         )
         scope.knownNames.formUnion(
             function.parameters.map { $0.name }
@@ -86,7 +86,7 @@ private final class Impl: TSTreeVisitor {
     func visit(type: TSTypeDecl) -> Bool {
         push()
 
-        let paramNames = type.genericParameters.compactMap { $0.type.named?.name }
+        let paramNames = type.genericParameters.map { $0.type.name }
         scope.knownNames.formUnion(paramNames)
         
         return true
@@ -110,8 +110,9 @@ private final class Impl: TSTreeVisitor {
         pop()
     }
 
-    func visit(identifier: TSIdentifierExpr) {
+    func visit(identifier: TSIdentifierExpr) -> Bool {
         check(identifier.name)
+        return true
     }
 
     func visit(named: TSNamedType) -> Bool {
