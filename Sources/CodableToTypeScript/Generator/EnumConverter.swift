@@ -105,7 +105,7 @@ struct EnumConverter {
         init(converter: TypeConverter, type: EnumType) {
             self.converter = converter
             self.type = type
-            self.builder = converter.decodeFunction(type: .enum(type))
+            self.builder = converter.decodeFunction()
         }
 
         var converter: TypeConverter
@@ -145,7 +145,7 @@ struct EnumConverter {
             var block: [TSBlockItem] = []
 
             let varDecl = TSVarDecl(
-                mode: "const", name: "j",
+                kind: "const", name: "j",
                 initializer: .memberAccess(
                     base: .identifier("json"),
                     name: ce.name
@@ -184,7 +184,7 @@ struct EnumConverter {
         }
 
         func generate() throws -> TSFunctionDecl {
-            var decl = builder.signature()
+            var decl = builder.signature(type: .enum(type))
 
             var topStmt: TSStmt?
 

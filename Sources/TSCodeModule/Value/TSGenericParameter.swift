@@ -1,12 +1,12 @@
 public struct TSGenericParameter: PrettyPrintable {
-    public var type: TSNamedType
+    public var name: String
 
-    public init(_ type: TSNamedType) {
-        self.type = type
+    public init(_ name: String) {
+        self.name = name
     }
 
     public func print(printer: PrettyPrinter) {
-        type.print(printer: printer)
+        printer.write(name)
     }
 }
 

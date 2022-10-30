@@ -2,23 +2,22 @@ import SwiftTypeReader
 import TSCodeModule
 
 struct DecodeFunctionBuilder {
-    init(converter: TypeConverter, type: SType) {
+    init(converter: TypeConverter) {
         self.c = converter
-        self.h = c.helperLibrary()
-        self.type = type
     }
 
     var c: TypeConverter
-    var h: HelperLibraryGenerator
-    var type: SType
 
-    func name() -> String {
-        var path = type.namePath()
-        path.items.append("decode")
-        return path.convert()
+    func name(type: SType) -> String {
+        let base = type.namePath().convert()
+        return self.name(base: base)
     }
 
-    func signature() -> TSFunctionDecl {
+    func name(base: String) -> String {
+        return "\(base)_decode"
+    }
+
+    func signature(type: SType) -> TSFunctionDecl {
         let typeName = c.transpiledName(of: type, kind: .type)
         let jsonName = c.transpiledName(of: type, kind: .json)
 
@@ -56,11 +55,11 @@ struct DecodeFunctionBuilder {
         for param in typeParameters {
             let jsonName = c.transpiledName(of: .genericParameter(param), kind: .json)
             let decodeType: TSType = .function(
-                parameters: [TSFunctionParameter(name: "json", type: .named(jsonName))],
+                parameters: [.init(name: "json", type: .named(jsonName))],
                 returnType: .named(param.name)
             )
 
-            let decodeName = c.decodeFunction(type: .genericParameter(param)).name()
+            let decodeName = self.name(type: .genericParameter(param))
 
             parameters.append(TSFunctionParameter(
                 name: decodeName,
@@ -69,7 +68,7 @@ struct DecodeFunctionBuilder {
         }
 
         return TSFunctionDecl(
-            name: self.name(),
+            name: self.name(type: type),
             genericParameters: genericParameters,
             parameters: parameters,
             returnType: returnType,
@@ -77,7 +76,7 @@ struct DecodeFunctionBuilder {
         )
     }
 
-    func access() throws -> TSExpr {
+    func access(type: SType) throws -> TSExpr {
         func makeClosure() throws -> TSExpr {
             let param = TSFunctionParameter(
                 name: "json",
@@ -85,15 +84,17 @@ struct DecodeFunctionBuilder {
             )
             let ret = try c.transpileTypeReference(type, kind: .type)
             let expr = try decodeValue(type: type, expr: .identifier("json"))
-            return .closure(TSClosureExpr(
+            return .closure(
                 parameters: [param],
                 returnType: ret,
-                items: [.stmt(.return(expr))]
-            ))
+                body: .block([
+                    .stmt(.return(expr))
+                ])
+            )
         }
 
         if try c.hasEmptyDecoder(type: type) {
-            return h.access(.identityFunction)
+            return c.helperLibrary().access(.identityFunction)
         }
         if let (_, _) = try type.unwrapOptional(limit: nil) {
             return try makeClosure()
@@ -104,7 +105,7 @@ struct DecodeFunctionBuilder {
         if let (_, _) = try type.asDictionary() {
             return try makeClosure()
         }
-        return .identifier(self.name())
+        return .identifier(self.name(type: type))
     }
 
     func decodeField(
@@ -115,7 +116,7 @@ struct DecodeFunctionBuilder {
             if try c.hasEmptyDecoder(type: wrapped) { return expr }
             return try callHeigherOrderDecode(
                 types: [wrapped],
-                callee: h.access(.optionalFieldDecodeFunction),
+                callee: c.helperLibrary().access(.optionalFieldDecodeFunction),
                 json: expr
             )
         }
@@ -127,11 +128,12 @@ struct DecodeFunctionBuilder {
         type: SType,
         expr: TSExpr
     ) throws -> TSExpr {
+        let lib = c.helperLibrary()
         if let (wrapped, _) = try type.unwrapOptional(limit: nil) {
             if try c.hasEmptyDecoder(type: wrapped) { return expr }
             return try callHeigherOrderDecode(
                 types: [wrapped],
-                callee: h.access(.optionalDecodeFunction),
+                callee: lib.access(.optionalDecodeFunction),
                 json: expr
             )
         }
@@ -139,7 +141,7 @@ struct DecodeFunctionBuilder {
             if try c.hasEmptyDecoder(type: element) { return expr }
             return try callHeigherOrderDecode(
                 types: [element],
-                callee: h.access(.arrayDecodeFunction),
+                callee: lib.access(.arrayDecodeFunction),
                 json: expr
             )
         }
@@ -147,7 +149,7 @@ struct DecodeFunctionBuilder {
             if try c.hasEmptyDecoder(type: value) { return expr }
             return try callHeigherOrderDecode(
                 types: [value],
-                callee: h.access(.dictionaryDecodeFunction),
+                callee: lib.access(.dictionaryDecodeFunction),
                 json: expr
             )
         }
@@ -156,7 +158,7 @@ struct DecodeFunctionBuilder {
             return expr
         }
 
-        let decode: TSExpr = .identifier(c.decodeFunction(type: type).name())
+        let decode: TSExpr = .identifier(self.name(type: type))
 
         let typeArgs = try type.genericArguments()
         if typeArgs.count > 0 {
@@ -183,10 +185,11 @@ struct DecodeFunctionBuilder {
         ]
 
         for type in types {
-            let decode = try c.decodeFunction(type: type).access()
+            let decode = try self.access(type: type)
             args.append(TSFunctionArgument(decode))
         }
 
         return .call(callee: callee, arguments: args)
     }
+
 }

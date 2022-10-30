@@ -9,7 +9,7 @@ class GenerateTestCaseBase: XCTestCase {
         case all
     }
     // debug
-    var prints: Prints { .one }
+    var prints: Prints { .none }
 
     func assertGenerate(
         source: String,
@@ -23,7 +23,6 @@ class GenerateTestCaseBase: XCTestCase {
         let result = try Reader().read(source: source)
 
         let gen = CodeGenerator(typeMap: typeMap ?? .default)
-
 
         if case .all = prints {
             for swType in result.module.types {

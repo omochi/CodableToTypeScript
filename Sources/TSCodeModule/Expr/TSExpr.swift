@@ -7,6 +7,7 @@ public indirect enum TSExpr: PrettyPrintable {
     case new(TSNewExpr)
     case object(TSObjectExpr)
     case stringLiteral(TSStringLiteralExpr)
+    case `subscript`(TSSubscriptExpr)
     case custom(TSCustomExpr)
 
     public func print(printer r: PrettyPrinter) {
@@ -19,6 +20,7 @@ public indirect enum TSExpr: PrettyPrintable {
         case .new(let e): e.print(printer: r)
         case .object(let e): e.print(printer: r)
         case .stringLiteral(let e): e.print(printer: r)
+        case .subscript(let e): e.print(printer: r)
         case .custom(let e): e.print(printer: r)
         }
     }
@@ -27,6 +29,10 @@ public indirect enum TSExpr: PrettyPrintable {
         .call(TSCallExpr(
             callee: callee, arguments: arguments
         ))
+    }
+
+    public static func closure(parameters: [TSFunctionParameter], returnType: TSType?, body: TSStmt) -> TSExpr {
+        .closure(TSClosureExpr(parameters: parameters, returnType: returnType, body: body))
     }
 
     public static func identifier(_ name: String) -> TSExpr {
@@ -57,6 +63,10 @@ public indirect enum TSExpr: PrettyPrintable {
 
     public static func stringLiteral(_ text: String) -> TSExpr {
         .stringLiteral(TSStringLiteralExpr(text))
+    }
+
+    public static func `subscript`(base: TSExpr, key: TSExpr) -> TSExpr {
+        .subscript(TSSubscriptExpr(base: base, key: key))
     }
 
     public static func custom(_ text: String) -> TSExpr {

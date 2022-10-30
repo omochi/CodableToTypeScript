@@ -10,6 +10,9 @@ public struct TSNamedType: PrettyPrintable {
     public var name: String
     public var genericArguments: [TSGenericArgument]
 
+    public static let null = TSNamedType("null")
+    public static let undefined = TSNamedType("undefined")
+
     public func print(printer: PrettyPrinter) {
         printer.write(name)
         genericArguments.print(printer: printer)

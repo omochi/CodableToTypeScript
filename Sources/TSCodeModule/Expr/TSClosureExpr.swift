@@ -1,16 +1,16 @@
 public struct TSClosureExpr: PrettyPrintable {
     public var parameters: [TSFunctionParameter]
     public var returnType: TSType?
-    public var items: [TSBlockItem]
+    public var body: TSStmt
 
     public init(
         parameters: [TSFunctionParameter],
         returnType: TSType?,
-        items: [TSBlockItem]
+        body: TSStmt
     ) {
         self.parameters = parameters
         self.returnType = returnType
-        self.items = items
+        self.body = body
     }
 
     public func print(printer: PrettyPrinter) {
@@ -19,10 +19,10 @@ public struct TSClosureExpr: PrettyPrintable {
             printer.write(": ")
             returnType.print(printer: printer)
         }
-        printer.writeLine(" => {")
-        printer.nest {
-            items.print(printer: printer)
+        printer.writeLine(" => ")
+        body.print(printer: printer)
+        if !printer.isStartOfLine {
+            printer.writeLine("")
         }
-        printer.write("}")
     }
 }

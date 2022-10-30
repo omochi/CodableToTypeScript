@@ -6,7 +6,7 @@ public struct TSUnionType: PrettyPrintable {
     }
 
     public var items: [TSType]
-
+    
     public func print(printer: PrettyPrinter) {
         let isBig = items.count > printer.smallNumber
 

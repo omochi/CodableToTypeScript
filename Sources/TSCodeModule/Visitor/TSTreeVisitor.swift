@@ -19,6 +19,8 @@ public protocol TSTreeVisitor {
     func visitEnd(custom: TSCustomDecl)
     func visit(block: TSBlockStmt) -> Bool
     func visitEnd(block: TSBlockStmt)
+    func visit(for: TSForStmt) -> Bool
+    func visitEnd(for: TSForStmt)
     func visit(if: TSIfStmt) -> Bool
     func visitEnd(if: TSIfStmt)
     func visit(return: TSReturnStmt) -> Bool
@@ -43,6 +45,8 @@ public protocol TSTreeVisitor {
     func visitEnd(object: TSObjectExpr)
     func visit(stringLiteral: TSStringLiteralExpr) -> Bool
     func visitEnd(stringLiteral: TSStringLiteralExpr)
+    func visit(subscript: TSSubscriptExpr) -> Bool
+    func visitEnd(subscript: TSSubscriptExpr)
     func visit(custom: TSCustomExpr) -> Bool
     func visitEnd(custom: TSCustomExpr)
     func visit(array: TSArrayType) -> Bool
@@ -137,6 +141,7 @@ extension TSTreeVisitor {
     public func visitImpl(stmt: TSStmt) {
         switch stmt {
         case .block(let s): visitImpl(block: s)
+        case .for(let s): visitImpl(for: s)
         case .if(let s): visitImpl(if: s)
         case .return(let s): visitImpl(return: s)
         case .throw(let s): visitImpl(throw: s)
@@ -154,6 +159,7 @@ extension TSTreeVisitor {
         case .new(let e): visitImpl(new: e)
         case .object(let e): visitImpl(object: e)
         case .stringLiteral(let e): visitImpl(stringLiteral: e)
+        case .subscript(let e): visitImpl(subscript: e)
         case .custom(let e): visitImpl(custom: e)
         }
     }
@@ -225,6 +231,14 @@ extension TSTreeVisitor {
         visitEnd(block: block)
     }
 
+    public func visitImpl(for: TSForStmt) {
+        if visit(for: `for`) {
+            visitImpl(expr: `for`.expr)
+            visitImpl(stmt: `for`.body)
+        }
+        visitEnd(for: `for`)
+    }
+
     public func visitImpl(if: TSIfStmt) {
         if visit(if: `if`) {
             visitImpl(stmt: `if`.then)
@@ -268,7 +282,7 @@ extension TSTreeVisitor {
             if let type = closure.returnType {
                 visitImpl(type: type)
             }
-            visitImpl(items: closure.items)
+            visitImpl(stmt: closure.body)
         }
         visitEnd(closure: closure)
     }
@@ -311,6 +325,14 @@ extension TSTreeVisitor {
     public func visitImpl(stringLiteral: TSStringLiteralExpr) {
         if visit(stringLiteral: stringLiteral) {}
         visitEnd(stringLiteral: stringLiteral)
+    }
+
+    public func visitImpl(subscript: TSSubscriptExpr) {
+        if visit(subscript: `subscript`) {
+            visitImpl(expr: `subscript`.base)
+            visitImpl(expr: `subscript`.key)
+        }
+        visitEnd(subscript: `subscript`)
     }
 
     public func visitImpl(custom: TSCustomExpr) {
@@ -435,9 +457,7 @@ extension TSTreeVisitor {
     }
 
     public func visitImpl(genericParameter: TSGenericParameter) {
-        if visit(genericParameter: genericParameter) {
-            visitImpl(named: genericParameter.type)
-        }
+        if visit(genericParameter: genericParameter) {}
         visitEnd(genericParameter: genericParameter)
     }
 
@@ -491,6 +511,8 @@ extension TSTreeVisitor {
     public func visitEnd(block: TSBlockStmt) {}
     public func visit(if: TSIfStmt) -> Bool { true }
     public func visitEnd(if: TSIfStmt) {}
+    public func visit(for: TSForStmt) -> Bool { true }
+    public func visitEnd(for: TSForStmt) {}
     public func visit(return: TSReturnStmt) -> Bool { true }
     public func visitEnd(return: TSReturnStmt) {}
     public func visit(throw: TSThrowStmt) -> Bool { true }
@@ -531,6 +553,8 @@ extension TSTreeVisitor {
     public func visitEnd(recordField: TSRecordType.Field) {}
     public func visit(stringLiteral: TSStringLiteralType) -> Bool { true }
     public func visitEnd(stringLiteral: TSStringLiteralType) {}
+    public func visit(subscript: TSSubscriptExpr) -> Bool { true }
+    public func visitEnd(subscript: TSSubscriptExpr) {}
     public func visit(union: TSUnionType) -> Bool { true }
     public func visitEnd(union: TSUnionType) {}
     public func visit(functionArgument: TSFunctionArgument) -> Bool { true }

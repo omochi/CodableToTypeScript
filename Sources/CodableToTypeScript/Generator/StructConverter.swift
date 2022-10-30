@@ -54,8 +54,8 @@ struct StructConverter {
     }
 
     private func generateDecodeFunc(type: StructType) throws -> TSFunctionDecl {
-        let builder = converter.decodeFunction(type: .struct(type))
-        var decl = builder.signature()
+        let builder = converter.decodeFunction()
+        var decl = builder.signature(type: .struct(type))
 
         var fields: [TSObjectField] = []
 

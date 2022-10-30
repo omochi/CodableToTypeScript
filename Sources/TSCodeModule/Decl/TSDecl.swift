@@ -36,8 +36,18 @@ public enum TSDecl: PrettyPrintable {
         .import(TSImportDecl(names: names, from: from))
     }
 
-    public static func `var`(mode: String, name: String, initializer: TSExpr? = nil) -> TSDecl {
-        .var(TSVarDecl(mode: mode, name: name, initializer: initializer))
+    public static func `var`(
+        kind: String,
+        name: String,
+        type: TSType? = nil,
+        initializer: TSExpr? = nil
+    ) -> TSDecl {
+        .var(TSVarDecl(
+            kind: kind,
+            name: name,
+            type: type,
+            initializer: initializer
+        ))
     }
 
     public static func custom(_ text: String) -> TSDecl {

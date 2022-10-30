@@ -74,20 +74,17 @@ final class TypeConverter {
     }
 
     func transpiledName(of type: SType, kind: TypeKind) -> String {
-        var path = type.namePath()
         switch kind {
-        case .type: break
+        case .type:
+            return type.namePath().convert()
         case .json:
-            switch type.regular {
-            case .struct,
-                    .enum,
-                    .genericParameter:
-                path.items.append("JSON")
-            default:
-                break
-            }
+            let base = transpiledName(of: type, kind: .type)
+            return jsonTypeName(base: base)
         }
-        return path.convert()
+    }
+
+    func jsonTypeName(base: String) -> String {
+        return "\(base)_JSON"
     }
 
     func transpileFieldTypeReference(type: SType, kind: TypeKind) throws -> (type: TSType, isOptionalField: Bool) {
@@ -105,10 +102,9 @@ final class TypeConverter {
 
     func transpileTypeReference(_ type: SType, kind: TypeKind) throws -> TSType {
         if let (wrapped, _) = try type.unwrapOptional(limit: nil) {
-            return .union([
-                try transpileTypeReference(wrapped, kind: kind),
-                .named("null")
-            ])
+            return .orNull(
+                try transpileTypeReference(wrapped, kind: kind)
+            )
         }
         if let (_, element) = try type.asArray() {
             return .array(
@@ -164,11 +160,11 @@ final class TypeConverter {
         return try emptyDecodeEvaluator.evaluate(type: type)
     }
 
-    func decodeFunction(type: SType) -> DecodeFunctionBuilder {
-        DecodeFunctionBuilder(converter: self, type: type)
+    func decodeFunction() -> DecodeFunctionBuilder {
+        DecodeFunctionBuilder(converter: self)
     }
 
     func helperLibrary() -> HelperLibraryGenerator {
-        HelperLibraryGenerator()
+        HelperLibraryGenerator(converter: self)
     }
 }

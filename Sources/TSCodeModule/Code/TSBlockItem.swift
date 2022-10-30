@@ -32,7 +32,7 @@ public enum TSBlockItem: PrettyPrintable {
             x.print(printer: printer)
         case .expr(let x):
             x.print(printer: printer)
-            printer.writeLine("")
+            printer.writeLine(";")
         }
     }
 }

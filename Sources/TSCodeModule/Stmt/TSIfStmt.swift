@@ -6,7 +6,7 @@ public struct TSIfStmt: PrettyPrintable {
     public init(
         condition: TSExpr,
         then: TSStmt,
-        `else`: TSStmt?
+        `else`: TSStmt? = nil
     ) {
         self.condition = condition
         self.then = then

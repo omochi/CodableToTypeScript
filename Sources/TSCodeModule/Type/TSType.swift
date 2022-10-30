@@ -8,7 +8,6 @@ public indirect enum TSType: PrettyPrintable {
     case stringLiteral(TSStringLiteralType)
     case union(TSUnionType)
 
-
     public func print(printer: PrettyPrinter) {
         switch self {
         case .array(let t): t.print(printer: printer)
@@ -61,7 +60,9 @@ public indirect enum TSType: PrettyPrintable {
         .union(TSUnionType(items))
     }
 
-
+    public static func union(_ items: TSType...) -> TSType {
+        union(items)
+    }
 
 
 }

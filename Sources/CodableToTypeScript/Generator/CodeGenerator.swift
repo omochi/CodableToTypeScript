@@ -19,7 +19,7 @@ public struct CodeGenerator {
     public var importFrom: String
 
     public init(
-        typeMap: TypeMap,
+        typeMap: TypeMap = .default,
         standardTypes: Set<String> = Self.defaultStandardTypes,
         importFrom: String = ".."
     ) {
@@ -66,5 +66,9 @@ public struct CodeGenerator {
     public func scanDependency(code: TSCode) -> [String] {
         let scanner = DependencyScanner(knownNames: standardTypes)
         return scanner.scan(code: code)
+    }
+
+    public func generateHelperLibrary() -> TSCode {
+        return typeConverter().helperLibrary().generate()
     }
 }

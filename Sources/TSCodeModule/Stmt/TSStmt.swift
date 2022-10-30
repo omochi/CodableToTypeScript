@@ -1,5 +1,6 @@
 public indirect enum TSStmt: PrettyPrintable {
     case block(TSBlockStmt)
+    case `for`(TSForStmt)
     case `if`(TSIfStmt)
     case `return`(TSReturnStmt)
     case `throw`(TSThrowStmt)
@@ -8,6 +9,7 @@ public indirect enum TSStmt: PrettyPrintable {
     public func print(printer r: PrettyPrinter) {
         switch self {
         case .block(let s): s.print(printer: r)
+        case .for(let s): s.print(printer: r)
         case .if(let s): s.print(printer: r)
         case .return(let s): s.print(printer: r)
         case .throw(let s): s.print(printer: r)
@@ -17,6 +19,26 @@ public indirect enum TSStmt: PrettyPrintable {
 
     public static func block(_ items: [TSBlockItem]) -> TSStmt {
         .block(TSBlockStmt(items))
+    }
+
+    public static func `for`(
+        kind: String,
+        name: String,
+        `operator`: String,
+        expr: TSExpr,
+        body: TSStmt
+    ) -> TSStmt {
+        .`for`(TSForStmt(
+            kind: kind,
+            name: name,
+            operator: `operator`,
+            expr: expr,
+            body: body
+        ))
+    }
+
+    public static func `if`(condition: TSExpr, then: TSStmt, `else`: TSStmt? = nil) -> TSStmt {
+        .`if`(TSIfStmt(condition: condition, then: then, else: `else`))
     }
     
     public static func `return`(_ expr: TSExpr) -> TSStmt {
