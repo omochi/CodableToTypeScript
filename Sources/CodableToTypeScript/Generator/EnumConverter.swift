@@ -17,7 +17,7 @@ struct EnumConverter {
 
         if try !converter.hasEmptyDecoder(type: .enum(type)) {
             jsonDecl = try transpile(type: type, kind: .json)
-            decodeFunc = try DecodeFunc(enumConverter: self, type: type).generate()
+            decodeFunc = try DecodeFunc(converter: converter, type: type).generate()
         }
 
         return .init(
@@ -102,10 +102,15 @@ struct EnumConverter {
     }
 
     struct DecodeFunc {
-        var enumConverter: EnumConverter
-        var converter: TypeConverter { enumConverter.converter }
+        init(converter: TypeConverter, type: EnumType) {
+            self.converter = converter
+            self.type = type
+            self.builder = converter.decodeFunction(type: .enum(type))
+        }
 
+        var converter: TypeConverter
         var type: EnumType
+        var builder: DecodeFunctionBuilder
 
         private func condCode(caseElement ce: CaseElement) -> TSExpr {
             return .infixOperator(
@@ -125,9 +130,7 @@ struct EnumConverter {
                 let label = value.label(index: index)
                 var expr: TSExpr = .memberAccess(base: json, name: label)
 
-                expr = try converter.generateFieldDecodeExpression(
-                    type: try value.type(), expr: expr
-                )
+                expr = try builder.decodeField(type: try value.type(), expr: expr)
 
                 let field = TSObjectField(
                     name: .identifier(label), value: expr
@@ -181,7 +184,7 @@ struct EnumConverter {
         }
 
         func generate() throws -> TSFunctionDecl {
-            var decl = converter.decodeFunctionSignature(type: .enum(type))
+            var decl = builder.signature()
 
             var topStmt: TSStmt?
 

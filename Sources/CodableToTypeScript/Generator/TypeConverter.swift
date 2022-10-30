@@ -2,6 +2,11 @@ import SwiftTypeReader
 import TSCodeModule
 
 final class TypeConverter {
+    enum TypeKind {
+        case type
+        case json
+    }
+
     struct TypeResult {
         var typeDecl: TSTypeDecl
         var jsonDecl: TSTypeDecl?
@@ -69,7 +74,7 @@ final class TypeConverter {
     }
 
     func transpiledName(of type: SType, kind: TypeKind) -> String {
-        var path = namePath(type: type)
+        var path = type.namePath()
         switch kind {
         case .type: break
         case .json:
@@ -85,21 +90,17 @@ final class TypeConverter {
         return path.convert()
     }
 
-    private func namePath(type: SType) -> NamePath {
-        var specifier = type.asSpecifier()
-        _ = specifier.removeModuleElement()
-
-        var parts: [String] = []
-        for element in specifier.elements {
-            parts.append(element.name)
+    func transpileFieldTypeReference(type: SType, kind: TypeKind) throws -> (type: TSType, isOptionalField: Bool) {
+        var type = type
+        var isOptionalField = false
+        if let (wrapped, _) = try type.unwrapOptional(limit: 1) {
+            type = wrapped
+            isOptionalField = true
         }
-
-        return NamePath(parts)
-    }
-
-    enum TypeKind {
-        case type
-        case json
+        return (
+            type: try transpileTypeReference(type, kind: kind),
+            isOptionalField: isOptionalField
+        )
     }
 
     func transpileTypeReference(_ type: SType, kind: TypeKind) throws -> TSType {
@@ -139,19 +140,6 @@ final class TypeConverter {
         return .named(name, genericArguments: args)
     }
 
-    func transpileFieldTypeReference(type: SType, kind: TypeKind) throws -> (type: TSType, isOptionalField: Bool) {
-        var type = type
-        var isOptionalField = false
-        if let (wrapped, _) = try type.unwrapOptional(limit: 1) {
-            type = wrapped
-            isOptionalField = true
-        }
-        return (
-            type: try transpileTypeReference(type, kind: kind),
-            isOptionalField: isOptionalField
-        )
-    }
-
     func transpileGenericParameter(type: SType, kind: TypeKind) -> TSGenericParameter {
         let name = transpiledName(of: type, kind: kind)
         return TSGenericParameter(.init(name))
@@ -176,202 +164,11 @@ final class TypeConverter {
         return try emptyDecodeEvaluator.evaluate(type: type)
     }
 
-    func decodeFunctionName(type: SType) -> String {
-        if let type = type.genericParameter {
-            let param = transpileGenericParameter(type: .genericParameter(type), kind: .type)
-            return genericParameterDecodeFunctionName(type: param.type)
-        }
-
-        var path = namePath(type: type)
-        path.items.append("decode")
-        return path.convert()
+    func decodeFunction(type: SType) -> DecodeFunctionBuilder {
+        DecodeFunctionBuilder(converter: self, type: type)
     }
 
-    private func genericParameterDecodeFunctionName(type: TSNamedType) -> String {
-        return type.name + "_decode"
-    }
-
-    func decodeFunctionSignature(type: SType) -> TSFunctionDecl {
-        let typeName = transpiledName(of: type, kind: .type)
-        let jsonName = transpiledName(of: type, kind: .json)
-        let funcName = decodeFunctionName(type: type)
-
-        let typeParameters: [GenericParameterType] = type.regular?.genericParameters ?? []
-
-        var typeArgs: [TSGenericArgument] = []
-        var jsonArgs: [TSGenericArgument] = []
-
-        for param in typeParameters {
-            typeArgs.append(TSGenericArgument(
-                .named(param.name)
-            ))
-            jsonArgs.append(TSGenericArgument(
-                .named(transpiledName(of: .genericParameter(param), kind: .json))
-            ))
-        }
-
-        var genericParameters: [TSGenericParameter] = []
-        for param in typeParameters {
-            genericParameters.append(TSGenericParameter(.init(param.name)))
-        }
-        for param in typeParameters {
-            let name = transpiledName(of: .genericParameter(param), kind: .json)
-            genericParameters.append(TSGenericParameter(.init(name)))
-        }
-
-        var parameters: [TSFunctionParameter] = [
-            TSFunctionParameter(
-                name: "json",
-                type: .named(jsonName, genericArguments: jsonArgs)
-            )
-        ]
-        let returnType: TSType = .named(typeName, genericArguments: typeArgs)
-
-        for param in typeParameters {
-            let jsonName = transpiledName(of: .genericParameter(param), kind: .json)
-            let decodeType: TSType = .function(
-                parameters: [TSFunctionParameter(name: "json", type: .named(jsonName))],
-                returnType: .named(param.name)
-            )
-
-            let decodeName = genericParameterDecodeFunctionName(type: .init(param.name))
-
-            parameters.append(TSFunctionParameter(
-                name: decodeName,
-                type: decodeType
-            ))
-        }
-
-        return TSFunctionDecl(
-            name: funcName,
-            genericParameters: genericParameters,
-            parameters: parameters,
-            returnType: returnType,
-            items: []
-        )
-    }
-
-    func generateDecodeFunctionAccess(type: SType) throws -> TSExpr {
-        func makeClosure() throws -> TSExpr {
-            let param = TSFunctionParameter(
-                name: "json",
-                type: try transpileTypeReference(type, kind: .json)
-            )
-            let ret = try transpileTypeReference(type, kind: .type)
-            let expr = try generateValueDecodeExpression(
-                type: type,
-                expr: .identifier("json")
-            )
-            return .closure(TSClosureExpr(
-                parameters: [param],
-                returnType: ret,
-                items: [.stmt(.return(expr))]
-            ))
-        }
-
-        if try hasEmptyDecoder(type: type) {
-            return .identifier(identityFunctionName)
-        }
-        if let (_, _) = try type.unwrapOptional(limit: nil) {
-            return try makeClosure()
-        }
-        if let (_, _) = try type.asArray() {
-            return try makeClosure()
-        }
-        if let (_, _) = try type.asDictionary() {
-            return try makeClosure()
-        }
-        return .identifier(decodeFunctionName(type: type))
-    }
-
-    let optionalFieldDecodeFunctionName = "OptionalField_decode"
-    let optionalDecodeFunctionName = "Optional_decode"
-    let arrayDecodeFunctionName = "Array_decode"
-    let dictionaryDecodeFunctionName = "Dictionary_decode"
-    let identityFunctionName = "identity"
-
-    func generateFieldDecodeExpression(
-        type: SType,
-        expr: TSExpr
-    ) throws -> TSExpr {
-        if let (wrapped, _) = try type.unwrapOptional(limit: 1) {
-            if try hasEmptyDecoder(type: wrapped) { return expr }
-            return try generateHigherOrderDecodeCall(
-                types: [wrapped],
-                callee: .identifier(optionalFieldDecodeFunctionName),
-                json: expr
-            )
-        }
-
-        return try generateValueDecodeExpression(
-            type: type, expr: expr
-        )
-    }
-
-    func generateValueDecodeExpression(
-        type: SType,
-        expr: TSExpr
-    ) throws -> TSExpr {
-        if let (wrapped, _) = try type.unwrapOptional(limit: nil) {
-            if try hasEmptyDecoder(type: wrapped) { return expr }
-            return try generateHigherOrderDecodeCall(
-                types: [wrapped],
-                callee: .identifier(optionalDecodeFunctionName),
-                json: expr
-            )
-        }
-        if let (_, element) = try type.asArray() {
-            if try hasEmptyDecoder(type: element) { return expr }
-            return try generateHigherOrderDecodeCall(
-                types: [element],
-                callee: .identifier(arrayDecodeFunctionName),
-                json: expr
-            )
-        }
-        if let (_, value) = try type.asDictionary() {
-            if try hasEmptyDecoder(type: value) { return expr }
-            return try generateHigherOrderDecodeCall(
-                types: [value],
-                callee: .identifier(dictionaryDecodeFunctionName),
-                json: expr
-            )
-        }
-
-        if try hasEmptyDecoder(type: type) {
-            return expr
-        }
-
-        let decode: TSExpr = .identifier(decodeFunctionName(type: type))
-
-        let typeArgs = try type.genericArguments()
-        if typeArgs.count > 0 {
-            return try generateHigherOrderDecodeCall(
-                types: typeArgs,
-                callee: decode,
-                json: expr
-            )
-        }
-
-        return .call(
-            callee: decode,
-            arguments: [TSFunctionArgument(expr)]
-        )
-    }
-
-    private func generateHigherOrderDecodeCall(
-        types: [SType],
-        callee: TSExpr,
-        json: TSExpr
-    ) throws -> TSExpr {
-        var args: [TSFunctionArgument] = [
-            TSFunctionArgument(json)
-        ]
-
-        for type in types {
-            let decode = try generateDecodeFunctionAccess(type: type)
-            args.append(TSFunctionArgument(decode))
-        }
-
-        return .call(callee: callee, arguments: args)
+    func helperLibrary() -> HelperLibraryGenerator {
+        HelperLibraryGenerator()
     }
 }

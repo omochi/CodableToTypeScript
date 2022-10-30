@@ -1,6 +1,18 @@
 import SwiftTypeReader
 
 extension SType {
+    func namePath() -> NamePath {
+        var specifier = self.asSpecifier()
+        _ = specifier.removeModuleElement()
+
+        var parts: [String] = []
+        for element in specifier.elements {
+            parts.append(element.name)
+        }
+
+        return NamePath(parts)
+    }
+
     func unwrapOptional(limit: Int?) throws -> (wrapped: SType, depth: Int)? {
         var type = self
         var depth = 0
