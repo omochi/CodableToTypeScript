@@ -15,8 +15,13 @@ struct StructConverter {
     func convert(type: StructType) throws -> TypeConverter.TypeResult {
         let typeDecl = try transpile(type: type, kind: .type)
 
-        let jsonDecl = try transpile(type: type, kind: .json)
-        let decodeFunc = try generateDecodeFunc(type: type)
+        var jsonDecl: TSTypeDecl?
+        var decodeFunc: TSFunctionDecl?
+
+        if try !converter.hasEmptyDecoder(type: .struct(type)) {
+            jsonDecl = try transpile(type: type, kind: .json)
+            decodeFunc = try generateDecodeFunc(type: type)
+        }
 
         return .init(
             typeDecl: typeDecl,

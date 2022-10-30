@@ -12,8 +12,13 @@ struct EnumConverter {
     func convert(type: EnumType) throws -> TypeConverter.TypeResult {
         let typeDecl = try transpile(type: type, kind: .type)
 
-        let jsonDecl = try transpile(type: type, kind: .json)
-        let decodeFunc = try DecodeFunc(enumConverter: self, type: type).generate()
+        var jsonDecl: TSTypeDecl?
+        var decodeFunc: TSFunctionDecl?
+
+        if try !converter.hasEmptyDecoder(type: .enum(type)) {
+            jsonDecl = try transpile(type: type, kind: .json)
+            decodeFunc = try DecodeFunc(enumConverter: self, type: type).generate()
+        }
 
         return .init(
             typeDecl: typeDecl,

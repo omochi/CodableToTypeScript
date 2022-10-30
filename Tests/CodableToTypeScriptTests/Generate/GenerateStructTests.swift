@@ -15,20 +15,11 @@ export type S = {
     a: number;
     b: string;
 };
-""", """
-export type S_JSON = {
-    a: number;
-    b: string;
-};
-""", """
-export function S_decode(json: S_JSON): S {
-    return {
-        a: json.a,
-        b: json.b
-    };
-}
 """
-            ]
+            ],
+            unexpecteds: ["""
+export function S_decode
+"""]
         )
     }
 
@@ -130,14 +121,8 @@ struct S {
     var e3: Int???
 """,
             typeSelector: .name("S"),
-            expecteds: ["""
-export function S_decode(json: S_JSON): S {
-    return {
-        e1: json.e1,
-        e2: json.e2,
-        e3: json.e3
-    };
-}
+            unexpecteds: ["""
+export function S_decode
 """
             ]
         )
@@ -186,14 +171,8 @@ struct S {
 """
             ,
             typeSelector: .name("S"),
-            expecteds: ["""
-export function S_decode(json: S_JSON): S {
-    return {
-        e1: json.e1,
-        e2: json.e2,
-        e3: json.e3
-    };
-}
+            unexpecteds: ["""
+export function S_decode
 """]
         )
     }
