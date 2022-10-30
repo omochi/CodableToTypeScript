@@ -11,7 +11,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/omochi/SwiftTypeReader", .upToNextMinor(from: "1.1.1")),
+        .package(url: "https://github.com/omochi/SwiftTypeReader", .upToNextMinor(from: "1.1.3")),
     ],
     targets: [
         .target(

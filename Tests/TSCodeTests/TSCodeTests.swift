@@ -12,11 +12,9 @@ final class TSCodeTests: XCTestCase {
             .init(name: "a", type: s2, isOptional: true)
         ])
 
-        let code = TSCode(
-            decls: [
-                .typeDecl(name: "S1", type: s1)
-            ]
-        )
+        let code = TSCode([
+            .decl(.type(name: "S1", type: s1))
+        ])
 
         let expected = """
 export type S1 = {
@@ -46,12 +44,10 @@ export type S1 = {
         let expected = """
 {
     kind: "a";
-    a: {
-    };
+    a: {};
 } | {
     kind: "b";
-    b: {
-    };
+    b: {};
 }
 """
 
@@ -63,12 +59,10 @@ export type S1 = {
             .stringLiteral("a"),
             .stringLiteral("b"),
             .stringLiteral("c")
-        ], splitLines: true)
+        ])
 
         let expected = """
-"a" |
-"b" |
-"c"
+"a" | "b" | "c"
 """
         XCTAssertEqual(e.description, expected)
     }
@@ -95,15 +89,13 @@ import {
         let ns = TSNamespaceDecl(
             name: "A",
             decls: [
-                .typeDecl(name: "B", type: b)
+                .type(name: "B", type: b)
             ]
         )
 
-        let code = TSCode(
-            decls: [
-                .namespaceDecl(ns)
-            ]
-        )
+        let code = TSCode([
+            .decl(.namespace(ns))
+        ])
 
         let expected = """
 export namespace A {

@@ -2,23 +2,6 @@ import SwiftTypeReader
 import TSCodeModule
 
 struct StructConverter {
-    struct Result {
-        var typeDecl: TSTypeDecl
-        var namespaceDecl: TSNamespaceDecl?
-
-        var decls: [TSDecl] {
-            var decls: [TSDecl] = [
-                .typeDecl(typeDecl)
-            ]
-
-            if let d = namespaceDecl {
-                decls.append(.namespaceDecl(d))
-            }
-
-            return decls
-        }
-    }
-
     init(
         converter: TypeConverter
     ) {
@@ -29,29 +12,74 @@ struct StructConverter {
 
     private var typeMap: TypeMap { converter.typeMap }
 
-    func convert(type: StructType) throws -> Result {
+    func convert(type: StructType) throws -> TypeConverter.TypeResult {
+        let typeDecl = try transpile(type: type, kind: .type)
+
+        var jsonDecl: TSTypeDecl?
+        var decodeFunc: TSFunctionDecl?
+
+        if try !converter.hasEmptyDecoder(type: .struct(type)) {
+            jsonDecl = try transpile(type: type, kind: .json)
+            decodeFunc = try generateDecodeFunc(type: type)
+        }
+
+        return .init(
+            typeDecl: typeDecl,
+            jsonDecl: jsonDecl,
+            decodeFunc: decodeFunc,
+            nestedTypeDecls: try converter.convertNestedTypeDecls(type: .struct(type))
+        )
+    }
+
+    private func transpile(type: StructType, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
         var fields: [TSRecordType.Field] = []
 
         for property in type.storedProperties {
-            let fieldName = property.name
-            let (type, isOptional) = try Utils.unwrapOptional(try property.type(), limit: 1)
-            let fieldType = try converter.transpileTypeReference(type)
+            let (type, isOptionalField) = try converter.transpileFieldTypeReference(
+                type: try property.type(), kind: kind
+            )
+
+            fields.append(.init(
+                name: property.name,
+                type: type,
+                isOptional: isOptionalField
+            ))
+        }
+
+        return TSTypeDecl(
+            name: converter.transpiledName(of: .struct(type), kind: kind),
+            genericParameters: converter.transpileGenericParameters(type: .struct(type), kind: kind),
+            type: .record(TSRecordType(fields))
+        )
+    }
+
+    private func generateDecodeFunc(type: StructType) throws -> TSFunctionDecl {
+        let builder = converter.decodeFunction()
+        var decl = builder.signature(type: .struct(type))
+
+        var fields: [TSObjectField] = []
+
+        for field in type.storedProperties {
+            var expr: TSExpr = .memberAccess(
+                base: .identifier("json"),
+                name: field.name
+            )
+
+            expr = try builder.decodeField(type: try field.type(), expr: expr)
 
             fields.append(
-                .init(name: fieldName, type: fieldType, isOptional: isOptional)
+                .init(
+                    name: .identifier(field.name),
+                    value: expr
+                )
             )
         }
 
-        let typeDecl = TSTypeDecl(
-            name: type.name,
-            genericParameters: type.genericParameters.map { $0.name },
-            type: .record(TSRecordType(fields))
-        )
+        decl.items = [
+            .stmt(.return(.object(fields)))
+        ]
 
-        return Result(
-            typeDecl: typeDecl,
-            namespaceDecl: try converter.convertNestedDecls(type: .struct(type))
-        )
+        return  decl
     }
 
 }

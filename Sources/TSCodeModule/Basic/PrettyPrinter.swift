@@ -15,12 +15,16 @@ public final class PrettyPrinter {
 
     public private(set) var output: String = ""
 
-    private var needsIndent: Bool = true
+    public private(set) var isStartOfLine: Bool = true
+
+    public private(set) var line: Int = 1
+
+    public var smallNumber: Int = 3
 
     public init() {}
 
     public func write(_ text: String) {
-        writeIndentIfNeeded()
+        indentIfStartOfLine()
         output += text
     }
 
@@ -32,7 +36,8 @@ public final class PrettyPrinter {
         write(text)
 
         output += "\n"
-        needsIndent = true
+        isStartOfLine = true
+        line += 1
     }
 
     public func push() {
@@ -49,9 +54,9 @@ public final class PrettyPrinter {
         return try f()
     }
 
-    private func writeIndentIfNeeded() {
-        guard needsIndent else { return }
-        needsIndent = false
+    private func indentIfStartOfLine() {
+        guard isStartOfLine else { return }
+        isStartOfLine = false
         output += String(repeating: "    ", count: level)
     }
 }

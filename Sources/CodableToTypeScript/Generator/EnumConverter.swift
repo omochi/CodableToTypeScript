@@ -9,257 +9,223 @@ struct EnumConverter {
     private var converter: TypeConverter
     private var typeMap: TypeMap { converter.typeMap }
 
-    enum TypeResult {
-        case stringRawValue(
-            typeDecl: TSTypeDecl
-        )
+    func convert(type: EnumType) throws -> TypeConverter.TypeResult {
+        let typeDecl = try transpile(type: type, kind: .type)
 
-        case associatedValue(
-            jsonTypeDecl: TSTypeDecl,
-            taggedTypeDecl: TSTypeDecl,
-            decodeFunc: TSFunctionDecl
-        )
+        var jsonDecl: TSTypeDecl?
+        var decodeFunc: TSFunctionDecl?
 
-        case never(
-            typeDecl: TSTypeDecl
-        )
-
-        var decls: [TSDecl] {
-            switch self {
-            case .stringRawValue(typeDecl: let typeDecl):
-                return [.typeDecl(typeDecl)]
-            case .associatedValue(
-                jsonTypeDecl: let jsonTypeDecl,
-                taggedTypeDecl: let taggedTypeDecl,
-                decodeFunc: let decodeFunc
-            ):
-                return [
-                    .typeDecl(jsonTypeDecl),
-                    .typeDecl(taggedTypeDecl),
-                    .functionDecl(decodeFunc)
-                ]
-            case .never(typeDecl: let typeDecl):
-                return [.typeDecl(typeDecl)]
-            }
+        if try !converter.hasEmptyDecoder(type: .enum(type)) {
+            jsonDecl = try transpile(type: type, kind: .json)
+            decodeFunc = try DecodeFunc(converter: converter, type: type).generate()
         }
-    }
-
-    struct Result {
-        var type: TypeResult
-        var namespaceDecl: TSNamespaceDecl?
-
-        var decls: [TSDecl] {
-            var decls: [TSDecl] = type.decls
-            if let d = namespaceDecl {
-                decls.append(.namespaceDecl(d))
-            }
-            return decls
-        }
-    }
-
-    func convert(type: EnumType) throws -> Result {
-        let typeResult = try convertType(type: type)
-
-        return Result(
-            type: typeResult,
-            namespaceDecl: try converter.convertNestedDecls(type: .enum(type))
-        )
-    }
-
-    private func convertType(type: EnumType) throws -> TypeResult {
-        if try Self.isStringRawValueType(type: type) {
-            let unionType = try transpile(type: type)
-            return .stringRawValue(
-                typeDecl: .init(
-                    name: type.name, type: .union(unionType)
-                )
-            )
-        }
-
-
-        let genericParameters = type.genericParameters.map { $0.name }
-
-        if type.caseElements.isEmpty {
-            return .never(
-                typeDecl: .init(
-                    name: type.name,
-                    genericParameters: genericParameters,
-                    type: .named("never")
-                )
-            )
-        }
-
-        let jsonType = try transpile(type: type)
-        let jsonTypeName = try Self.transpiledName(type: type)
-        let taggedTypeName = type.name
-        let taggedType = Self.makeTaggedType(jsonType: jsonType)
-
-        let decodeFunc = Self.makeDecodeFunc(
-            taggedName: taggedTypeName,
-            jsonName: jsonTypeName,
-            jsonType: jsonType,
-            genericParameters: genericParameters
-        )
-
-        return .associatedValue(
-            jsonTypeDecl: .init(
-                name: jsonTypeName,
-                genericParameters: genericParameters,
-                type: .union(jsonType)
-            ),
-            taggedTypeDecl: .init(
-                name: taggedTypeName,
-                genericParameters: genericParameters,
-                type: .union(taggedType)
-            ),
-            decodeFunc: decodeFunc
-        )
-    }
-
-    func transpile(type: EnumType) throws -> TSUnionType {
-        let splitLines: Bool
-        var itemTypes: [TSType] = []
-
-        if try Self.isStringRawValueType(type: type) {
-            splitLines = true
-            for ce in type.caseElements {
-                itemTypes.append(.stringLiteral(ce.name))
-            }
-        } else {
-            splitLines = false
-            for ce in type.caseElements {
-                let record = try transpile(caseElement: ce)
-                itemTypes.append(.record(record))
-            }
-        }
-
-        return TSUnionType(itemTypes, splitLines: splitLines)
-    }
-
-    static func isStringRawValueType(type: EnumType) throws -> Bool {
-        try type.inheritedTypes().first?.name == "String"
-    }
-
-    static func transpiledName(type: EnumType) throws -> String {
-        if try isStringRawValueType(type: type) {
-            return type.name
-        } else {
-            return type.name + "JSON"
-        }
-    }
-
-    private func transpile(caseElement: CaseElement) throws -> TSRecordType {
-        var fields: [TSRecordType.Field] = []
-
-        for (i, av) in caseElement.associatedValues.enumerated() {
-            let field = try transpile(associatedValue: av, index: i)
-            fields.append(field)
-        }
-
-        return TSRecordType([
-            .init(
-                name: caseElement.name,
-                type: .record(fields)
-            )
-        ])
-    }
-
-    private func transpile(associatedValue av: AssociatedValue, index: Int) throws -> TSRecordType.Field {
-        let fieldName = Utils.label(of: av, index)
-        let (type, isOptional) = try Utils.unwrapOptional(try av.type(), limit: 1)
-        let fieldType = try converter.transpileTypeReference(type)
 
         return .init(
-            name: fieldName,
-            type: fieldType,
-            isOptional: isOptional
+            typeDecl: typeDecl,
+            jsonDecl: jsonDecl,
+            decodeFunc: decodeFunc,
+            nestedTypeDecls: try converter.convertNestedTypeDecls(type: .enum(type))
         )
     }
 
-    static func caseElements(from jsonType: TSUnionType) -> [TSRecordType.Field] {
-        jsonType.items.compactMap { (item) in
-            guard case .record(let record) = item,
-                  let field = record.fields.first else {
-                return nil
+    func transpile(type: EnumType, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
+        let genericParameters = converter.transpileGenericParameters(
+            type: .enum(type), kind: kind
+        )
+
+        if type.caseElements.isEmpty {
+            return TSTypeDecl(
+                name: converter.transpiledName(of: .enum(type), kind: kind),
+                genericParameters: genericParameters,
+                type: .named("never")
+            )
+        } else if try SType.enum(type).hasStringRawValue() {
+            let items: [TSType] = type.caseElements.map { (ce) in
+                .stringLiteral(ce.name)
             }
 
-            return field
+            return TSTypeDecl(
+                name: converter.transpiledName(of: .enum(type), kind: kind),
+                genericParameters: genericParameters,
+                type: .union(items)
+            )
         }
+
+        let items: [TSType] = try type.caseElements.map { (ce) in
+            .record(try transpile(caseElement: ce, kind: kind))
+        }
+
+        return TSTypeDecl(
+            name: converter.transpiledName(of: .enum(type), kind: kind),
+            genericParameters: genericParameters,
+            type: .union(items)
+        )
     }
 
-    static func makeTaggedType(jsonType: TSUnionType) -> TSUnionType {
-        var itemTypes: [TSType] = []
+    private func transpile(
+        caseElement: CaseElement,
+        kind: TypeConverter.TypeKind
+    ) throws -> TSRecordType {
+        var outerFields: [TSRecordType.Field] = []
 
-        for caseElement in self.caseElements(from: jsonType) {
-            let fields: [TSRecordType.Field] = [
-                .init(name: "kind", type: .stringLiteral(caseElement.name)),
-                caseElement
+        switch kind {
+        case .type:
+            outerFields.append(
+                .init(name: "kind", type: .stringLiteral(caseElement.name))
+            )
+        case .json:
+            break
+        }
+
+        var innerFields: [TSRecordType.Field] = []
+
+        for (index, av) in caseElement.associatedValues.enumerated() {
+            let (type, isOptionalField) = try converter.transpileFieldTypeReference(
+                type: try av.type(), kind: kind
+            )
+
+            innerFields.append(.init(
+                name: av.label(index: index),
+                type: type,
+                isOptional: isOptionalField
+            ))
+        }
+
+        outerFields.append(
+            .init(
+                name: caseElement.name,
+                type: .record(innerFields)
+            )
+        )
+
+        return TSRecordType(outerFields)
+    }
+
+    struct DecodeFunc {
+        init(converter: TypeConverter, type: EnumType) {
+            self.converter = converter
+            self.type = type
+            self.builder = converter.decodeFunction()
+        }
+
+        var converter: TypeConverter
+        var type: EnumType
+        var builder: DecodeFunctionBuilder
+
+        private func condCode(caseElement ce: CaseElement) -> TSExpr {
+            return .infixOperator(
+                .stringLiteral(ce.name),
+                "in",
+                .identifier("json")
+            )
+        }
+
+        private func decodeCaseObject(
+            caseElement ce: CaseElement,
+            json: TSExpr
+        ) throws -> TSExpr {
+            var fields: [TSObjectField] = []
+
+            for (index, value) in ce.associatedValues.enumerated() {
+                let label = value.label(index: index)
+                var expr: TSExpr = .memberAccess(base: json, name: label)
+
+                expr = try builder.decodeField(type: try value.type(), expr: expr)
+
+                let field = TSObjectField(
+                    name: .identifier(label), value: expr
+                )
+                fields.append(field)
+            }
+
+            return .object(fields)
+        }
+
+        private func thenCode(caseElement ce: CaseElement) throws -> TSStmt {
+            var block: [TSBlockItem] = []
+
+            let varDecl = TSVarDecl(
+                kind: "const", name: "j",
+                initializer: .memberAccess(
+                    base: .identifier("json"),
+                    name: ce.name
+                )
+            )
+            if !ce.associatedValues.isEmpty {
+                block.append(.decl(.var(varDecl)))
+            }
+
+            let fields: [TSObjectField] = [
+                .init(
+                    name: .identifier("kind"),
+                    value: .stringLiteral(ce.name)
+                ),
+                .init(
+                    name: .identifier(ce.name),
+                    value: try decodeCaseObject(
+                        caseElement: ce,
+                        json: .identifier("j")
+                    )
+                )
             ]
-
-            itemTypes.append(.record(fields))
+            block.append(.stmt(.return(.object(fields))))
+            return .block(block)
         }
 
-        return TSUnionType(itemTypes)
-
-    }
-
-    static func makeDecodeFunc(
-        taggedName: String,
-        jsonName: String,
-        jsonType: TSUnionType,
-        genericParameters: [String]
-    ) -> TSFunctionDecl {
-        let genericSignature: String
-        if genericParameters.isEmpty {
-            genericSignature = ""
-        } else {
-            genericSignature = "<" +
-                genericParameters.joined(separator: ", ") +
-                ">"
+        private func lastElseCode() -> TSStmt {
+            return .block([
+                .stmt(.throw(.new(
+                    callee: .identifier("Error"),
+                    arguments: [
+                        TSFunctionArgument(.stringLiteral("unknown kind"))
+                    ]
+                )))
+            ])
         }
 
-        let caseElements = self.caseElements(from: jsonType)
+        func generate() throws -> TSFunctionDecl {
+            var decl = builder.signature(type: .enum(type))
 
-        func ifCase(_ ce: TSRecordType.Field, _ i: Int) -> [String] {
-            let open: String
-            if i == 0 {
-                open = "if"
-            } else {
-                open = "} else if"
+            var topStmt: TSStmt?
+
+            func appendElse(stmt: TSStmt) {
+                if case .if(let top) = topStmt {
+                    topStmt = .if(appendElse(stmt: stmt, to: top))
+                } else {
+                    topStmt = stmt
+                }
             }
 
-            var strs: [String] = """
-\(open) ("\(ce.name)" in json) {
-    return { "kind": "\(ce.name)", \(ce.name): json.\(ce.name) };
-""".components(separatedBy: "\n")
+            func appendElse(stmt: TSStmt, to ifStmt: TSIfStmt) -> TSIfStmt {
+                var ifStmt = ifStmt
 
+                if case .if(let nextIf) = ifStmt.else {
+                    ifStmt.else = .if(appendElse(stmt: stmt, to: nextIf))
+                } else {
+                    ifStmt.else = stmt
+                }
 
-            if i == caseElements.count - 1 {
-                strs += """
-} else {
-    throw new Error("unknown kind");
-}
-""".components(separatedBy: "\n")
+                return ifStmt
             }
 
-            return strs
+            for ce in type.caseElements {
+                let ifSt = TSIfStmt(
+                    condition: condCode(caseElement: ce),
+                    then: try thenCode(caseElement: ce),
+                    else: nil
+                )
+
+                appendElse(stmt: .if(ifSt))
+            }
+
+            appendElse(stmt: lastElseCode())
+
+            if let top = topStmt {
+                decl.items.append(.stmt(top))
+            }
+
+            return decl
         }
-
-        let signature = [
-            "\(taggedName)Decode\(genericSignature)(",
-            "json: \(jsonName)\(genericSignature)",
-            "): ",
-            "\(taggedName)\(genericSignature)"
-        ].joined()
-
-
-        let body = caseElements.enumerated().flatMap { (i, ce) in
-            ifCase(ce, i)
-        }
-
-        return TSFunctionDecl(
-            signature: signature,
-            body: body
-        )
     }
+
 }

@@ -11,6 +11,7 @@ public struct CodeGenerator {
         "boolean",
         "number",
         "string",
+        "Error"
     ]
 
     public var typeMap: TypeMap
@@ -18,7 +19,7 @@ public struct CodeGenerator {
     public var importFrom: String
 
     public init(
-        typeMap: TypeMap,
+        typeMap: TypeMap = .default,
         standardTypes: Set<String> = Self.defaultStandardTypes,
         importFrom: String = ".."
     ) {
@@ -41,18 +42,33 @@ public struct CodeGenerator {
     ) throws -> TSCode {
         var decls = try typeConverter().convert(type: type)
 
-        let deps = DependencyScanner(standardTypes: standardTypes)(decls: decls)
+        let deps = scanDependency(
+            code: TSCode(decls.map { .decl($0) })
+        )
+
         if !deps.isEmpty {
-            let importDecl = TSImportDecl(names: deps, from: importFrom)
-            decls.insert(.importDecl(importDecl), at: 0)
+            let imp = TSImportDecl(names: deps, from: importFrom)
+            decls.insert(.`import`(imp), at: 0)
         }
 
-        return TSCode(decls: decls)
+        return TSCode(decls.map { .decl($0) })
     }
 
     public func transpileTypeReference(
         type: SType
     ) throws -> TSType {
-        return try typeConverter().transpileTypeReference(type)
+        return try typeConverter().transpileTypeReference(
+            type,
+            kind: .type
+        )
+    }
+
+    public func scanDependency(code: TSCode) -> [String] {
+        let scanner = DependencyScanner(knownNames: standardTypes)
+        return scanner.scan(code: code)
+    }
+
+    public func generateHelperLibrary() -> TSCode {
+        return typeConverter().helperLibrary().generate()
     }
 }
