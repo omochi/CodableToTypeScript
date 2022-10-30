@@ -240,4 +240,32 @@ export function S_decode(json: S_JSON): S {
 """]
         )
     }
+
+    func testRecursive() throws {
+        try assertGenerate(
+            source: """
+struct S {
+    var a: S?
+}
+""",
+            expecteds: ["""
+export type S = {
+    a?: S;
+};
+""", """
+export type S_JSON = {
+    a?: S_JSON;
+};
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        a: OptionalField_decode(json.a, S_decode)
+    };
+}
+"""
+            ]
+        )
+    }
+
+
 }

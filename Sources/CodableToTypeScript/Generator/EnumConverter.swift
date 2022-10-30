@@ -39,7 +39,7 @@ struct EnumConverter {
                 genericParameters: genericParameters,
                 type: .named("never")
             )
-        } else if try converter.isStringRawValueType(type: .enum(type)) {
+        } else if try SType.enum(type).hasStringRawValue() {
             let items: [TSType] = type.caseElements.map { (ce) in
                 .stringLiteral(ce.name)
             }
@@ -85,7 +85,7 @@ struct EnumConverter {
             )
 
             innerFields.append(.init(
-                name: converter.associatedValueLabel(value: av, index: index),
+                name: av.label(index: index),
                 type: type,
                 isOptional: isOptionalField
             ))
@@ -122,7 +122,7 @@ struct EnumConverter {
             var fields: [TSObjectField] = []
 
             for (index, value) in ce.associatedValues.enumerated() {
-                let label = converter.associatedValueLabel(value: value, index: index)
+                let label = value.label(index: index)
                 var expr: TSExpr = .memberAccess(base: json, name: label)
 
                 expr = try converter.generateFieldDecodeExpression(
