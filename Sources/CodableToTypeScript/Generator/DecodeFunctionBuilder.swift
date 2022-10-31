@@ -102,10 +102,7 @@ struct DecodeFunctionBuilder {
         return .identifier(self.name(type: type))
     }
 
-    func decodeField(
-        type: SType,
-        expr: TSExpr
-    ) throws -> TSExpr {
+    func decodeField(type: SType, expr: TSExpr) throws -> TSExpr {
         if let (wrapped, _) = try type.unwrapOptional(limit: 1) {
             if try c.hasEmptyDecoder(type: wrapped) { return expr }
             return try callHeigherOrderDecode(
@@ -118,10 +115,7 @@ struct DecodeFunctionBuilder {
         return try decodeValue(type: type, expr: expr)
     }
 
-    func decodeValue(
-        type: SType,
-        expr: TSExpr
-    ) throws -> TSExpr {
+    func decodeValue(type: SType, expr: TSExpr) throws -> TSExpr {
         let lib = c.helperLibrary()
         if let (wrapped, _) = try type.unwrapOptional(limit: nil) {
             if try c.hasEmptyDecoder(type: wrapped) { return expr }
@@ -169,11 +163,7 @@ struct DecodeFunctionBuilder {
         )
     }
 
-    private func callHeigherOrderDecode(
-        types: [SType],
-        callee: TSExpr,
-        json: TSExpr
-    ) throws -> TSExpr {
+    private func callHeigherOrderDecode(types: [SType], callee: TSExpr, json: TSExpr) throws -> TSExpr {
         var args: [TSFunctionArgument] = [
             TSFunctionArgument(json)
         ]

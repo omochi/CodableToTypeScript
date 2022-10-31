@@ -2,36 +2,9 @@ import SwiftTypeReader
 import TSCodeModule
 
 struct StructConverter {
-    init(
-        converter: TypeConverter
-    ) {
-        self.converter = converter
-    }
+    var converter: TypeConverter
 
-    private var converter: TypeConverter
-
-    private var typeMap: TypeMap { converter.typeMap }
-
-    func convert(type: StructType) throws -> TypeConverter.TypeResult {
-        let typeDecl = try transpile(type: type, kind: .type)
-
-        var jsonDecl: TSTypeDecl?
-        var decodeFunc: TSFunctionDecl?
-
-        if try !converter.hasEmptyDecoder(type: .struct(type)) {
-            jsonDecl = try transpile(type: type, kind: .json)
-            decodeFunc = try generateDecodeFunc(type: type)
-        }
-
-        return .init(
-            typeDecl: typeDecl,
-            jsonDecl: jsonDecl,
-            decodeFunc: decodeFunc,
-            nestedTypeDecls: try converter.convertNestedTypeDecls(type: .struct(type))
-        )
-    }
-
-    private func transpile(type: StructType, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
+    func transpile(type: StructType, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
         var fields: [TSRecordType.Field] = []
 
         for property in type.storedProperties {
@@ -53,7 +26,7 @@ struct StructConverter {
         )
     }
 
-    private func generateDecodeFunc(type: StructType) throws -> TSFunctionDecl {
+    func generateDecodeFunc(type: StructType) throws -> TSFunctionDecl {
         let builder = converter.decodeFunction()
         var decl = builder.signature(type: .struct(type))
 

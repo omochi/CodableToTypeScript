@@ -7,30 +7,6 @@ final class TypeConverter {
         case json
     }
 
-    struct TypeResult {
-        var typeDecl: TSTypeDecl
-        var jsonDecl: TSTypeDecl?
-        var decodeFunc: TSFunctionDecl?
-        var nestedTypeDecls: [TSDecl]
-
-        var decls: [TSDecl] {
-            var decls: [TSDecl] = [
-                .type(typeDecl)
-            ]
-
-            if let d = jsonDecl {
-                decls.append(.type(d))
-            }
-            if let d = decodeFunc {
-                decls.append(.function(d))
-            }
-            
-            decls += nestedTypeDecls
-
-            return decls
-        }
-    }
-
     init(typeMap: TypeMap) {
         self.typeMap = typeMap
         self.emptyDecodeEvaluator = EmptyDecodeEvaluator(typeMap: typeMap)
@@ -39,38 +15,53 @@ final class TypeConverter {
     let typeMap: TypeMap
     private let emptyDecodeEvaluator: EmptyDecodeEvaluator
 
-    func convert(type: SType) throws -> [TSDecl] {
+    func generateTypeOwnDeclarations(type: SType) throws -> TypeOwnDeclarations {
+        return TypeOwnDeclarations(
+            type: try generateTypeDeclaration(type: type),
+            jsonType: try generateJSONTypeDeclaration(type: type),
+            decodeFunction: try generateDecodeFunction(type: type)
+        )
+    }
+
+    func generateTypeDeclaration(type: SType) throws -> TSTypeDecl {
+        return try generateTypeDeclaration(type: type, kind: .type)
+    }
+
+    func generateJSONTypeDeclaration(type: SType) throws -> TSTypeDecl? {
+        if try hasEmptyDecoder(type: type) { return nil }
+        return try generateTypeDeclaration(type: type, kind: .json)
+    }
+
+    private func generateTypeDeclaration(type: SType, kind: TypeKind) throws -> TSTypeDecl {
         guard let type = type.regular else {
-            return []
+            throw MessageError("unresolved type: \(type)")
         }
 
         switch type {
         case .enum(let type):
-            let result = try EnumConverter(converter: self).convert(type: type)
-            return result.decls
+            return try EnumConverter(converter: self).transpile(type: type, kind: kind)
         case .struct(let type):
-            let result = try StructConverter(converter: self).convert(type: type)
-            return result.decls
-        case .protocol,
-                .genericParameter:
-            return []
+            return try StructConverter(converter: self).transpile(type: type, kind: kind)
+        case .protocol, .genericParameter:
+            throw MessageError("unsupported type: \(type)")
         }
     }
 
-    func convertNestedTypeDecls(type: SType) throws -> [TSDecl] {
-        var decls: [TSDecl] = []
+    func generateDecodeFunction(type: SType) throws -> TSFunctionDecl? {
+        if try hasEmptyDecoder(type: type) { return nil }
 
         guard let type = type.regular else {
-            return decls
+            throw MessageError("unresolved type: \(type)")
         }
 
-        if !type.types.isEmpty {
-            for nestedType in type.types {
-                decls += try self.convert(type: nestedType)
-            }
+        switch type {
+        case .enum(let type):
+            return try EnumConverter.DecodeFunc(converter: self, type: type).generate()
+        case .struct(let type):
+            return try StructConverter(converter: self).generateDecodeFunc(type: type)
+        case .protocol, .genericParameter:
+            throw MessageError("unsupported type: \(type)")
         }
-
-        return decls
     }
 
     func transpiledName(of type: SType, kind: TypeKind) -> String {

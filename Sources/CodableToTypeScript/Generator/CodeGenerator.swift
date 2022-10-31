@@ -3,7 +3,7 @@ import SwiftTypeReader
 import TSCodeModule
 
 public struct CodeGenerator {
-    public static let defaultStandardTypes: Set<String> = [
+    public static let defaultKnownNames: Set<String> = [
         "never",
         "void",
         "null",
@@ -14,18 +14,28 @@ public struct CodeGenerator {
         "Error"
     ]
 
-    public var typeMap: TypeMap
-    public var standardTypes: Set<String>
-    public var importFrom: String
+    public var typeMap: TypeMap {
+        didSet {
+            // reset cache
+            typeConverter = TypeConverter(typeMap: typeMap)
+        }
+    }
+
+    public var knownNames: Set<String>
+    public var importFrom: String?
+
+    private var typeConverter: TypeConverter
+
 
     public init(
         typeMap: TypeMap = .default,
-        standardTypes: Set<String> = Self.defaultStandardTypes,
-        importFrom: String = ".."
+        knownNames: Set<String> = Self.defaultKnownNames,
+        importFrom: String? = nil
     ) {
         self.typeMap = typeMap
-        self.standardTypes = standardTypes
+        self.knownNames = knownNames
         self.importFrom = importFrom
+        self.typeConverter = TypeConverter(typeMap: typeMap)
     }
 
     @available(*, deprecated, message: "Use `generateTypeDeclarationFile`")
@@ -33,42 +43,69 @@ public struct CodeGenerator {
         try generateTypeDeclarationFile(type: type)
     }
 
-    private func typeConverter() -> TypeConverter {
-        return TypeConverter(typeMap: typeMap)
+    public func generateTypeOwnDeclarations(type: SType) throws -> TypeOwnDeclarations {
+        try typeConverter.generateTypeOwnDeclarations(type: type)
     }
 
-    public func generateTypeDeclarationFile(
-        type: SType
-    ) throws -> TSCode {
-        var decls = try typeConverter().convert(type: type)
+    public func generateTypeDeclaration(type: SType) throws -> TSTypeDecl {
+        try typeConverter.generateTypeDeclaration(type: type)
+    }
 
-        let deps = scanDependency(
-            code: TSCode(decls.map { .decl($0) })
-        )
+    public func hasTranspiledJSONType(type: SType) throws -> Bool {
+        try !typeConverter.hasEmptyDecoder(type: type)
+    }
 
-        if !deps.isEmpty {
-            let imp = TSImportDecl(names: deps, from: importFrom)
-            decls.insert(.`import`(imp), at: 0)
+    public func generateJSONTypeDeclaration(type: SType) throws -> TSTypeDecl? {
+        try typeConverter.generateJSONTypeDeclaration(type: type)
+    }
+
+    public func generateDecodeFunction(type: SType) throws -> TSFunctionDecl? {
+        try typeConverter.generateDecodeFunction(type: type)
+    }
+
+    public func generateTypeDeclarationFile(type: SType) throws -> TSCode {
+        var decls: [TSDecl] = []
+
+        func walk(type: SType) throws {
+            decls += try generateTypeOwnDeclarations(type: type).decls
+
+            for type in type.regular?.types ?? [] {
+                try walk(type: type)
+            }
+        }
+
+        try walk(type: type)
+
+        if let from = importFrom {
+            let deps = DependencyScanner(knownNames: knownNames).scan(
+                code: TSCode(decls.map { .decl($0) })
+            )
+            if !deps.isEmpty {
+                let imp = TSImportDecl(names: deps, from: from)
+                decls.insert(.`import`(imp), at: 0)
+            }
         }
 
         return TSCode(decls.map { .decl($0) })
     }
 
-    public func transpileTypeReference(
-        type: SType
-    ) throws -> TSType {
-        return try typeConverter().transpileTypeReference(
-            type,
-            kind: .type
-        )
+    public func transpileTypeReference(type: SType) throws -> TSType {
+        return try typeConverter.transpileTypeReference(type, kind: .type)
     }
 
-    public func scanDependency(code: TSCode) -> [String] {
-        let scanner = DependencyScanner(knownNames: standardTypes)
-        return scanner.scan(code: code)
+    public func transpileTypeReferenceToJSON(type: SType) throws -> TSType {
+        return try typeConverter.transpileTypeReference(type, kind: .json)
     }
 
     public func generateHelperLibrary() -> TSCode {
-        return typeConverter().helperLibrary().generate()
+        return typeConverter.helperLibrary().generate()
+    }
+
+    public func generateDecodeFieldExpression(type: SType, expr: TSExpr) throws -> TSExpr {
+        return try typeConverter.decodeFunction().decodeField(type: type, expr: expr)
+    }
+
+    public func generateDecodeValueExpression(type: SType, expr: TSExpr) throws -> TSExpr {
+        return try typeConverter.decodeFunction().decodeValue(type: type, expr: expr)
     }
 }
