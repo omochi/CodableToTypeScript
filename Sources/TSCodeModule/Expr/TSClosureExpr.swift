@@ -19,10 +19,7 @@ public struct TSClosureExpr: PrettyPrintable {
             printer.write(": ")
             returnType.print(printer: printer)
         }
-        printer.writeLine(" => ")
+        printer.write(" => ")
         body.print(printer: printer)
-        if !printer.isStartOfLine {
-            printer.writeLine("")
-        }
     }
 }
