@@ -96,15 +96,6 @@ struct DecodeFunctionBuilder {
         if try c.hasEmptyDecoder(type: type) {
             return c.helperLibrary().access(.identityFunction)
         }
-        if let (_, _) = try type.unwrapOptional(limit: nil) {
-            return try makeClosure()
-        }
-        if let (_, _) = try type.asArray() {
-            return try makeClosure()
-        }
-        if let (_, _) = try type.asDictionary() {
-            return try makeClosure()
-        }
         if try !type.genericArguments().isEmpty {
             return try makeClosure()
         }
