@@ -30,7 +30,7 @@ public struct CodeGenerator {
     public init(
         typeMap: TypeMap = .default,
         knownNames: Set<String> = Self.defaultKnownNames,
-        importFrom: String? = nil
+        importFrom: String? = ".."
     ) {
         self.typeMap = typeMap
         self.knownNames = knownNames
