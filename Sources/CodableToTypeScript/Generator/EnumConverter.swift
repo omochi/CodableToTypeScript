@@ -2,31 +2,7 @@ import SwiftTypeReader
 import TSCodeModule
 
 struct EnumConverter {
-    init(converter: TypeConverter) {
-        self.converter = converter
-    }
-
-    private var converter: TypeConverter
-    private var typeMap: TypeMap { converter.typeMap }
-
-    func convert(type: EnumType) throws -> TypeConverter.TypeResult {
-        let typeDecl = try transpile(type: type, kind: .type)
-
-        var jsonDecl: TSTypeDecl?
-        var decodeFunc: TSFunctionDecl?
-
-        if try !converter.hasEmptyDecoder(type: .enum(type)) {
-            jsonDecl = try transpile(type: type, kind: .json)
-            decodeFunc = try DecodeFunc(converter: converter, type: type).generate()
-        }
-
-        return .init(
-            typeDecl: typeDecl,
-            jsonDecl: jsonDecl,
-            decodeFunc: decodeFunc,
-            nestedTypeDecls: try converter.convertNestedTypeDecls(type: .enum(type))
-        )
-    }
+    var converter: TypeConverter
 
     func transpile(type: EnumType, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
         let genericParameters = converter.transpileGenericParameters(

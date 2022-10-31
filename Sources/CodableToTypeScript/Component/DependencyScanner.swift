@@ -1,13 +1,18 @@
 import SwiftTypeReader
 import TSCodeModule
 
-struct DependencyScanner {
-    var knownNames: Set<String>
+public struct DependencyScanner {
+    public init(knownNames: Set<String>) {
+        self.knownNames = knownNames
+    }
 
-    func scan(code: TSCode) -> [String] {
-        Impl(
+    public var knownNames: Set<String>
+
+    public func scan(code: TSCode) -> [String] {
+        let impl = Impl(
             knownNames: knownNames
-        ).run(code: code)
+        )
+        return impl.run(code: code)
     }
 }
 
