@@ -403,4 +403,18 @@ export function E_decode<T, T_JSON>(json: E_JSON<T_JSON>, T_decode: (json: T_JSO
         )
     }
 
+    func testNestedGenericParameter() throws {
+        try assertGenerate(
+            source: """
+struct X<T> {
+    var a: T
+    var b: String
+}
+
+struct Y<T> {
+    var x: [X<T>]
+}
+""")
+    }
+
 }

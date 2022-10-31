@@ -105,6 +105,9 @@ struct DecodeFunctionBuilder {
         if let (_, _) = try type.asDictionary() {
             return try makeClosure()
         }
+        if try !type.genericArguments().isEmpty {
+            return try makeClosure()
+        }
         return .identifier(self.name(type: type))
     }
 
