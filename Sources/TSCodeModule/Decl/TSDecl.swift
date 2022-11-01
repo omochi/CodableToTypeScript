@@ -1,6 +1,9 @@
 public enum TSDecl: PrettyPrintable {
+    case `class`(TSClassDecl)
     case function(TSFunctionDecl)
     case `import`(TSImportDecl)
+    case interface(TSInterfaceDecl)
+    case method(TSMethodDecl)
     case namespace(TSNamespaceDecl)
     case type(TSTypeDecl)
     case `var`(TSVarDecl)
@@ -8,8 +11,11 @@ public enum TSDecl: PrettyPrintable {
 
     public func print(printer r: PrettyPrinter) {
         switch self {
+        case .class(let d): d.print(printer: r)
         case .function(let d): d.print(printer: r)
         case .import(let d): d.print(printer: r)
+        case .interface(let d): d.print(printer: r)
+        case .method(let d): d.print(printer: r)
         case .namespace(let d): d.print(printer: r)
         case .type(let d): d.print(printer: r)
         case .var(let d): d.print(printer: r)

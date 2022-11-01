@@ -33,7 +33,9 @@ public final class PrettyPrinter {
     }
 
     public func writeLine(_ text: String) {
-        write(text)
+        if !text.isEmpty {
+            write(text)
+        }
 
         output += "\n"
         isStartOfLine = true

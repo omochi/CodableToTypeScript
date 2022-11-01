@@ -117,4 +117,110 @@ export namespace A {
 
         XCTAssertEqual(t.description, "A.B")
     }
+
+    func testInterface() {
+        let t = TSInterfaceDecl(
+            name: "I",
+            genericParameters: [.init("T")],
+            decls: [
+                .method(TSMethodDecl(
+                    name: "a",
+                    genericParameters: [.init("U")],
+                    parameters: [.init(name: "x", type: .named("T"))],
+                    returnType: .named("U")
+                ))
+            ]
+        )
+
+        XCTAssertEqual(t.description, """
+export interface I<T> {
+    a<U>(x: T): U;
+}
+
+""")
+    }
+
+    func testClass1() {
+
+        let d = TSClassDecl(name: "A", items: [])
+        XCTAssertEqual(d.description, """
+export class A {
+}
+
+""")
+
+    }
+
+    func testClass2() {
+        let d = TSClassDecl(
+            name: "A",
+            genericParameters: [.init("T")],
+            extends: .named("B", genericArguments: [.init(.named("T"))]),
+            implements: [.named("I", genericArguments: [.init(.named("T"))])],
+            items: [
+                .decl(.method(TSMethodDecl(
+                    name: "a", parameters: [], returnType: .named("number"),
+                    items: [
+                        .stmt(.return(.numberLiteral("1.0")))
+                    ]
+                )))
+            ]
+        )
+        XCTAssertEqual(d.description, """
+export class A<T> extends B<T> implements I<T> {
+    a(): number {
+        return 1.0;
+    }
+}
+
+""")
+    }
+
+    func testClass3() {
+        let d = TSClassDecl(
+            name: "A",
+            extends: .named("B"),
+            implements: [.named("I"), .named("J"), .named("K"), .named("L")],
+            items: [
+                .decl(.method(TSMethodDecl(
+                    modifier: "async", name: "a", parameters: [],
+                    returnType: .named("Promise", genericArguments: [.init(.named("number"))]),
+                    items: [ .stmt(.return(.numberLiteral("1")))]
+                ))),
+                .decl(.method(TSMethodDecl(
+                    modifier: "async", name: "b", parameters: [],
+                    returnType: .named("Promise", genericArguments: [.init(.named("number"))]),
+                    items: [
+                        .stmt(.return(
+                            .prefixOperator(
+                                "await",
+                                .call(
+                                    callee: .memberAccess(base: .identifier("this"), name: "a"),
+                                    arguments: []
+                                )
+                            )
+                        ))
+                    ]
+                )))
+            ]
+        )
+
+        XCTAssertEqual(d.description, """
+export class A extends B implements
+    I,
+    J,
+    K,
+    L
+{
+    async a(): Promise<number> {
+        return 1;
+    }
+
+    async b(): Promise<number> {
+        return await this.a();
+    }
+}
+
+""")
+    }
 }
