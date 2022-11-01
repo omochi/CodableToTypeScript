@@ -1,5 +1,6 @@
 public struct TSMethodDecl: PrettyPrintable {
     public init(
+        visibility: String? = nil,
         modifiers: [String] = [],
         name: String,
         genericParameters: [TSGenericParameter] = .init(),
@@ -7,6 +8,7 @@ public struct TSMethodDecl: PrettyPrintable {
         returnType: TSType?,
         items: [TSBlockItem]? = nil
     ) {
+        self.visibility = visibility
         self.modifiers = modifiers
         self.name = name
         self.genericParameters = genericParameters
@@ -15,6 +17,7 @@ public struct TSMethodDecl: PrettyPrintable {
         self.items = items
     }
 
+    public var visibility: String?
     public var modifiers: [String]
     public var name: String
     public var genericParameters: [TSGenericParameter]
@@ -23,6 +26,9 @@ public struct TSMethodDecl: PrettyPrintable {
     public var items: [TSBlockItem]?
 
     public func print(printer: PrettyPrinter) {
+        if let visibility {
+            printer.write(visibility)
+        }
         for modifier in modifiers {
             printer.writeUnlessStartOfLine(" ")
             printer.write(modifier)

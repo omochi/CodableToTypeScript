@@ -7,6 +7,8 @@ public protocol TSTreeVisitor {
     func visitEnd(items: [TSBlockItem])
     func visit(class: TSClassDecl) -> Bool
     func visitEnd(class: TSClassDecl)
+    func visit(field: TSFieldDecl) -> Bool
+    func visitEnd(field: TSFieldDecl)
     func visit(function: TSFunctionDecl) -> Bool
     func visitEnd(function: TSFunctionDecl)
     func visit(import: TSImportDecl) -> Bool
@@ -146,6 +148,7 @@ extension TSTreeVisitor {
     public func visitImpl(decl: TSDecl) {
         switch decl {
         case .class(let d): visitImpl(class: d)
+        case .field(let d): visitImpl(field: d)
         case .function(let d): visitImpl(function: d)
         case .import(let d): visitImpl(import: d)
         case .interface(let d): visitImpl(interface: d)
@@ -218,6 +221,13 @@ extension TSTreeVisitor {
             visitImpl(items: `class`.items)
         }
         visitEnd(class: `class`)
+    }
+
+    public func visitImpl(field: TSFieldDecl) {
+        if visit(field: field) {
+            visitImpl(type: field.type)
+        }
+        visitEnd(field: field)
     }
 
     public func visitImpl(function: TSFunctionDecl) {
@@ -581,6 +591,8 @@ extension TSTreeVisitor {
     public func visitEnd(items: [TSBlockItem]) {}
     public func visit(class: TSClassDecl) -> Bool { true }
     public func visitEnd(class: TSClassDecl) {}
+    public func visit(field: TSFieldDecl) -> Bool { true }
+    public func visitEnd(field: TSFieldDecl) {}
     public func visit(function: TSFunctionDecl) -> Bool { true }
     public func visitEnd(function: TSFunctionDecl) {}
     public func visit(import: TSImportDecl) -> Bool { true }
