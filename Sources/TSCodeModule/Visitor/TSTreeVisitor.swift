@@ -234,6 +234,7 @@ extension TSTreeVisitor {
     public func visitImpl(interface: TSInterfaceDecl) {
         if visit(interface: interface) {
             visitImpl(genericParameters: interface.genericParameters)
+            visitImpl(types: interface.extends)
             visitImpl(items: interface.decls.map { .decl($0) })
         }
         visitEnd(interface: interface)

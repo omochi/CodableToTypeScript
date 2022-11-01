@@ -63,6 +63,14 @@ public indirect enum TSType: PrettyPrintable {
     public static func union(_ items: TSType...) -> TSType {
         union(items)
     }
+
+    public static func orNull(_ type: TSType) -> TSType {
+        .union([type, .named(.null)])
+    }
+
+    public static func orUndefined(_ type: TSType) -> TSType {
+        .union([type, .named(.undefined)])
+    }
 }
 
 extension [TSType] {

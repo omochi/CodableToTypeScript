@@ -122,6 +122,7 @@ export namespace A {
         let t = TSInterfaceDecl(
             name: "I",
             genericParameters: [.init("T")],
+            extends: [.named("J")],
             decls: [
                 .method(TSMethodDecl(
                     name: "a",
@@ -133,7 +134,7 @@ export namespace A {
         )
 
         XCTAssertEqual(t.description, """
-export interface I<T> {
+export interface I<T> extends J {
     a<U>(x: T): U;
 }
 
