@@ -10,7 +10,10 @@ public struct DependencyScanner {
         "boolean",
         "number",
         "string",
-        "Error"
+        "any",
+        "unknown",
+        "Error",
+        "Promise"
     ]
 
     public init(knownNames: Set<String> = Self.defaultKnownNames) {
