@@ -25,17 +25,19 @@ public enum TSDecl: PrettyPrintable {
 
     public var wantsTrailingNewline: Bool {
         switch self {
-        case .`var`, .custom: return false
+        case .`var`(let d): return d.wantsTrailingNewline
+        case .custom: return false
         default: return true
         }
     }
 
     public static func type(
+        export: Bool = true,
         name: String,
         genericParameters: [TSGenericParameter] = .init(),
         type: TSType
     ) -> TSDecl {
-        .type(TSTypeDecl(name: name, genericParameters: genericParameters, type: type))
+        .type(TSTypeDecl(export: export, name: name, genericParameters: genericParameters, type: type))
     }
 
     public static func `import`(names: [String], from: String) -> TSDecl {
@@ -43,16 +45,20 @@ public enum TSDecl: PrettyPrintable {
     }
 
     public static func `var`(
+        export: Bool = false,
         kind: String,
         name: String,
         type: TSType? = nil,
-        initializer: TSExpr? = nil
+        initializer: TSExpr? = nil,
+        wantsTrailingNewline: Bool = false
     ) -> TSDecl {
         .var(TSVarDecl(
+            export: export,
             kind: kind,
             name: name,
             type: type,
-            initializer: initializer
+            initializer: initializer,
+            wantsTrailingNewline: wantsTrailingNewline
         ))
     }
 

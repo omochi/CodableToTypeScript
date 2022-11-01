@@ -25,6 +25,8 @@ public protocol TSTreeVisitor {
     func visitEnd(custom: TSCustomDecl)
     func visit(block: TSBlockStmt) -> Bool
     func visitEnd(block: TSBlockStmt)
+    func visit(expr: TSExprStmt) -> Bool
+    func visitEnd(expr: TSExprStmt)
     func visit(for: TSForStmt) -> Bool
     func visitEnd(for: TSForStmt)
     func visit(if: TSIfStmt) -> Bool
@@ -158,6 +160,7 @@ extension TSTreeVisitor {
     public func visitImpl(stmt: TSStmt) {
         switch stmt {
         case .block(let s): visitImpl(block: s)
+        case .expr(let s): visitImpl(expr: s)
         case .for(let s): visitImpl(for: s)
         case .if(let s): visitImpl(if: s)
         case .return(let s): visitImpl(return: s)
@@ -286,6 +289,13 @@ extension TSTreeVisitor {
             visitImpl(items: block.items)
         }
         visitEnd(block: block)
+    }
+
+    public func visitImpl(expr: TSExprStmt) {
+        if visit(expr: expr) {
+            visitImpl(expr: expr.expr)
+        }
+        visitEnd(expr: expr)
     }
 
     public func visitImpl(for: TSForStmt) {
@@ -589,6 +599,8 @@ extension TSTreeVisitor {
     public func visitEnd(custom: TSCustomDecl) {}
     public func visit(block: TSBlockStmt) -> Bool { true }
     public func visitEnd(block: TSBlockStmt) {}
+    public func visit(expr: TSExprStmt) -> Bool { true }
+    public func visitEnd(expr: TSExprStmt) {}
     public func visit(if: TSIfStmt) -> Bool { true }
     public func visitEnd(if: TSIfStmt) {}
     public func visit(for: TSForStmt) -> Bool { true }

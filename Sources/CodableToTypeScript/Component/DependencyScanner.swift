@@ -13,7 +13,8 @@ public struct DependencyScanner {
         "any",
         "unknown",
         "Error",
-        "Promise"
+        "Promise",
+        "this"
     ]
 
     public init(knownNames: Set<String> = Self.defaultKnownNames) {

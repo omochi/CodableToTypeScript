@@ -1,4 +1,5 @@
 public struct TSClassDecl: PrettyPrintable {
+    public var export: Bool
     public var name: String
     public var genericParameters: [TSGenericParameter]
     public var extends: TSType?
@@ -6,12 +7,14 @@ public struct TSClassDecl: PrettyPrintable {
     public var items: [TSBlockItem]
 
     public init(
+        export: Bool = true,
         name: String,
         genericParameters: [TSGenericParameter] = [],
         extends: TSType? = nil,
         implements: [TSType]? = nil,
         items: [TSBlockItem]
     ) {
+        self.export = export
         self.name = name
         self.genericParameters = genericParameters
         self.extends = extends
@@ -20,7 +23,11 @@ public struct TSClassDecl: PrettyPrintable {
     }
 
     public func print(printer: PrettyPrinter) {
-        printer.write("export class \(name)")
+        if export {
+            printer.write("export")
+        }
+        printer.writeUnlessStartOfLine(" ")
+        printer.write("class \(name)")
         genericParameters.print(printer: printer)
         if let extends {
             printer.write(" extends ")
@@ -30,9 +37,7 @@ public struct TSClassDecl: PrettyPrintable {
             printer.write(" implements")
             implements.print(printer: printer)
         }
-        if !printer.isStartOfLine {
-            printer.write(" ")
-        }
+        printer.writeUnlessStartOfLine(" ")
         printer.writeLine("{")
 
         printer.nest {

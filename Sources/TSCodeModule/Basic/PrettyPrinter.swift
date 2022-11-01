@@ -32,6 +32,12 @@ public final class PrettyPrinter {
         value.print(printer: self)
     }
 
+    public func writeUnlessStartOfLine(_ text: String) {
+        if !isStartOfLine {
+            write(text)
+        }
+    }
+
     public func writeLine(_ text: String) {
         if !text.isEmpty {
             write(text)
