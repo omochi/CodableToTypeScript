@@ -1,13 +1,13 @@
 public struct TSMethodDecl: PrettyPrintable {
     public init(
-        modifier: String? = nil,
+        modifiers: [String] = [],
         name: String,
         genericParameters: [TSGenericParameter] = .init(),
         parameters: [TSFunctionParameter],
         returnType: TSType?,
         items: [TSBlockItem]? = nil
     ) {
-        self.modifier = modifier
+        self.modifiers = modifiers
         self.name = name
         self.genericParameters = genericParameters
         self.parameters = parameters
@@ -15,7 +15,7 @@ public struct TSMethodDecl: PrettyPrintable {
         self.items = items
     }
 
-    public var modifier: String?
+    public var modifiers: [String]
     public var name: String
     public var genericParameters: [TSGenericParameter]
     public var parameters: [TSFunctionParameter]
@@ -23,8 +23,14 @@ public struct TSMethodDecl: PrettyPrintable {
     public var items: [TSBlockItem]?
 
     public func print(printer: PrettyPrinter) {
-        if let modifier {
-            printer.write("\(modifier) ")
+        for modifier in modifiers {
+            if !printer.isStartOfLine {
+                printer.write(" ")
+            }
+            printer.write(modifier)
+        }
+        if !printer.isStartOfLine {
+            printer.write(" ")
         }
         printer.write("\(name)")
         genericParameters.print(printer: printer)

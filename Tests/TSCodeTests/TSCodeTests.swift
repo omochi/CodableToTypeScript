@@ -184,12 +184,12 @@ export class A<T> extends B<T> implements I<T> {
             implements: [.named("I"), .named("J"), .named("K"), .named("L")],
             items: [
                 .decl(.method(TSMethodDecl(
-                    modifier: "async", name: "a", parameters: [],
+                    modifiers: ["async"], name: "a", parameters: [],
                     returnType: .named("Promise", genericArguments: [.init(.named("number"))]),
                     items: [ .stmt(.return(.numberLiteral("1")))]
                 ))),
                 .decl(.method(TSMethodDecl(
-                    modifier: "async", name: "b", parameters: [],
+                    modifiers: ["async"], name: "b", parameters: [],
                     returnType: .named("Promise", genericArguments: [.init(.named("number"))]),
                     items: [
                         .stmt(.return(
