@@ -2,7 +2,22 @@ import SwiftTypeReader
 import TSCodeModule
 
 public struct DependencyScanner {
-    public init(knownNames: Set<String>) {
+    public static let defaultKnownNames: Set<String> = [
+        "never",
+        "void",
+        "null",
+        "undefined",
+        "boolean",
+        "number",
+        "string",
+        "any",
+        "unknown",
+        "Error",
+        "Promise",
+        "this"
+    ]
+
+    public init(knownNames: Set<String> = Self.defaultKnownNames) {
         self.knownNames = knownNames
     }
 
@@ -73,6 +88,30 @@ private final class Impl: TSTreeVisitor {
         pop()
     }
 
+    func visit(class: TSClassDecl) -> Bool {
+        push()
+        scope.knownNames.formUnion(
+            `class`.genericParameters.map { $0.name }
+        )
+        return true
+    }
+
+    func visitEnd(class: TSClassDecl) {
+        pop()
+    }
+
+    func visit(interface: TSInterfaceDecl) -> Bool {
+        push()
+        scope.knownNames.formUnion(
+            interface.genericParameters.map { $0.name }
+        )
+        return true
+    }
+
+    func visitEnd(interface: TSInterfaceDecl) {
+        pop()
+    }
+
     func visit(function: TSFunctionDecl) -> Bool {
         push()
         scope.knownNames.formUnion(
@@ -85,6 +124,22 @@ private final class Impl: TSTreeVisitor {
     }
 
     func visitEnd(function: TSFunctionDecl) {
+        pop()
+    }
+
+    func visit(method: TSMethodDecl) -> Bool {
+        push()
+
+        scope.knownNames.formUnion(
+            method.genericParameters.map { $0.name }
+        )
+        scope.knownNames.formUnion(
+            method.parameters.map { $0.name }
+        )
+        return true
+    }
+
+    func visitEnd(method: TSMethodDecl) {
         pop()
     }
 
@@ -161,8 +216,13 @@ private final class NameCollector: TSTreeVisitor {
         return names
     }
 
-    func visit(type: TSTypeDecl) -> Bool {
-        names.insert(type.name)
+    func visit(class: TSClassDecl) -> Bool {
+        names.insert(`class`.name)
+        return false
+    }
+
+    func visit(interface: TSInterfaceDecl) -> Bool {
+        names.insert(interface.name)
         return false
     }
 
@@ -173,6 +233,11 @@ private final class NameCollector: TSTreeVisitor {
 
     func visit(namespace: TSNamespaceDecl) -> Bool {
         names.insert(namespace.name)
+        return false
+    }
+
+    func visit(type: TSTypeDecl) -> Bool {
+        names.insert(type.name)
         return false
     }
 

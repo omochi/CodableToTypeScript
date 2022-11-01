@@ -3,17 +3,6 @@ import SwiftTypeReader
 import TSCodeModule
 
 public struct CodeGenerator {
-    public static let defaultKnownNames: Set<String> = [
-        "never",
-        "void",
-        "null",
-        "undefined",
-        "boolean",
-        "number",
-        "string",
-        "Error"
-    ]
-
     public var typeMap: TypeMap {
         didSet {
             // reset cache
@@ -29,7 +18,7 @@ public struct CodeGenerator {
 
     public init(
         typeMap: TypeMap = .default,
-        knownNames: Set<String> = Self.defaultKnownNames,
+        knownNames: Set<String> = DependencyScanner.defaultKnownNames,
         importFrom: String? = ".."
     ) {
         self.typeMap = typeMap

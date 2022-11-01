@@ -5,9 +5,12 @@ public indirect enum TSExpr: PrettyPrintable {
     case infixOperator(TSInfixOperatorExpr)
     case memberAccess(TSMemberAccessExpr)
     case new(TSNewExpr)
+    case numberLiteral(TSNumberLiteralExpr)
     case object(TSObjectExpr)
+    case prefixOperator(TSPrefixOperatorExpr)
     case stringLiteral(TSStringLiteralExpr)
     case `subscript`(TSSubscriptExpr)
+    case type(TSTypeExpr)
     case custom(TSCustomExpr)
 
     public func print(printer r: PrettyPrinter) {
@@ -18,9 +21,12 @@ public indirect enum TSExpr: PrettyPrintable {
         case .infixOperator(let e): e.print(printer: r)
         case .memberAccess(let e): e.print(printer: r)
         case .new(let e): e.print(printer: r)
+        case .numberLiteral(let e): e.print(printer: r)
         case .object(let e): e.print(printer: r)
+        case .prefixOperator(let e): e.print(printer: r)
         case .stringLiteral(let e): e.print(printer: r)
         case .subscript(let e): e.print(printer: r)
+        case .type(let e): e.print(printer: r)
         case .custom(let e): e.print(printer: r)
         }
     }
@@ -51,6 +57,10 @@ public indirect enum TSExpr: PrettyPrintable {
         ))
     }
 
+    public static func numberLiteral(_ text: String) -> TSExpr {
+        .numberLiteral(TSNumberLiteralExpr(text))
+    }
+
     public static func memberAccess(base: TSExpr, name: String) -> TSExpr {
         .memberAccess(TSMemberAccessExpr(
             base: base, name: name
@@ -61,12 +71,20 @@ public indirect enum TSExpr: PrettyPrintable {
         .object(TSObjectExpr(fields))
     }
 
+    public static func prefixOperator(_ `operator`: String, _ expr: TSExpr) -> TSExpr {
+        .prefixOperator(TSPrefixOperatorExpr(`operator`, expr))
+    }
+
     public static func stringLiteral(_ text: String) -> TSExpr {
         .stringLiteral(TSStringLiteralExpr(text))
     }
 
     public static func `subscript`(base: TSExpr, key: TSExpr) -> TSExpr {
         .subscript(TSSubscriptExpr(base: base, key: key))
+    }
+
+    public static func type(_ type: TSType) -> TSExpr {
+        .type(TSTypeExpr(type))
     }
 
     public static func custom(_ text: String) -> TSExpr {

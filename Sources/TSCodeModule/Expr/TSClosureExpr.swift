@@ -15,7 +15,7 @@ public struct TSClosureExpr: PrettyPrintable {
 
     public func print(printer: PrettyPrinter) {
         parameters.print(printer: printer)
-        if let returnType = returnType {
+        if let returnType {
             printer.write(": ")
             returnType.print(printer: printer)
         }

@@ -64,5 +64,45 @@ public indirect enum TSType: PrettyPrintable {
         union(items)
     }
 
+    public static func orNull(_ type: TSType) -> TSType {
+        .union([type, .named(.null)])
+    }
 
+    public static func orUndefined(_ type: TSType) -> TSType {
+        .union([type, .named(.undefined)])
+    }
+}
+
+extension [TSType] {
+    public func print(printer: PrettyPrinter) {
+        if isEmpty { return }
+
+        let isBig = count > printer.smallNumber
+
+        if isBig {
+            printer.writeLine("")
+            printer.push()
+        } else {
+            if !printer.isStartOfLine {
+                printer.write(" ")
+            }
+        }
+
+        for (index, type) in enumerated() {
+            if index > 0 {
+                if isBig {
+                    printer.writeLine(",")
+                } else {
+                    printer.write(", ")
+                }
+            }
+
+            type.print(printer: printer)
+        }
+
+        if isBig {
+            printer.writeLine("")
+            printer.pop()
+        }
+    }
 }
