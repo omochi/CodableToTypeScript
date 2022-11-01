@@ -5,7 +5,7 @@ public struct TSMethodDecl: PrettyPrintable {
         genericParameters: [TSGenericParameter] = .init(),
         parameters: [TSFunctionParameter],
         returnType: TSType?,
-        items: [TSBlockItem]?
+        items: [TSBlockItem]? = nil
     ) {
         self.modifiers = modifiers
         self.name = name
