@@ -7,10 +7,8 @@ public struct TSBlockStmt: PrettyPrintable {
 
     public func print(printer: PrettyPrinter) {
         printer.writeLine("{")
-        printer.with(blockScope: .blockStmt) {
-            printer.nest {
-                items.print(printer: printer)
-            }
+        printer.nest {
+            items.print(printer: printer)
         }
         printer.write("}")
     }

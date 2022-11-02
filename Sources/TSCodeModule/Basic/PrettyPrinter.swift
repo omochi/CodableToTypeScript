@@ -13,9 +13,7 @@ extension PrettyPrintable {
 public enum BlockScope {
     case global
     case function
-    case method
     case `class`
-    case blockStmt
     case interface
 }
 
