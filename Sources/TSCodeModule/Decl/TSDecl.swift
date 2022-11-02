@@ -20,16 +20,41 @@ public enum TSDecl: PrettyPrintable {
         case .method(let d): d.print(printer: r)
         case .namespace(let d): d.print(printer: r)
         case .type(let d): d.print(printer: r)
-        case .var(let d): d.print(printer: r)
+        case .`var`(let d): d.print(printer: r)
         case .custom(let d): d.print(printer: r)
         }
     }
 
-    public var wantsTrailingNewline: Bool {
+    public func wantsNewlineBetweenSiblingDecl(scope: BlockScope) -> Bool {
         switch self {
-        case .`var`(let d): return d.wantsTrailingNewline
-        case .custom: return false
-        default: return true
+        case .class:
+            return true
+        case .field:
+            return false
+        case .import:
+            return false
+        case .interface:
+            return true
+        case .method, .function:
+            switch scope {
+            case .interface:
+                return false
+            default:
+                return true
+            }
+        case .namespace:
+            return true
+        case .type:
+            return true
+        case .var:
+            switch scope {
+            case .global:
+                return true
+            default:
+                return false
+            }
+        case .custom:
+            return true
         }
     }
 
@@ -51,20 +76,45 @@ public enum TSDecl: PrettyPrintable {
         kind: String,
         name: String,
         type: TSType? = nil,
-        initializer: TSExpr? = nil,
-        wantsTrailingNewline: Bool = false
+        initializer: TSExpr? = nil
     ) -> TSDecl {
-        .var(TSVarDecl(
+        .`var`(TSVarDecl(
             export: export,
             kind: kind,
             name: name,
             type: type,
-            initializer: initializer,
-            wantsTrailingNewline: wantsTrailingNewline
+            initializer: initializer
         ))
     }
 
     public static func custom(_ text: String) -> TSDecl {
         .custom(TSCustomDecl(text))
+    }
+}
+
+public func isSameKind(lhs: TSDecl, rhs: TSDecl) -> Bool {
+    switch (lhs, rhs) {
+    case (.`class`, .`class`):
+        return true
+    case (.field, .field):
+        return true
+    case (.function, .function):
+        return true
+    case (.`import`, .`import`):
+        return true
+    case (.interface, .interface):
+        return true
+    case (.method, .method):
+        return true
+    case (.namespace, .namespace):
+        return true
+    case (.type, .type):
+        return true
+    case (.`var`, .`var`):
+        return true
+    case (.custom, .custom):
+        return false
+    default:
+        return false
     }
 }

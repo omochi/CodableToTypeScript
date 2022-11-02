@@ -8,6 +8,8 @@ public struct TSCode: PrettyPrintable {
     public var items: [TSBlockItem]
 
     public func print(printer: PrettyPrinter) {
-        items.print(printer: printer)
+        printer.with(blockScope: .global) {
+            items.print(printer: printer)
+        }
     }
 }
