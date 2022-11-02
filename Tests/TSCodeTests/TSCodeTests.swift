@@ -71,11 +71,7 @@ export type S1 = {
         let imp = TSImportDecl(names: ["A", "B", "C"], from: "..")
 
         let expected = """
-import {
-    A,
-    B,
-    C
-} from "..";
+import { A, B, C } from "..";
 
 """
         XCTAssertEqual(imp.description, expected)

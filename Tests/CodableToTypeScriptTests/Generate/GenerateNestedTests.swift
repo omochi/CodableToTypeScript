@@ -101,9 +101,7 @@ struct C {
 """,
             typeSelector: .name("C"),
             expecteds: ["""
-import {
-    A_B
-} from "..";
+import { A_B } from "..";
 """, """
 export type C = {
     b: A_B;
