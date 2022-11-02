@@ -26,11 +26,13 @@ public final class PrettyPrinter {
 
     public private(set) var line: Int = 1
 
-    public private(set) var blockScope: BlockScope = .global
+    public private(set) var blockScope: BlockScope
 
     public var smallNumber: Int = 3
 
-    public init() {}
+    public init(initialScope: BlockScope = .global) {
+        blockScope = initialScope
+    }
 
     public func write(_ text: String) {
         indentIfStartOfLine()
