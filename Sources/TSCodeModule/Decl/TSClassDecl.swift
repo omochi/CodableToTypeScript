@@ -39,11 +39,11 @@ public struct TSClassDecl: PrettyPrintable {
         }
         printer.writeUnlessStartOfLine(" ")
         printer.writeLine("{")
-
-        printer.nest {
-            items.print(printer: printer)
+        printer.with(blockScope: .class) {
+            printer.nest {
+                items.print(printer: printer)
+            }
         }
-
         printer.writeLine("}")
     }
 }

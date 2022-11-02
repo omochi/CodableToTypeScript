@@ -4,22 +4,19 @@ public struct TSVarDecl: PrettyPrintable {
     public var name: String
     public var type: TSType?
     public var initializer: TSExpr?
-    public var wantsTrailingNewline: Bool
 
     public init(
         export: Bool = false,
         kind: String,
         name: String,
         type: TSType? = nil,
-        initializer: TSExpr? = nil,
-        wantsTrailingNewline: Bool = false
+        initializer: TSExpr? = nil
     ) {
         self.export = export
         self.kind = kind
         self.name = name
         self.type = type
         self.initializer = initializer
-        self.wantsTrailingNewline = wantsTrailingNewline
     }
 
     public func print(printer: PrettyPrinter) {

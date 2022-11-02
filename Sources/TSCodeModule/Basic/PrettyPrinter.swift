@@ -10,6 +10,13 @@ extension PrettyPrintable {
     }
 }
 
+public enum BlockScope {
+    case global
+    case function
+    case `class`
+    case interface
+}
+
 public final class PrettyPrinter {
     private var level: Int = 0
 
@@ -19,9 +26,13 @@ public final class PrettyPrinter {
 
     public private(set) var line: Int = 1
 
+    public private(set) var blockScope: BlockScope
+
     public var smallNumber: Int = 3
 
-    public init() {}
+    public init(initialScope: BlockScope = .global) {
+        blockScope = initialScope
+    }
 
     public func write(_ text: String) {
         indentIfStartOfLine()
@@ -59,6 +70,13 @@ public final class PrettyPrinter {
     public func nest<R>(_ f: () throws -> R) rethrows -> R {
         push()
         defer { pop() }
+        return try f()
+    }
+
+    public func with<R>(blockScope: BlockScope, _ f: () throws -> R) rethrows -> R {
+        let prev = self.blockScope
+        defer { self.blockScope = prev }
+        self.blockScope = blockScope
         return try f()
     }
 

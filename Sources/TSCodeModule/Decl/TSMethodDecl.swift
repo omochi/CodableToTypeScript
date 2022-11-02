@@ -44,8 +44,10 @@ public struct TSMethodDecl: PrettyPrintable {
 
         if let items {
             printer.writeLine(" {")
-            printer.nest {
-                items.print(printer: printer)
+            printer.with(blockScope: .function) {
+                printer.nest {
+                    items.print(printer: printer)
+                }
             }
             printer.writeLine("}")
         } else {

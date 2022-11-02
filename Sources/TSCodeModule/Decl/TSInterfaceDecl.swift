@@ -32,8 +32,10 @@ public struct TSInterfaceDecl: PrettyPrintable {
         }
         printer.writeUnlessStartOfLine(" ")
         printer.writeLine("{")
-        printer.nest {
-            decls.map { TSBlockItem.decl($0) }.print(printer: printer)
+        printer.with(blockScope: .interface) {
+            printer.nest {
+                decls.map { TSBlockItem.decl($0) }.print(printer: printer)
+            }
         }
         printer.writeLine("}")
     }

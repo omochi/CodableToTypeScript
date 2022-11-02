@@ -71,11 +71,7 @@ export type S1 = {
         let imp = TSImportDecl(names: ["A", "B", "C"], from: "..")
 
         let expected = """
-import {
-    A,
-    B,
-    C
-} from "..";
+import { A, B, C } from "..";
 
 """
         XCTAssertEqual(imp.description, expected)
@@ -223,5 +219,98 @@ export class A extends B implements
 }
 
 """)
+    }
+
+    func testImports() {
+        let e: TSCode = .init([
+            .decl(.import(names: ["A", "B"], from: "./ab.js")),
+            .decl(.import(names: ["C"], from: "./c.js")),
+            .decl(.import(names: ["D", "E", "F", "G", "H", "I"], from: "./defghi.js")),
+            .decl(.function(.init(name: "foo", parameters: [], returnType: nil, items: [])))
+        ])
+        let expected = """
+import { A, B } from "./ab.js";
+import { C } from "./c.js";
+import {
+    D,
+    E,
+    F,
+    G,
+    H,
+    I
+} from "./defghi.js";
+
+export function foo() {
+}
+
+"""
+
+        XCTAssertEqual(e.description, expected)
+    }
+
+    func testNewLineBetweenDecls() {
+        let e: TSCode = .init([
+            .decl(.import(names: ["A", "B"], from: "./ab.js")),
+            .decl(.import(names: ["C"], from: "./c.js")),
+            .decl(.interface(.init(name: "I", decls: [
+                .field(.init(name: "value1", type: .named("A"))),
+                .field(.init(name: "value2", type: .named("B"))),
+                .method(.init(name: "f1", parameters: [], returnType: nil)),
+                .method(.init(name: "f2", parameters: [], returnType: nil)),
+            ]))),
+            .decl(.function(.init(name: "foo", parameters: [], returnType: nil, items: [
+                .decl(.var(kind: "const", name: "c1", type: .orUndefined(.named("C")), initializer: .identifier("undefined"))),
+                .decl(.var(kind: "const", name: "c2", type: .orUndefined(.named("C")), initializer: .identifier("undefined"))),
+            ]))),
+            .decl(.var(export: true, kind: "const", name: "c1", type: .orUndefined(.named("C")), initializer: .identifier("undefined"))),
+            .decl(.var(export: true, kind: "const", name: "c2", type: .orUndefined(.named("C")), initializer: .identifier("undefined"))),
+            .decl(.class(.init(name: "Bar", items: [
+                .decl(.field(.init(name: "value1", type: .named("A")))),
+                .decl(.field(.init(name: "value2", type: .named("B")))),
+                .decl(.function(.init(export: false, name: "f1", parameters: [], returnType: .named("string"), items: [
+                    .decl(.var(kind: "const", name: "c1", type: .orUndefined(.named("C")), initializer: .identifier("undefined"))),
+                    .decl(.var(kind: "const", name: "c2", type: .orUndefined(.named("C")), initializer: .identifier("undefined"))),
+                ]))),
+                .decl(.function(.init(export: false, name: "f2", parameters: [], returnType: .named("string"), items: [
+                ]))),
+            ])))
+        ])
+        let expected = """
+import { A, B } from "./ab.js";
+import { C } from "./c.js";
+
+export interface I {
+    value1: A;
+    value2: B;
+
+    f1();
+    f2();
+}
+
+export function foo() {
+    const c1: C | undefined = undefined;
+    const c2: C | undefined = undefined;
+}
+
+export const c1: C | undefined = undefined;
+
+export const c2: C | undefined = undefined;
+
+export class Bar {
+    value1: A;
+    value2: B;
+
+    function f1(): string {
+        const c1: C | undefined = undefined;
+        const c2: C | undefined = undefined;
+    }
+
+    function f2(): string {
+    }
+}
+
+"""
+
+        XCTAssertEqual(e.description, expected)
     }
 }

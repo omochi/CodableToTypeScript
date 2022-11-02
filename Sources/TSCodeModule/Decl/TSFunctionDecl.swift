@@ -37,8 +37,10 @@ public struct TSFunctionDecl: PrettyPrintable {
         }
 
         printer.writeLine(" {")
-        printer.nest {
-            items.print(printer: printer)
+        printer.with(blockScope: .function) {
+            printer.nest {
+                items.print(printer: printer)
+            }
         }
         printer.writeLine("}")
     }

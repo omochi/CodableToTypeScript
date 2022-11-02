@@ -41,10 +41,13 @@ extension [TSBlockItem] {
     public func print(printer: PrettyPrinter) {
         for (index, item) in enumerated() {
             if index > 0,
-               let decl = self[index - 1].decl,
-               decl.wantsTrailingNewline
+               let prevDecl = self[index - 1].decl,
+               let itemDecl = item.decl
             {
-                printer.writeLine("")
+                let isSame = isSameKind(lhs: prevDecl, rhs: itemDecl)
+                if !isSame || itemDecl.wantsNewlineBetweenSiblingDecl(scope: printer.blockScope) {
+                    printer.writeLine("")
+                }
             }
 
             item.print(printer: printer)

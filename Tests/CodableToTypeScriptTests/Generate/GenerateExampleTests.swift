@@ -144,11 +144,7 @@ enum R<T> {
 }
 """,
         expecteds: ["""
-import {
-    E,
-    E_JSON,
-    E_decode
-} from "..";
+import { E, E_JSON, E_decode } from "..";
 """, """
 export type R<T> = {
     kind: "s";
