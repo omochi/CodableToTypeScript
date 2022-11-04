@@ -1,7 +1,9 @@
 import SwiftTypeReader
 
 public struct TypeMap {
-    public static let `default` = TypeMap()
+    public static let `default` = TypeMap(
+        table: TypeMap.defaultTable
+    )
 
     public static let defaultTable: [String: String] = [
         "Void": "void",
