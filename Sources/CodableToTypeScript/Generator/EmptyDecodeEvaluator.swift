@@ -52,7 +52,9 @@ final class EmptyDecodeEvaluator {
             return try visit(type: value, visiteds: visiteds)
         }
 
-        guard let type = type.regular else { return true }
+        guard let type = type.regular else {
+            throw MessageError("Unresolved type (\(type.asSpecifier())) can't be evaluated")
+        }
 
         switch type {
         case .enum(let type):

@@ -267,5 +267,14 @@ export function S_decode(json: S_JSON): S {
         )
     }
 
-
+    func testUnresolvedFailure() throws {
+        XCTAssertThrowsError(
+            try assertGenerate(
+                source: """
+struct S {
+    var a: A
+}
+""")
+        )
+    }
 }

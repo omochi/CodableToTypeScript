@@ -3,13 +3,22 @@ import CodableToTypeScript
 
 final class GenerateImportTests: GenerateTestCaseBase {
     func testGenericStruct() throws {
+        var typeMap = TypeMap.default
+
+        typeMap.table.merge([
+            "A": "A",
+            "B": "B",
+            "C": "C",
+            "Y": "Y"
+        ], uniquingKeysWith: { $1 })
+
         try assertGenerate(
             source: """
 struct X<T> {}
 
 struct S<T, U> {
     var a: A?
-    var b: number
+    var b: Int
     var c: [B]
     var t: T
     var xc: X<C>
@@ -18,6 +27,7 @@ struct S<T, U> {
     var yu: Y<U>
 }
 """,
+            typeMap: typeMap,
             expecteds: ["""
 import {
     A,
