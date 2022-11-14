@@ -9,7 +9,7 @@ struct StructConverter {
 
         for property in type.storedProperties {
             let (type, isOptionalField) = try converter.transpileFieldTypeReference(
-                type: try property.type(), kind: kind
+                type: property.type(), kind: kind
             )
 
             fields.append(.init(
@@ -38,7 +38,7 @@ struct StructConverter {
                 name: field.name
             )
 
-            expr = try builder.decodeField(type: try field.type(), expr: expr)
+            expr = try builder.decodeField(type: field.type(), expr: expr)
 
             fields.append(
                 .init(

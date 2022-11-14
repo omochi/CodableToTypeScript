@@ -81,7 +81,7 @@ final class TypeConverter {
     func transpileFieldTypeReference(type: SType, kind: TypeKind) throws -> (type: TSType, isOptionalField: Bool) {
         var type = type
         var isOptionalField = false
-        if let (wrapped, _) = try type.unwrapOptional(limit: 1) {
+        if let (wrapped, _) = type.unwrapOptional(limit: 1) {
             type = wrapped
             isOptionalField = true
         }
@@ -92,17 +92,17 @@ final class TypeConverter {
     }
 
     func transpileTypeReference(_ type: SType, kind: TypeKind) throws -> TSType {
-        if let (wrapped, _) = try type.unwrapOptional(limit: nil) {
+        if let (wrapped, _) = type.unwrapOptional(limit: nil) {
             return .orNull(
                 try transpileTypeReference(wrapped, kind: kind)
             )
         }
-        if let (_, element) = try type.asArray() {
+        if let (_, element) = type.asArray() {
             return .array(
                 try transpileTypeReference(element, kind: kind)
             )
         }
-        if let (_, value) = try type.asDictionary() {
+        if let (_, value) = type.asDictionary() {
             return .dictionary(
                 try transpileTypeReference(value, kind: kind)
             )
