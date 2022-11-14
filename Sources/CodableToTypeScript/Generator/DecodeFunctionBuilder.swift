@@ -96,14 +96,14 @@ struct DecodeFunctionBuilder {
         if try c.hasEmptyDecoder(type: type) {
             return c.helperLibrary().access(.identityFunction)
         }
-        if try !type.genericArguments().isEmpty {
+        if !type.genericArguments().isEmpty {
             return try makeClosure()
         }
         return .identifier(self.name(type: type))
     }
 
     func decodeField(type: SType, expr: TSExpr) throws -> TSExpr {
-        if let (wrapped, _) = try type.unwrapOptional(limit: 1) {
+        if let (wrapped, _) = type.unwrapOptional(limit: 1) {
             if try c.hasEmptyDecoder(type: wrapped) { return expr }
             return try callHeigherOrderDecode(
                 types: [wrapped],
@@ -117,7 +117,7 @@ struct DecodeFunctionBuilder {
 
     func decodeValue(type: SType, expr: TSExpr) throws -> TSExpr {
         let lib = c.helperLibrary()
-        if let (wrapped, _) = try type.unwrapOptional(limit: nil) {
+        if let (wrapped, _) = type.unwrapOptional(limit: nil) {
             if try c.hasEmptyDecoder(type: wrapped) { return expr }
             return try callHeigherOrderDecode(
                 types: [wrapped],
@@ -125,7 +125,7 @@ struct DecodeFunctionBuilder {
                 json: expr
             )
         }
-        if let (_, element) = try type.asArray() {
+        if let (_, element) = type.asArray() {
             if try c.hasEmptyDecoder(type: element) { return expr }
             return try callHeigherOrderDecode(
                 types: [element],
@@ -133,7 +133,7 @@ struct DecodeFunctionBuilder {
                 json: expr
             )
         }
-        if let (_, value) = try type.asDictionary() {
+        if let (_, value) = type.asDictionary() {
             if try c.hasEmptyDecoder(type: value) { return expr }
             return try callHeigherOrderDecode(
                 types: [value],
@@ -148,7 +148,7 @@ struct DecodeFunctionBuilder {
 
         let decode: TSExpr = .identifier(self.name(type: type))
 
-        let typeArgs = try type.genericArguments()
+        let typeArgs = type.genericArguments()
         if typeArgs.count > 0 {
             return try callHeigherOrderDecode(
                 types: typeArgs,

@@ -42,13 +42,13 @@ final class EmptyDecodeEvaluator {
             return true
         }
 
-        if let (wrapped, _) = try type.unwrapOptional(limit: nil) {
+        if let (wrapped, _) = type.unwrapOptional(limit: nil) {
             return try visit(type: wrapped, visiteds: visiteds)
         }
-        if let (_, element) = try type.asArray() {
+        if let (_, element) = type.asArray() {
             return try visit(type: element, visiteds: visiteds)
         }
-        if let (_, value) = try type.asDictionary() {
+        if let (_, value) = type.asDictionary() {
             return try visit(type: value, visiteds: visiteds)
         }
 
@@ -59,12 +59,12 @@ final class EmptyDecodeEvaluator {
         switch type {
         case .enum(let type):
             if type.caseElements.isEmpty { return true }
-            if try SType.enum(type).hasStringRawValue() { return true }
+            if SType.enum(type).hasStringRawValue() { return true }
             return false
         case .struct(let type):
             for field in type.storedProperties {
                 if try !visit(
-                    type: try field.type(),
+                    type: field.type(),
                     visiteds: visiteds
                 ) {
                     return false
