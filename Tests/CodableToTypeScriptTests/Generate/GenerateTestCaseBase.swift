@@ -25,7 +25,9 @@ class GenerateTestCaseBase: XCTestCase {
             _ = try Reader(context: context, module: module)
                 .read(source: source, file: URL(fileURLWithPath: "main.swift"))
 
-            let gen = CodeGenerator(typeMap: typeMap ?? .default)
+            let gen = CodeGenerator(
+                context: context, typeMap: typeMap ?? .default
+            )
 
             if case .all = prints {
                 for swType in module.types {

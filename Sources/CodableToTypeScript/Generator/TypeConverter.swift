@@ -7,12 +7,15 @@ final class TypeConverter {
         case json
     }
 
-    init(typeMap: TypeMap) {
+    init(context: Context, typeMap: TypeMap) {
         self.typeMap = typeMap
-        self.emptyDecodeEvaluator = EmptyDecodeEvaluator(typeMap: typeMap)
+        self.emptyDecodeEvaluator = EmptyDecodeEvaluator(
+            evaluator: context.evaluator,
+            typeMap: typeMap
+        )
     }
 
-    let typeMap: TypeMap
+    private let typeMap: TypeMap
     private let emptyDecodeEvaluator: EmptyDecodeEvaluator
 
     func generateTypeOwnDeclarations(type: any TypeDecl) throws -> TypeOwnDeclarations {
@@ -143,7 +146,7 @@ final class TypeConverter {
     }
 
     func hasEmptyDecoder(type: any SType) throws -> Bool {
-        return try emptyDecodeEvaluator.evaluate(type: type)
+        return try emptyDecodeEvaluator.evaluate(type)
     }
 
     func hasEmptyDecoder(type: any TypeDecl) throws -> Bool {

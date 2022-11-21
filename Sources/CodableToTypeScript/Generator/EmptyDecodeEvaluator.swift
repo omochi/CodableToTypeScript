@@ -1,40 +1,43 @@
 import SwiftTypeReader
 
-final class EmptyDecodeEvaluator {
-    init(typeMap: TypeMap) {
+final class EmptyDecodeEvaluator: HashableFromIdentity {
+    struct Request: SwiftTypeReader.Request {
+        var evaluator: EmptyDecodeEvaluator
+        @AnyTypeStorage var type: any SType
+
+        func evaluate(on evaluator: RequestEvaluator) throws -> Bool {
+            return try self.evaluator.evaluateImpl(type: type)
+        }
+    }
+
+    init(
+        evaluator: RequestEvaluator,
+        typeMap: TypeMap
+    ) {
+        self.evaluator = evaluator
         self.typeMap = typeMap
     }
 
-    var typeMap: TypeMap
-    var result: [TypeKey: Bool] = [:]
+    let evaluator: RequestEvaluator
+    let typeMap: TypeMap
 
-    func evaluate(type: any SType) throws -> Bool {
-        return try visit(type: type, visiteds: [])
+    func evaluate(_ type: any SType) throws -> Bool {
+        do {
+            return try evaluator(
+                Request(evaluator: self, type: type)
+            )
+        } catch {
+            switch error {
+            case is CycleRequestError:
+                // cycle type needs decoder
+                return false
+            default:
+                throw error
+            }
+        }
     }
 
-    private func visit(
-        type: any SType, visiteds: Set<TypeKey>
-    ) throws -> Bool {
-        let key = TypeKey(type: type)
-        if let cache = result[key] {
-            return cache
-        }
-
-        if visiteds.contains(key) {
-            return false
-        }
-
-        let result = try _visit(
-            type: type,
-            visiteds: visiteds.union([key])
-        )
-        self.result[key] = result
-        return result
-    }
-
-    private func _visit(
-        type: any SType, visiteds: Set<TypeKey>
-    ) throws -> Bool {
+    private func evaluateImpl(type: any SType) throws -> Bool {
         let repr = type.toTypeRepr(containsModule: false)
         if let _ = typeMap.map(repr: repr) {
             /*
@@ -44,13 +47,13 @@ final class EmptyDecodeEvaluator {
         }
 
         if let (wrapped, _) = type.unwrapOptional(limit: nil) {
-            return try visit(type: wrapped, visiteds: visiteds)
+            return try evaluate(wrapped)
         }
         if let (_, element) = type.asArray() {
-            return try visit(type: element, visiteds: visiteds)
+            return try evaluate(element)
         }
         if let (_, value) = type.asDictionary() {
-            return try visit(type: value, visiteds: visiteds)
+            return try evaluate(value)
         }
 
         if type is ErrorType {
@@ -64,10 +67,7 @@ final class EmptyDecodeEvaluator {
             return false
         case let type as StructType:
             for field in type.decl.storedProperties {
-                if try !visit(
-                    type: field.interfaceType,
-                    visiteds: visiteds
-                ) {
+                if try !evaluate(field.interfaceType) {
                     return false
                 }
             }

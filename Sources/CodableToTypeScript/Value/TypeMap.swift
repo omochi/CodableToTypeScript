@@ -52,3 +52,11 @@ public struct TypeMap {
         }
     }
 }
+
+public final class TypeMapBox: HashableFromIdentity {
+    public init(_ value: TypeMap) {
+        self.value = value
+    }
+
+    public var value: TypeMap
+}

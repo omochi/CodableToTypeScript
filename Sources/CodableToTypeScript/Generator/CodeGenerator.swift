@@ -3,10 +3,14 @@ import SwiftTypeReader
 import TSCodeModule
 
 public struct CodeGenerator {
+    public let context: Context
+
     public var typeMap: TypeMap {
         didSet {
             // reset cache
-            typeConverter = TypeConverter(typeMap: typeMap)
+            typeConverter = TypeConverter(
+                context: context, typeMap: typeMap
+            )
         }
     }
 
@@ -15,16 +19,17 @@ public struct CodeGenerator {
 
     private var typeConverter: TypeConverter
 
-
     public init(
+        context: Context,
         typeMap: TypeMap = .default,
         knownNames: Set<String> = DependencyScanner.defaultKnownNames,
         importFrom: String? = ".."
     ) {
+        self.context = context
         self.typeMap = typeMap
         self.knownNames = knownNames
         self.importFrom = importFrom
-        self.typeConverter = TypeConverter(typeMap: typeMap)
+        self.typeConverter = TypeConverter(context: context, typeMap: typeMap)
     }
 
     @available(*, deprecated, message: "Use `generateTypeDeclarationFile`")
