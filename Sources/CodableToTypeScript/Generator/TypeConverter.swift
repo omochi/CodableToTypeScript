@@ -7,15 +7,18 @@ final class TypeConverter {
         case json
     }
 
-    init(typeMap: TypeMap) {
+    init(context: Context, typeMap: TypeMap) {
         self.typeMap = typeMap
-        self.emptyDecodeEvaluator = EmptyDecodeEvaluator(typeMap: typeMap)
+        self.emptyDecodeEvaluator = EmptyDecodeEvaluator(
+            evaluator: context.evaluator,
+            typeMap: typeMap
+        )
     }
 
-    let typeMap: TypeMap
+    private let typeMap: TypeMap
     private let emptyDecodeEvaluator: EmptyDecodeEvaluator
 
-    func generateTypeOwnDeclarations(type: SType) throws -> TypeOwnDeclarations {
+    func generateTypeOwnDeclarations(type: any TypeDecl) throws -> TypeOwnDeclarations {
         return TypeOwnDeclarations(
             type: try generateTypeDeclaration(type: type),
             jsonType: try generateJSONTypeDeclaration(type: type),
@@ -23,48 +26,40 @@ final class TypeConverter {
         )
     }
 
-    func generateTypeDeclaration(type: SType) throws -> TSTypeDecl {
+    func generateTypeDeclaration(type: any TypeDecl) throws -> TSTypeDecl {
         return try generateTypeDeclaration(type: type, kind: .type)
     }
 
-    func generateJSONTypeDeclaration(type: SType) throws -> TSTypeDecl? {
+    func generateJSONTypeDeclaration(type: any TypeDecl) throws -> TSTypeDecl? {
         if try hasEmptyDecoder(type: type) { return nil }
         return try generateTypeDeclaration(type: type, kind: .json)
     }
 
-    private func generateTypeDeclaration(type: SType, kind: TypeKind) throws -> TSTypeDecl {
-        guard let type = type.regular else {
-            throw MessageError("unresolved type: \(type)")
-        }
-
+    private func generateTypeDeclaration(type: any TypeDecl, kind: TypeKind) throws -> TSTypeDecl {
         switch type {
-        case .enum(let type):
+        case let type as EnumDecl:
             return try EnumConverter(converter: self).transpile(type: type, kind: kind)
-        case .struct(let type):
+        case let type as StructDecl:
             return try StructConverter(converter: self).transpile(type: type, kind: kind)
-        case .protocol, .genericParameter:
+        default:
             throw MessageError("unsupported type: \(type)")
         }
     }
 
-    func generateDecodeFunction(type: SType) throws -> TSFunctionDecl? {
+    func generateDecodeFunction(type: any TypeDecl) throws -> TSFunctionDecl? {
         if try hasEmptyDecoder(type: type) { return nil }
 
-        guard let type = type.regular else {
-            throw MessageError("unresolved type: \(type)")
-        }
-
         switch type {
-        case .enum(let type):
+        case let type as EnumDecl:
             return try EnumConverter.DecodeFunc(converter: self, type: type).generate()
-        case .struct(let type):
+        case let type as StructDecl:
             return try StructConverter(converter: self).generateDecodeFunc(type: type)
-        case .protocol, .genericParameter:
+        default:
             throw MessageError("unsupported type: \(type)")
         }
     }
 
-    func transpiledName(of type: SType, kind: TypeKind) -> String {
+    func transpiledName(of type: any SType, kind: TypeKind) -> String {
         switch kind {
         case .type:
             return type.namePath().convert()
@@ -74,11 +69,15 @@ final class TypeConverter {
         }
     }
 
+    func transpiledName(of type: any TypeDecl, kind: TypeKind) -> String {
+        return transpiledName(of: type.declaredInterfaceType, kind: kind)
+    }
+
     func jsonTypeName(base: String) -> String {
         return "\(base)_JSON"
     }
 
-    func transpileFieldTypeReference(type: SType, kind: TypeKind) throws -> (type: TSType, isOptionalField: Bool) {
+    func transpileFieldTypeReference(type: any SType, kind: TypeKind) throws -> (type: TSType, isOptionalField: Bool) {
         var type = type
         var isOptionalField = false
         if let (wrapped, _) = type.unwrapOptional(limit: 1) {
@@ -91,7 +90,7 @@ final class TypeConverter {
         )
     }
 
-    func transpileTypeReference(_ type: SType, kind: TypeKind) throws -> TSType {
+    func transpileTypeReference(_ type: any SType, kind: TypeKind) throws -> TSType {
         if let (wrapped, _) = type.unwrapOptional(limit: nil) {
             return .orNull(
                 try transpileTypeReference(wrapped, kind: kind)
@@ -107,7 +106,7 @@ final class TypeConverter {
                 try transpileTypeReference(value, kind: kind)
             )
         }
-        if let mappedName = typeMap.map(specifier: type.asSpecifier()) {
+        if let mappedName = typeMap.map(repr: type.toTypeRepr(containsModule: false)) {
             let args = try transpileGenericArguments(type: type, kind: kind)
             return .named(mappedName, genericArguments: args)
         }
@@ -127,28 +126,31 @@ final class TypeConverter {
         return .named(name, genericArguments: args)
     }
 
-    func transpileGenericParameter(type: SType, kind: TypeKind) -> TSGenericParameter {
+    func transpileGenericParameter(type: GenericParamDecl, kind: TypeKind) -> TSGenericParameter {
         let name = transpiledName(of: type, kind: kind)
         return TSGenericParameter(.init(name))
     }
 
-    func transpileGenericParameters(type: SType, kind: TypeKind) -> [TSGenericParameter] {
-        guard let type = type.regular else { return .init() }
-
-        return type.genericParameters.map { (param) in
-            transpileGenericParameter(type: .genericParameter(param), kind: kind)
+    func transpileGenericParameters(type: any TypeDecl, kind: TypeKind) -> [TSGenericParameter] {
+        return type.genericParams.items.map { (param) in
+            transpileGenericParameter(type: param, kind: kind)
         }
     }
 
-    func transpileGenericArguments(type: SType, kind: TypeKind) throws -> [TSGenericArgument] {
-        return try type.genericArguments().map { (type) in
+    func transpileGenericArguments(type: any SType, kind: TypeKind) throws -> [TSGenericArgument] {
+        guard let type = type as? any NominalType else { return [] }
+        return try type.genericArgs.map { (type) in
             let type = try transpileTypeReference(type, kind: kind)
             return TSGenericArgument(type)
         }
     }
 
-    func hasEmptyDecoder(type: SType) throws -> Bool {
-        return try emptyDecodeEvaluator.evaluate(type: type)
+    func hasEmptyDecoder(type: any SType) throws -> Bool {
+        return try emptyDecodeEvaluator.evaluate(type)
+    }
+
+    func hasEmptyDecoder(type: any TypeDecl) throws -> Bool {
+        return try hasEmptyDecoder(type: type.declaredInterfaceType)
     }
 
     func decodeFunction() -> DecodeFunctionBuilder {

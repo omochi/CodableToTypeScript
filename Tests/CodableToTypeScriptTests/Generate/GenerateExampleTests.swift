@@ -207,8 +207,10 @@ struct S {
     var b: K
 }
 """,
-            typeMap: TypeMap { (spec) in
-                if spec.lastElement.name == "D" {
+            typeMap: TypeMap { (repr) in
+                if let ident = repr as? IdentTypeRepr,
+                   ident.elements.last?.name == "D"
+                {
                     return "string";
                 }
 

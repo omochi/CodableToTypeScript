@@ -1,41 +1,45 @@
 import SwiftTypeReader
 
-final class EmptyDecodeEvaluator {
-    init(typeMap: TypeMap) {
+final class EmptyDecodeEvaluator: HashableFromIdentity {
+    struct Request: SwiftTypeReader.Request {
+        var evaluator: EmptyDecodeEvaluator
+        @AnyTypeStorage var type: any SType
+
+        func evaluate(on evaluator: RequestEvaluator) throws -> Bool {
+            return try self.evaluator.evaluateImpl(type: type)
+        }
+    }
+
+    init(
+        evaluator: RequestEvaluator,
+        typeMap: TypeMap
+    ) {
+        self.evaluator = evaluator
         self.typeMap = typeMap
     }
 
-    var typeMap: TypeMap
-    var result: [TypeKey: Bool] = [:]
+    let evaluator: RequestEvaluator
+    let typeMap: TypeMap
 
-    func evaluate(type: SType) throws -> Bool {
-        return try visit(type: type, visiteds: [])
+    func evaluate(_ type: any SType) throws -> Bool {
+        do {
+            return try evaluator(
+                Request(evaluator: self, type: type)
+            )
+        } catch {
+            switch error {
+            case is CycleRequestError:
+                // cycle type needs decoder
+                return false
+            default:
+                throw error
+            }
+        }
     }
 
-    private func visit(
-        type: SType, visiteds: Set<TypeKey>
-    ) throws -> Bool {
-        let key = try TypeKey(type: type)
-        if let cache = result[key] {
-            return cache
-        }
-
-        if visiteds.contains(key) {
-            return false
-        }
-
-        let result = try _visit(
-            type: type,
-            visiteds: visiteds.union([key])
-        )
-        self.result[key] = result
-        return result
-    }
-
-    private func _visit(
-        type: SType, visiteds: Set<TypeKey>
-    ) throws -> Bool {
-        if let _ = typeMap.map(specifier: type.asSpecifier()) {
+    private func evaluateImpl(type: any SType) throws -> Bool {
+        let repr = type.toTypeRepr(containsModule: false)
+        if let _ = typeMap.map(repr: repr) {
             /*
              mapped type doesn't have decoder
              */
@@ -43,39 +47,35 @@ final class EmptyDecodeEvaluator {
         }
 
         if let (wrapped, _) = type.unwrapOptional(limit: nil) {
-            return try visit(type: wrapped, visiteds: visiteds)
+            return try evaluate(wrapped)
         }
         if let (_, element) = type.asArray() {
-            return try visit(type: element, visiteds: visiteds)
+            return try evaluate(element)
         }
         if let (_, value) = type.asDictionary() {
-            return try visit(type: value, visiteds: visiteds)
+            return try evaluate(value)
         }
 
-        guard let type = type.regular else {
-            throw MessageError("Unresolved type (\(type.asSpecifier())) can't be evaluated")
+        if type is ErrorType {
+            throw MessageError("Unresolved type (\(repr)) can't be evaluated")
         }
 
         switch type {
-        case .enum(let type):
-            if type.caseElements.isEmpty { return true }
-            if SType.enum(type).hasStringRawValue() { return true }
+        case let type as EnumType:
+            if type.decl.caseElements.isEmpty { return true }
+            if type.hasStringRawValue() { return true }
             return false
-        case .struct(let type):
-            for field in type.storedProperties {
-                if try !visit(
-                    type: field.type(),
-                    visiteds: visiteds
-                ) {
+        case let type as StructType:
+            for field in type.decl.storedProperties {
+                if try !evaluate(field.interfaceType) {
                     return false
                 }
             }
             return true
-        case .genericParameter:
+        case is GenericParamType:
             return false
-        case .protocol:
+        default:
             return true
         }
-
     }
 }

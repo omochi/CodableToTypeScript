@@ -8,7 +8,7 @@ struct DecodeFunctionBuilder {
 
     var c: TypeConverter
 
-    func name(type: SType) -> String {
+    func name(type: any SType) -> String {
         let base = type.namePath().convert()
         return self.name(base: base)
     }
@@ -17,11 +17,11 @@ struct DecodeFunctionBuilder {
         return "\(base)_decode"
     }
 
-    func signature(type: SType) -> TSFunctionDecl {
+    func signature(type: any TypeDecl) -> TSFunctionDecl {
         let typeName = c.transpiledName(of: type, kind: .type)
         let jsonName = c.transpiledName(of: type, kind: .json)
 
-        let typeParameters: [GenericParameterType] = type.regular?.genericParameters ?? []
+        let typeParameters: [GenericParamDecl] = type.genericParams.items
 
         var typeArgs: [TSGenericArgument] = []
         var jsonArgs: [TSGenericArgument] = []
@@ -31,7 +31,7 @@ struct DecodeFunctionBuilder {
                 .named(param.name)
             ))
             jsonArgs.append(TSGenericArgument(
-                .named(c.transpiledName(of: .genericParameter(param), kind: .json))
+                .named(c.transpiledName(of: param, kind: .json))
             ))
         }
 
@@ -40,7 +40,7 @@ struct DecodeFunctionBuilder {
             genericParameters.append(TSGenericParameter(.init(param.name)))
         }
         for param in typeParameters {
-            let name = c.transpiledName(of: .genericParameter(param), kind: .json)
+            let name = c.transpiledName(of: param, kind: .json)
             genericParameters.append(TSGenericParameter(.init(name)))
         }
 
@@ -53,13 +53,13 @@ struct DecodeFunctionBuilder {
         let returnType: TSType = .named(typeName, genericArguments: typeArgs)
 
         for param in typeParameters {
-            let jsonName = c.transpiledName(of: .genericParameter(param), kind: .json)
+            let jsonName = c.transpiledName(of: param, kind: .json)
             let decodeType: TSType = .function(
                 parameters: [.init(name: "json", type: .named(jsonName))],
                 returnType: .named(param.name)
             )
 
-            let decodeName = self.name(type: .genericParameter(param))
+            let decodeName = self.name(type: param.declaredInterfaceType)
 
             parameters.append(TSFunctionParameter(
                 name: decodeName,
@@ -68,7 +68,7 @@ struct DecodeFunctionBuilder {
         }
 
         return TSFunctionDecl(
-            name: self.name(type: type),
+            name: self.name(type: type.declaredInterfaceType),
             genericParameters: genericParameters,
             parameters: parameters,
             returnType: returnType,
@@ -76,7 +76,7 @@ struct DecodeFunctionBuilder {
         )
     }
 
-    func access(type: SType) throws -> TSExpr {
+    func access(type: any SType) throws -> TSExpr {
         func makeClosure() throws -> TSExpr {
             let param = TSFunctionParameter(
                 name: "json",
@@ -96,13 +96,14 @@ struct DecodeFunctionBuilder {
         if try c.hasEmptyDecoder(type: type) {
             return c.helperLibrary().access(.identityFunction)
         }
-        if !type.genericArguments().isEmpty {
+
+        if !type.genericArgs.isEmpty {
             return try makeClosure()
         }
         return .identifier(self.name(type: type))
     }
 
-    func decodeField(type: SType, expr: TSExpr) throws -> TSExpr {
+    func decodeField(type: any SType, expr: TSExpr) throws -> TSExpr {
         if let (wrapped, _) = type.unwrapOptional(limit: 1) {
             if try c.hasEmptyDecoder(type: wrapped) { return expr }
             return try callHeigherOrderDecode(
@@ -115,7 +116,7 @@ struct DecodeFunctionBuilder {
         return try decodeValue(type: type, expr: expr)
     }
 
-    func decodeValue(type: SType, expr: TSExpr) throws -> TSExpr {
+    func decodeValue(type: any SType, expr: TSExpr) throws -> TSExpr {
         let lib = c.helperLibrary()
         if let (wrapped, _) = type.unwrapOptional(limit: nil) {
             if try c.hasEmptyDecoder(type: wrapped) { return expr }
@@ -148,7 +149,7 @@ struct DecodeFunctionBuilder {
 
         let decode: TSExpr = .identifier(self.name(type: type))
 
-        let typeArgs = type.genericArguments()
+        let typeArgs = type.genericArgs
         if typeArgs.count > 0 {
             return try callHeigherOrderDecode(
                 types: typeArgs,
@@ -163,7 +164,7 @@ struct DecodeFunctionBuilder {
         )
     }
 
-    private func callHeigherOrderDecode(types: [SType], callee: TSExpr, json: TSExpr) throws -> TSExpr {
+    private func callHeigherOrderDecode(types: [any SType], callee: TSExpr, json: TSExpr) throws -> TSExpr {
         var args: [TSFunctionArgument] = [
             TSFunctionArgument(json)
         ]

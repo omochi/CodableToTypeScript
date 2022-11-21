@@ -4,12 +4,12 @@ import TSCodeModule
 struct StructConverter {
     var converter: TypeConverter
 
-    func transpile(type: StructType, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
+    func transpile(type: StructDecl, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
         var fields: [TSRecordType.Field] = []
 
         for property in type.storedProperties {
             let (type, isOptionalField) = try converter.transpileFieldTypeReference(
-                type: property.type(), kind: kind
+                type: property.interfaceType, kind: kind
             )
 
             fields.append(.init(
@@ -20,15 +20,15 @@ struct StructConverter {
         }
 
         return TSTypeDecl(
-            name: converter.transpiledName(of: .struct(type), kind: kind),
-            genericParameters: converter.transpileGenericParameters(type: .struct(type), kind: kind),
+            name: converter.transpiledName(of: type, kind: kind),
+            genericParameters: converter.transpileGenericParameters(type: type, kind: kind),
             type: .record(TSRecordType(fields))
         )
     }
 
-    func generateDecodeFunc(type: StructType) throws -> TSFunctionDecl {
+    func generateDecodeFunc(type: StructDecl) throws -> TSFunctionDecl {
         let builder = converter.decodeFunction()
-        var decl = builder.signature(type: .struct(type))
+        var decl = builder.signature(type: type)
 
         var fields: [TSObjectField] = []
 
@@ -38,7 +38,7 @@ struct StructConverter {
                 name: field.name
             )
 
-            expr = try builder.decodeField(type: field.type(), expr: expr)
+            expr = try builder.decodeField(type: field.interfaceType, expr: expr)
 
             fields.append(
                 .init(

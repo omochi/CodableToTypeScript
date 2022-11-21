@@ -1,9 +1,10 @@
 import XCTest
 import CodableToTypeScript
+import SwiftTypeReader
 
 final class HelperLibraryTests: XCTestCase {
     func testHelperLibrary() {
-        let gen = CodeGenerator()
+        let gen = CodeGenerator(context: Context())
         let code = gen.generateHelperLibrary()
 
         let actual = code.description
