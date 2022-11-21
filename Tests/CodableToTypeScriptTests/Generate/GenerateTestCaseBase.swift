@@ -21,7 +21,9 @@ class GenerateTestCaseBase: XCTestCase {
         line: UInt = #line
     ) throws {
         try withExtendedLifetime(Context()) { context in
-            let module = try Reader(context: context).read(source: source)
+            let module = context.getOrCreateModule(name: "main")
+            _ = try Reader(context: context, module: module)
+                .read(source: source, file: URL(fileURLWithPath: "main.swift"))
 
             let gen = CodeGenerator(typeMap: typeMap ?? .default)
 

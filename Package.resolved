@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "swift-collections",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-collections",
+      "state" : {
+        "revision" : "f504716c27d2e5d4144fa4794b12129301d17729",
+        "version" : "1.0.3"
+      }
+    },
+    {
       "identity" : "swift-syntax",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-syntax",
@@ -14,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/omochi/SwiftTypeReader",
       "state" : {
-        "revision" : "fb37c5bfeb4c97e8f3097d6df707c3b1f9cf9743",
-        "version" : "1.1.4"
+        "branch" : "decl-repr",
+        "revision" : "55a546f41f61d402eeaee131cb39c2b624688758"
       }
     }
   ],

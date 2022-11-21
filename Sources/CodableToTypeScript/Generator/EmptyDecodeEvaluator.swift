@@ -8,14 +8,14 @@ final class EmptyDecodeEvaluator {
     var typeMap: TypeMap
     var result: [TypeKey: Bool] = [:]
 
-    func evaluate(type: SType) throws -> Bool {
+    func evaluate(type: any SType) throws -> Bool {
         return try visit(type: type, visiteds: [])
     }
 
     private func visit(
-        type: SType, visiteds: Set<TypeKey>
+        type: any SType, visiteds: Set<TypeKey>
     ) throws -> Bool {
-        let key = try TypeKey(type: type)
+        let key = TypeKey(type: type)
         if let cache = result[key] {
             return cache
         }
@@ -33,9 +33,10 @@ final class EmptyDecodeEvaluator {
     }
 
     private func _visit(
-        type: SType, visiteds: Set<TypeKey>
+        type: any SType, visiteds: Set<TypeKey>
     ) throws -> Bool {
-        if let _ = typeMap.map(specifier: type.asSpecifier()) {
+        let repr = type.toTypeRepr(containsModule: false)
+        if let _ = typeMap.map(repr: repr) {
             /*
              mapped type doesn't have decoder
              */
@@ -52,30 +53,29 @@ final class EmptyDecodeEvaluator {
             return try visit(type: value, visiteds: visiteds)
         }
 
-        guard let type = type.regular else {
-            throw MessageError("Unresolved type (\(type.asSpecifier())) can't be evaluated")
+        if type is ErrorType {
+            throw MessageError("Unresolved type (\(repr)) can't be evaluated")
         }
 
         switch type {
-        case .enum(let type):
-            if type.caseElements.isEmpty { return true }
-            if SType.enum(type).hasStringRawValue() { return true }
+        case let type as EnumType:
+            if type.decl.caseElements.isEmpty { return true }
+            if type.hasStringRawValue() { return true }
             return false
-        case .struct(let type):
-            for field in type.storedProperties {
+        case let type as StructType:
+            for field in type.decl.storedProperties {
                 if try !visit(
-                    type: field.type(),
+                    type: field.interfaceType,
                     visiteds: visiteds
                 ) {
                     return false
                 }
             }
             return true
-        case .genericParameter:
+        case is GenericParamType:
             return false
-        case .protocol:
+        default:
             return true
         }
-
     }
 }

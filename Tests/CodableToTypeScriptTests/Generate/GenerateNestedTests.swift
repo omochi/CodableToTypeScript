@@ -1,10 +1,13 @@
 import XCTest
 import CodableToTypeScript
+import SwiftTypeReader
 
 final class GenerateNestedTests: GenerateTestCaseBase {
     func testNestedTypeProperty() throws {
-        let typeMap = TypeMap { (specifier) in
-            if specifier.lastElement.name == "ID" {
+        let typeMap = TypeMap { (repr) in
+            if let ident = repr as? IdentTypeRepr,
+               ident.elements.last?.name == "ID"
+            {
                 return "string"
             }
 

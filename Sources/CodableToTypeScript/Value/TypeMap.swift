@@ -16,7 +16,7 @@ public struct TypeMap {
 
     public init(
         table: [String : String]? = nil,
-        closure: ((TypeSpecifier) -> String?)? = nil
+        closure: ((any TypeRepr) -> String?)? = nil
     ) {
         self.table = table ?? Self.defaultTable
         self.closure = closure
@@ -24,21 +24,31 @@ public struct TypeMap {
 
     public var table: [String: String]
 
-    public var closure: ((TypeSpecifier) -> String?)?
+    public var closure: ((any TypeRepr) -> String?)?
 
-    public func map(specifier: TypeSpecifier) -> String? {
-        if let type = closure?(specifier) {
+    public func map(repr: any TypeRepr) -> String? {
+        if let type = closure?(repr) {
             return type
         }
 
-        let element = specifier.lastElement
-
-        let name = element.name
-
-        if let type = table[name] {
+        if let type = mapFromTable(repr: repr) {
             return type
         }
 
         return nil
+    }
+
+    private func mapFromTable(repr: any TypeRepr) -> String? {
+        guard let key = tableMapKey(repr: repr) else { return nil }
+        return table[key]
+    }
+
+    private func tableMapKey(repr: any TypeRepr) -> String? {
+        if let ident = repr as? IdentTypeRepr,
+           let element = ident.elements.last {
+            return element.name
+        } else {
+            return nil
+        }
     }
 }

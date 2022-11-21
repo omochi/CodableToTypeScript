@@ -1,24 +1,59 @@
 import SwiftTypeReader
 
-extension SType {
-    func namePath() -> NamePath {
-        var specifier = self.asSpecifier()
-        _ = specifier.removeModuleElement()
-
-        var parts: [String] = []
-        for element in specifier.elements {
-            parts.append(element.name)
+extension TypeDecl {
+    var genericParams: GenericParamList {
+        if let self = self as? any GenericContext {
+            return self.genericParams
+        } else {
+            return GenericParamList()
         }
-
-        return NamePath(parts)
     }
 
-    func unwrapOptional(limit: Int?) -> (wrapped: SType, depth: Int)? {
-        var type = self
+    func namePath() -> NamePath {
+        return declaredInterfaceType.namePath()
+    }
+}
+
+extension NominalTypeDecl {
+    func isStandardLibraryType(_ name: String) -> Bool {
+        return moduleContext.name == "Swift" &&
+        self.name == name
+    }
+
+    func hasStringRawValue() -> Bool {
+        return inheritedTypes.contains { (type) in
+            type.isStandardLibraryType("String")
+        }
+    }
+}
+
+extension SType {
+    var genericArgs: [any SType] {
+        if let self = self as? any NominalType {
+            return self.genericArgs
+        } else {
+            return []
+        }
+    }
+
+    func namePath() -> NamePath {
+        let repr = toTypeRepr(containsModule: false)
+
+        if let ident = repr as? IdentTypeRepr {
+            return NamePath(
+                ident.elements.map { $0.name }
+            )
+        } else {
+            return NamePath([repr.description])
+        }
+    }
+
+    func unwrapOptional(limit: Int?) -> (wrapped: any SType, depth: Int)? {
+        var type: any SType = self
         var depth = 0
         while type.isStandardLibraryType("Optional"),
-              let optional = type.struct,
-              let wrapped = optional.genericArguments()[safe: 0]
+              let optional = type as? EnumType,
+              let wrapped = optional.genericArgs[safe: 0]
         {
             if let limit = limit,
                depth >= limit
@@ -34,41 +69,43 @@ extension SType {
         return (wrapped: type, depth: depth)
     }
 
-    func asArray() -> (array: StructType, element: SType)? {
+    func asArray() -> (array: StructType, element: any SType)? {
         guard isStandardLibraryType("Array"),
-              let array = self.struct,
-              let element = array.genericArguments()[safe: 0] else { return nil }
+              let array = self as? StructType,
+              let element = array.genericArgs[safe: 0] else { return nil }
         return (array: array, element: element)
     }
 
-    func asDictionary() -> (dictionary: StructType, value: SType)? {
+    func asDictionary() -> (dictionary: StructType, value: any SType)? {
         guard isStandardLibraryType("Dictionary"),
-              let dict = self.struct,
-              let value = dict.genericArguments()[safe: 1] else { return nil }
+              let dict = self as? StructType,
+              let value = dict.genericArgs[safe: 1] else { return nil }
         return (dictionary: dict, value: value)
     }
 
     func isStandardLibraryType(_ name: String) -> Bool {
-        guard let type = self.regular else { return false }
-
-        return type.location.module == "Swift" &&
-        type.name == name
+        guard let self = self as? any NominalType else { return false }
+        return self.nominalTypeDecl.isStandardLibraryType(name)
     }
 
     func hasStringRawValue() -> Bool {
-        guard let type = self.regular else { return false }
-        return type.inheritedTypes().contains { (type) in
-            type.isStandardLibraryType("String")
-        }
+        guard let self = self as? any NominalType else { return false }
+        return self.nominalTypeDecl.hasStringRawValue()
     }
 }
 
-extension AssociatedValue {
-    func label(index: Int) -> String {
+extension ParamDecl {
+    var index: Int {
+        if let caseElement = parentContext as? EnumCaseElementDecl {
+            return caseElement.associatedValues.firstIndex(of: self)!
+        }
+        fatalError()
+    }
+
+    var codableLabel: String {
         if let name = self.name {
             return name
-        } else {
-            return "_\(index)"
         }
+        return "_\(index)"
     }
 }

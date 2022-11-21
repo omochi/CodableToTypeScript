@@ -4,24 +4,24 @@ import TSCodeModule
 struct EnumConverter {
     var converter: TypeConverter
 
-    func transpile(type: EnumType, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
+    func transpile(type: EnumDecl, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
         let genericParameters = converter.transpileGenericParameters(
-            type: .enum(type), kind: kind
+            type: type, kind: kind
         )
 
         if type.caseElements.isEmpty {
             return TSTypeDecl(
-                name: converter.transpiledName(of: .enum(type), kind: kind),
+                name: converter.transpiledName(of: type, kind: kind),
                 genericParameters: genericParameters,
                 type: .named("never")
             )
-        } else if SType.enum(type).hasStringRawValue() {
+        } else if type.hasStringRawValue() {
             let items: [TSType] = type.caseElements.map { (ce) in
                 .stringLiteral(ce.name)
             }
 
             return TSTypeDecl(
-                name: converter.transpiledName(of: .enum(type), kind: kind),
+                name: converter.transpiledName(of: type, kind: kind),
                 genericParameters: genericParameters,
                 type: .union(items)
             )
@@ -32,14 +32,14 @@ struct EnumConverter {
         }
 
         return TSTypeDecl(
-            name: converter.transpiledName(of: .enum(type), kind: kind),
+            name: converter.transpiledName(of: type, kind: kind),
             genericParameters: genericParameters,
             type: .union(items)
         )
     }
 
     private func transpile(
-        caseElement: CaseElement,
+        caseElement: EnumCaseElementDecl,
         kind: TypeConverter.TypeKind
     ) throws -> TSRecordType {
         var outerFields: [TSRecordType.Field] = []
@@ -55,13 +55,13 @@ struct EnumConverter {
 
         var innerFields: [TSRecordType.Field] = []
 
-        for (index, av) in caseElement.associatedValues.enumerated() {
+        for value in caseElement.associatedValues {
             let (type, isOptionalField) = try converter.transpileFieldTypeReference(
-                type: av.type(), kind: kind
+                type: value.interfaceType, kind: kind
             )
 
             innerFields.append(.init(
-                name: av.label(index: index),
+                name: value.codableLabel,
                 type: type,
                 isOptional: isOptionalField
             ))
@@ -78,17 +78,17 @@ struct EnumConverter {
     }
 
     struct DecodeFunc {
-        init(converter: TypeConverter, type: EnumType) {
+        init(converter: TypeConverter, type: EnumDecl) {
             self.converter = converter
             self.type = type
             self.builder = converter.decodeFunction()
         }
 
         var converter: TypeConverter
-        var type: EnumType
+        var type: EnumDecl
         var builder: DecodeFunctionBuilder
 
-        private func condCode(caseElement ce: CaseElement) -> TSExpr {
+        private func condCode(caseElement ce: EnumCaseElementDecl) -> TSExpr {
             return .infixOperator(
                 .stringLiteral(ce.name),
                 "in",
@@ -97,16 +97,16 @@ struct EnumConverter {
         }
 
         private func decodeCaseObject(
-            caseElement ce: CaseElement,
+            caseElement ce: EnumCaseElementDecl,
             json: TSExpr
         ) throws -> TSExpr {
             var fields: [TSObjectField] = []
 
-            for (index, value) in ce.associatedValues.enumerated() {
-                let label = value.label(index: index)
+            for value in ce.associatedValues {
+                let label = value.codableLabel
                 var expr: TSExpr = .memberAccess(base: json, name: label)
 
-                expr = try builder.decodeField(type: value.type(), expr: expr)
+                expr = try builder.decodeField(type: value.interfaceType, expr: expr)
 
                 let field = TSObjectField(
                     name: .identifier(label), value: expr
@@ -117,7 +117,7 @@ struct EnumConverter {
             return .object(fields)
         }
 
-        private func thenCode(caseElement ce: CaseElement) throws -> TSStmt {
+        private func thenCode(caseElement ce: EnumCaseElementDecl) throws -> TSStmt {
             var block: [TSBlockItem] = []
 
             let varDecl = TSVarDecl(
@@ -160,7 +160,7 @@ struct EnumConverter {
         }
 
         func generate() throws -> TSFunctionDecl {
-            var decl = builder.signature(type: .enum(type))
+            var decl = builder.signature(type: type)
 
             var topStmt: TSStmt?
 
