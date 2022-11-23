@@ -67,7 +67,7 @@ public struct CodeGenerator {
         func walk(type: any TypeDecl) throws {
             decls += try generateTypeOwnDeclarations(type: type).decls
 
-            for type in (type as? any NominalTypeDecl)?.types ?? [] {
+            for type in type.asNominalType?.types ?? [] {
                 try walk(type: type)
             }
         }

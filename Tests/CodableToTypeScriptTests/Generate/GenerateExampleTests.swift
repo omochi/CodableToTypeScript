@@ -208,7 +208,7 @@ struct S {
 }
 """,
             typeMap: TypeMap { (repr) in
-                if let ident = repr as? IdentTypeRepr,
+                if let ident = repr.asIdent,
                    ident.elements.last?.name == "D"
                 {
                     return "string";

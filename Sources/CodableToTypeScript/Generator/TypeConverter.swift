@@ -138,7 +138,7 @@ final class TypeConverter {
     }
 
     func transpileGenericArguments(type: any SType, kind: TypeKind) throws -> [TSGenericArgument] {
-        guard let type = type as? any NominalType else { return [] }
+        guard let type = type.asNominal else { return [] }
         return try type.genericArgs.map { (type) in
             let type = try transpileTypeReference(type, kind: kind)
             return TSGenericArgument(type)

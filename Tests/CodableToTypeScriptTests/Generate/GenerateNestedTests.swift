@@ -5,7 +5,7 @@ import SwiftTypeReader
 final class GenerateNestedTests: GenerateTestCaseBase {
     func testNestedTypeProperty() throws {
         let typeMap = TypeMap { (repr) in
-            if let ident = repr as? IdentTypeRepr,
+            if let ident = repr.asIdent,
                ident.elements.last?.name == "ID"
             {
                 return "string"

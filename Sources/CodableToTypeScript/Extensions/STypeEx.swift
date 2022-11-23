@@ -29,7 +29,7 @@ extension NominalTypeDecl {
 
 extension SType {
     var genericArgs: [any SType] {
-        if let self = self as? any NominalType {
+        if let self = self.asNominal {
             return self.genericArgs
         } else {
             return []
@@ -39,7 +39,7 @@ extension SType {
     func namePath() -> NamePath {
         let repr = toTypeRepr(containsModule: false)
 
-        if let ident = repr as? IdentTypeRepr {
+        if let ident = repr.asIdent {
             return NamePath(
                 ident.elements.map { $0.name }
             )
@@ -52,7 +52,7 @@ extension SType {
         var type: any SType = self
         var depth = 0
         while type.isStandardLibraryType("Optional"),
-              let optional = type as? EnumType,
+              let optional = type.asEnum,
               let wrapped = optional.genericArgs[safe: 0]
         {
             if let limit = limit,
@@ -71,32 +71,32 @@ extension SType {
 
     func asArray() -> (array: StructType, element: any SType)? {
         guard isStandardLibraryType("Array"),
-              let array = self as? StructType,
+              let array = self.asStruct,
               let element = array.genericArgs[safe: 0] else { return nil }
         return (array: array, element: element)
     }
 
     func asDictionary() -> (dictionary: StructType, value: any SType)? {
         guard isStandardLibraryType("Dictionary"),
-              let dict = self as? StructType,
+              let dict = self.asStruct,
               let value = dict.genericArgs[safe: 1] else { return nil }
         return (dictionary: dict, value: value)
     }
 
     func isStandardLibraryType(_ name: String) -> Bool {
-        guard let self = self as? any NominalType else { return false }
+        guard let self = self.asNominal else { return false }
         return self.nominalTypeDecl.isStandardLibraryType(name)
     }
 
     func hasStringRawValue() -> Bool {
-        guard let self = self as? any NominalType else { return false }
+        guard let self = self.asNominal else { return false }
         return self.nominalTypeDecl.hasStringRawValue()
     }
 }
 
 extension ParamDecl {
     var index: Int {
-        if let caseElement = parentContext as? EnumCaseElementDecl {
+        if let caseElement = parentContext?.asEnumCaseElement {
             return caseElement.associatedValues.firstIndex(of: self)!
         }
         fatalError()

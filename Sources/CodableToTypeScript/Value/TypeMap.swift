@@ -44,7 +44,7 @@ public struct TypeMap {
     }
 
     private func tableMapKey(repr: any TypeRepr) -> String? {
-        if let ident = repr as? IdentTypeRepr,
+        if let ident = repr.asIdent,
            let element = ident.elements.last {
             return element.name
         } else {
