@@ -35,7 +35,7 @@ struct StructConverter {
         for field in type.storedProperties {
             var expr: any TSExpr = TSMemberExpr(
                 base: TSIdentExpr("json"),
-                name: field.name
+                name: TSIdentExpr(field.name)
             )
 
             expr = try builder.decodeField(type: field.interfaceType, expr: expr)

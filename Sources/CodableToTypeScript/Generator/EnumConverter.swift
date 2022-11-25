@@ -104,7 +104,7 @@ struct EnumConverter {
 
             for value in ce.associatedValues {
                 let label = value.codableLabel
-                var expr: any TSExpr = TSMemberExpr(base: json, name: label)
+                var expr: any TSExpr = TSMemberExpr(base: json, name: TSIdentExpr(label))
 
                 expr = try builder.decodeField(type: value.interfaceType, expr: expr)
 
@@ -124,7 +124,7 @@ struct EnumConverter {
                 kind: .const, name: "j",
                 initializer: TSMemberExpr(
                     base: TSIdentExpr("json"),
-                    name: ce.name
+                    name: TSIdentExpr(ce.name)
                 )
             )
             if !ce.associatedValues.isEmpty {
@@ -162,7 +162,7 @@ struct EnumConverter {
         }
 
         func generate() throws -> TSFunctionDecl {
-            var decl = builder.signature(type: type)
+            let decl = builder.signature(type: type)
 
             var topStmt: (any TSStmt)?
 
@@ -175,8 +175,6 @@ struct EnumConverter {
             }
 
             func appendElse(stmt: any TSStmt, to ifStmt: TSIfStmt) -> TSIfStmt {
-                var ifStmt = ifStmt
-
                 if let nextIf = ifStmt.else?.asIf {
                     ifStmt.else = appendElse(stmt: stmt, to: nextIf)
                 } else {

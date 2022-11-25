@@ -107,7 +107,7 @@ struct HelperLibraryGenerator {
                     TSReturnStmt(
                         TSCallExpr(
                             callee: TSMemberExpr(
-                                base: TSIdentExpr("json"), name: "map"
+                                base: TSIdentExpr("json"), name: TSIdentExpr("map")
                             ),
                             args: [
                                 TSIdentExpr(tDecoderName())
@@ -136,7 +136,9 @@ struct HelperLibraryGenerator {
                         body: TSBlockStmt([
                             TSIfStmt(
                                 condition: TSCallExpr(
-                                    callee: TSMemberExpr(base: TSIdentExpr("json"), name: "hasOwnProperty"),
+                                    callee: TSMemberExpr(
+                                        base: TSIdentExpr("json"), name: TSIdentExpr("hasOwnProperty")
+                                    ),
                                     args: [TSIdentExpr("k")]
                                 ),
                                 then: TSBlockStmt([

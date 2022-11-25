@@ -21,12 +21,6 @@ let package = Package(
 //        .target(
 //            name: "TSCodeModule"
 //        ),
-        .testTarget(
-            name: "TSCodeTests",
-            dependencies: [
-//                .target(name: "TSCodeModule")
-            ]
-        ),
         .target(
             name: "CodableToTypeScript",
             dependencies: [
