@@ -1,5 +1,5 @@
 import XCTest
-@testable import TSCodeModule
+import TypeScriptAST
 
 final class TSCodeTests: XCTestCase {
     func testBasic() {

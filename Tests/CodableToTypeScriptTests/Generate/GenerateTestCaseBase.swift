@@ -44,7 +44,7 @@ class GenerateTestCaseBase: XCTestCase {
                 print(code)
             }
 
-            let actual = code.description
+            let actual = code.print()
 
             for expected in expecteds {
                 if !actual.contains(expected) {

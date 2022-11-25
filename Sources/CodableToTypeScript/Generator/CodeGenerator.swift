@@ -1,6 +1,6 @@
 import Foundation
 import SwiftTypeReader
-import TSCodeModule
+import TypeScriptAST
 
 public struct CodeGenerator {
     public let context: Context
@@ -14,27 +14,15 @@ public struct CodeGenerator {
         }
     }
 
-    public var knownNames: Set<String>
-    public var importFrom: String?
-
     private var typeConverter: TypeConverter
 
     public init(
         context: Context,
-        typeMap: TypeMap = .default,
-        knownNames: Set<String> = DependencyScanner.defaultKnownNames,
-        importFrom: String? = ".."
+        typeMap: TypeMap = .default
     ) {
         self.context = context
         self.typeMap = typeMap
-        self.knownNames = knownNames
-        self.importFrom = importFrom
         self.typeConverter = TypeConverter(context: context, typeMap: typeMap)
-    }
-
-    @available(*, deprecated, message: "Use `generateTypeDeclarationFile`")
-    public func callAsFunction(type: any TypeDecl) throws -> TSCode {
-        try generateTypeDeclarationFile(type: type)
     }
 
     public func generateTypeOwnDeclarations(type: any TypeDecl) throws -> TypeOwnDeclarations {
@@ -61,8 +49,8 @@ public struct CodeGenerator {
         try typeConverter.generateDecodeFunction(type: type)
     }
 
-    public func generateTypeDeclarationFile(type: any TypeDecl) throws -> TSCode {
-        var decls: [TSDecl] = []
+    public func generateTypeDeclarationFile(type: any TypeDecl) throws -> TSSourceFile {
+        var decls: [any ASTNode] = []
 
         func walk(type: any TypeDecl) throws {
             decls += try generateTypeOwnDeclarations(type: type).decls
@@ -74,36 +62,26 @@ public struct CodeGenerator {
 
         try walk(type: type)
 
-        if let from = importFrom {
-            let deps = DependencyScanner(knownNames: knownNames).scan(
-                code: TSCode(decls.map { .decl($0) })
-            )
-            if !deps.isEmpty {
-                let imp = TSImportDecl(names: deps, from: from)
-                decls.insert(.`import`(imp), at: 0)
-            }
-        }
-
-        return TSCode(decls.map { .decl($0) })
+        return TSSourceFile(decls)
     }
 
-    public func transpileTypeReference(type: any SType) throws -> TSType {
+    public func transpileTypeReference(type: any SType) throws -> any TSType {
         return try typeConverter.transpileTypeReference(type, kind: .type)
     }
 
-    public func transpileTypeReferenceToJSON(type: any SType) throws -> TSType {
+    public func transpileTypeReferenceToJSON(type: any SType) throws -> any TSType {
         return try typeConverter.transpileTypeReference(type, kind: .json)
     }
 
-    public func generateHelperLibrary() -> TSCode {
+    public func generateHelperLibrary() -> TSSourceFile {
         return typeConverter.helperLibrary().generate()
     }
 
-    public func generateDecodeFieldExpression(type: any SType, expr: TSExpr) throws -> TSExpr {
+    public func generateDecodeFieldExpression(type: any SType, expr: any TSExpr) throws -> any TSExpr {
         return try typeConverter.decodeFunction().decodeField(type: type, expr: expr)
     }
 
-    public func generateDecodeValueExpression(type: any SType, expr: TSExpr) throws -> TSExpr {
+    public func generateDecodeValueExpression(type: any SType, expr: any TSExpr) throws -> any TSExpr {
         return try typeConverter.decodeFunction().decodeValue(type: type, expr: expr)
     }
 }

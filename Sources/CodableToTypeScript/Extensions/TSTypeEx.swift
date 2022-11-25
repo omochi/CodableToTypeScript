@@ -1,4 +1,0 @@
-import TSCodeModule
-
-extension TSType {
-}

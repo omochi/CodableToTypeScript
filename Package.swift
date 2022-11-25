@@ -12,31 +12,34 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/omochi/SwiftTypeReader", from: "2.1.0"),
+        .package(url: "https://github.com/omochi/TypeScriptAST", branch: "main")
     ],
     targets: [
         .target(
             name: "TestUtils"
         ),
-        .target(
-            name: "TSCodeModule"
-        ),
+//        .target(
+//            name: "TSCodeModule"
+//        ),
         .testTarget(
             name: "TSCodeTests",
             dependencies: [
-                .target(name: "TSCodeModule")
+//                .target(name: "TSCodeModule")
             ]
         ),
         .target(
             name: "CodableToTypeScript",
             dependencies: [
-                .target(name: "TestUtils"),
-                .target(name: "TSCodeModule"),
-                .product(name: "SwiftTypeReader", package: "SwiftTypeReader")
+                .product(name: "SwiftTypeReader", package: "SwiftTypeReader"),
+                .product(name: "TypeScriptAST", package: "TypeScriptAST")
             ]
         ),
         .testTarget(
             name: "CodableToTypeScriptTests",
-            dependencies: ["CodableToTypeScript"]
+            dependencies: [
+                .target(name: "TestUtils"),
+                .target(name: "CodableToTypeScript")
+            ]
         ),
     ]
 )

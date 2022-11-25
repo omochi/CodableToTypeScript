@@ -1,5 +1,5 @@
 import SwiftTypeReader
-import TSCodeModule
+import TypeScriptAST
 
 final class TypeConverter {
     enum TypeKind {
@@ -77,7 +77,7 @@ final class TypeConverter {
         return "\(base)_JSON"
     }
 
-    func transpileFieldTypeReference(type: any SType, kind: TypeKind) throws -> (type: TSType, isOptionalField: Bool) {
+    func transpileFieldTypeReference(type: any SType, kind: TypeKind) throws -> (type: any TSType, isOptionalField: Bool) {
         var type = type
         var isOptionalField = false
         if let (wrapped, _) = type.unwrapOptional(limit: 1) {
@@ -90,25 +90,26 @@ final class TypeConverter {
         )
     }
 
-    func transpileTypeReference(_ type: any SType, kind: TypeKind) throws -> TSType {
+    func transpileTypeReference(_ type: any SType, kind: TypeKind) throws -> any TSType {
         if let (wrapped, _) = type.unwrapOptional(limit: nil) {
-            return .orNull(
-                try transpileTypeReference(wrapped, kind: kind)
-            )
+            return TSUnionType([
+                try transpileTypeReference(wrapped, kind: kind),
+                TSIdentType.null
+            ])
         }
         if let (_, element) = type.asArray() {
-            return .array(
+            return TSArrayType(
                 try transpileTypeReference(element, kind: kind)
             )
         }
         if let (_, value) = type.asDictionary() {
-            return .dictionary(
+            return TSDictionaryType(
                 try transpileTypeReference(value, kind: kind)
             )
         }
         if let mappedName = typeMap.map(repr: type.toTypeRepr(containsModule: false)) {
             let args = try transpileGenericArguments(type: type, kind: kind)
-            return .named(mappedName, genericArguments: args)
+            return TSIdentType(mappedName, genericArgs: args)
         }
 
         let name: String = try {
@@ -123,25 +124,23 @@ final class TypeConverter {
 
         let args = try transpileGenericArguments(type: type, kind: kind)
 
-        return .named(name, genericArguments: args)
+        return TSIdentType(name, genericArgs: args)
     }
 
-    func transpileGenericParameter(type: GenericParamDecl, kind: TypeKind) -> TSGenericParameter {
-        let name = transpiledName(of: type, kind: kind)
-        return TSGenericParameter(.init(name))
+    func transpileGenericParameter(type: GenericParamDecl, kind: TypeKind) -> String {
+        return transpiledName(of: type, kind: kind)
     }
 
-    func transpileGenericParameters(type: any TypeDecl, kind: TypeKind) -> [TSGenericParameter] {
+    func transpileGenericParameters(type: any TypeDecl, kind: TypeKind) -> [String] {
         return type.genericParams.items.map { (param) in
             transpileGenericParameter(type: param, kind: kind)
         }
     }
 
-    func transpileGenericArguments(type: any SType, kind: TypeKind) throws -> [TSGenericArgument] {
+    func transpileGenericArguments(type: any SType, kind: TypeKind) throws -> [any TSType] {
         guard let type = type.asNominal else { return [] }
         return try type.genericArgs.map { (type) in
-            let type = try transpileTypeReference(type, kind: kind)
-            return TSGenericArgument(type)
+            try transpileTypeReference(type, kind: kind)
         }
     }
 
