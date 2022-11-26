@@ -1,4 +1,4 @@
-import TSCodeModule
+import TypeScriptAST
 
 public struct TypeOwnDeclarations {
     public var type: TSTypeDecl
@@ -15,17 +15,17 @@ public struct TypeOwnDeclarations {
         self.decodeFunction = decodeFunction
     }
 
-    public var decls: [TSDecl] {
-        var decls: [TSDecl] = [
-            .type(type)
+    public var decls: [any TSDecl] {
+        var decls: [any TSDecl] = [
+            type
         ]
 
         if let decl = jsonType {
-            decls.append(.type(decl))
+            decls.append(decl)
         }
 
         if let decl = decodeFunction {
-            decls.append(.function(decl))
+            decls.append(decl)
         }
 
         return decls

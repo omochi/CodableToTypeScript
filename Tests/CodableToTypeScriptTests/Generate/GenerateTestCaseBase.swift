@@ -1,6 +1,7 @@
 import XCTest
 import SwiftTypeReader
 import CodableToTypeScript
+import TypeScriptAST
 
 class GenerateTestCaseBase: XCTestCase {
     enum Prints {
@@ -29,22 +30,32 @@ class GenerateTestCaseBase: XCTestCase {
                 context: context, typeMap: typeMap ?? .default
             )
 
+            func generate(type: any TypeDecl) throws -> TSSourceFile {
+                let code = try gen.generateTypeDeclarationFile(type: type)
+                let imports = try code.buildAutoImportDecls(
+                    symbolTable: SymbolTable(),
+                    defaultFile: ".."
+                )
+                code.replaceImportDecls(imports)
+                return code
+            }
+
             if case .all = prints {
                 for swType in module.types {
                     print("// \(swType.name)")
-                    let code = try gen.generateTypeDeclarationFile(type: swType)
-                    print(code)
+                    let code = try generate(type: swType)
+                    print(code.print())
                 }
             }
 
             let swType = try typeSelector(module: module)
-            let code = try gen.generateTypeDeclarationFile(type: swType)
+            let code = try generate(type: swType)
 
             if case .one = prints {
-                print(code)
+                print(code.print())
             }
 
-            let actual = code.description
+            let actual = code.print()
 
             for expected in expecteds {
                 if !actual.contains(expected) {

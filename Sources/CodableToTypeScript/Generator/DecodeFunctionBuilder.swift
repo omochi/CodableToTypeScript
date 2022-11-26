@@ -1,5 +1,5 @@
 import SwiftTypeReader
-import TSCodeModule
+import TypeScriptAST
 
 struct DecodeFunctionBuilder {
     init(converter: TypeConverter) {
@@ -23,72 +23,75 @@ struct DecodeFunctionBuilder {
 
         let typeParameters: [GenericParamDecl] = type.genericParams.items
 
-        var typeArgs: [TSGenericArgument] = []
-        var jsonArgs: [TSGenericArgument] = []
+        var typeArgs: [any TSType] = []
+        var jsonArgs: [any TSType] = []
 
         for param in typeParameters {
-            typeArgs.append(TSGenericArgument(
-                .named(param.name)
-            ))
-            jsonArgs.append(TSGenericArgument(
-                .named(c.transpiledName(of: param, kind: .json))
-            ))
+            typeArgs.append(
+                TSIdentType(param.name)
+            )
+            jsonArgs.append(
+                TSIdentType(c.transpiledName(of: param, kind: .json))
+            )
         }
 
-        var genericParameters: [TSGenericParameter] = []
+        var genericParameters: [String] = []
         for param in typeParameters {
-            genericParameters.append(TSGenericParameter(.init(param.name)))
+            genericParameters.append(param.name)
         }
         for param in typeParameters {
             let name = c.transpiledName(of: param, kind: .json)
-            genericParameters.append(TSGenericParameter(.init(name)))
+            genericParameters.append(name)
         }
 
-        var parameters: [TSFunctionParameter] = [
-            TSFunctionParameter(
+        var parameters: [TSFunctionType.Param] = [
+            .init(
                 name: "json",
-                type: .named(jsonName, genericArguments: jsonArgs)
+                type: TSIdentType(jsonName, genericArgs: jsonArgs)
             )
         ]
-        let returnType: TSType = .named(typeName, genericArguments: typeArgs)
+        let result: any TSType = TSIdentType(typeName, genericArgs: typeArgs)
 
         for param in typeParameters {
             let jsonName = c.transpiledName(of: param, kind: .json)
-            let decodeType: TSType = .function(
-                parameters: [.init(name: "json", type: .named(jsonName))],
-                returnType: .named(param.name)
+            let decodeType: any TSType = TSFunctionType(
+                params: [.init(name: "json", type: TSIdentType(jsonName))],
+                result: TSIdentType(param.name)
             )
 
             let decodeName = self.name(type: param.declaredInterfaceType)
 
-            parameters.append(TSFunctionParameter(
-                name: decodeName,
-                type: decodeType
-            ))
+            parameters.append(
+                .init(
+                    name: decodeName,
+                    type: decodeType
+                )
+            )
         }
 
         return TSFunctionDecl(
+            modifiers: [.export],
             name: self.name(type: type.declaredInterfaceType),
-            genericParameters: genericParameters,
-            parameters: parameters,
-            returnType: returnType,
-            items: []
+            genericParams: genericParameters,
+            params: parameters,
+            result: result,
+            body: TSBlockStmt()
         )
     }
 
-    func access(type: any SType) throws -> TSExpr {
-        func makeClosure() throws -> TSExpr {
-            let param = TSFunctionParameter(
+    func access(type: any SType) throws -> any TSExpr {
+        func makeClosure() throws -> any TSExpr {
+            let param = TSFunctionType.Param(
                 name: "json",
                 type: try c.transpileTypeReference(type, kind: .json)
             )
             let ret = try c.transpileTypeReference(type, kind: .type)
-            let expr = try decodeValue(type: type, expr: .identifier("json"))
-            return .closure(
-                parameters: [param],
-                returnType: ret,
-                body: .block([
-                    .stmt(.return(expr))
+            let expr = try decodeValue(type: type, expr: TSIdentExpr("json"))
+            return TSClosureExpr(
+                params: [param],
+                result: ret,
+                body: TSBlockStmt([
+                    TSReturnStmt(expr)
                 ])
             )
         }
@@ -100,10 +103,10 @@ struct DecodeFunctionBuilder {
         if !type.genericArgs.isEmpty {
             return try makeClosure()
         }
-        return .identifier(self.name(type: type))
+        return TSIdentExpr(self.name(type: type))
     }
 
-    func decodeField(type: any SType, expr: TSExpr) throws -> TSExpr {
+    func decodeField(type: any SType, expr: any TSExpr) throws -> any TSExpr {
         if let (wrapped, _) = type.unwrapOptional(limit: 1) {
             if try c.hasEmptyDecoder(type: wrapped) { return expr }
             return try callHeigherOrderDecode(
@@ -116,7 +119,7 @@ struct DecodeFunctionBuilder {
         return try decodeValue(type: type, expr: expr)
     }
 
-    func decodeValue(type: any SType, expr: TSExpr) throws -> TSExpr {
+    func decodeValue(type: any SType, expr: any TSExpr) throws -> any TSExpr {
         let lib = c.helperLibrary()
         if let (wrapped, _) = type.unwrapOptional(limit: nil) {
             if try c.hasEmptyDecoder(type: wrapped) { return expr }
@@ -147,7 +150,7 @@ struct DecodeFunctionBuilder {
             return expr
         }
 
-        let decode: TSExpr = .identifier(self.name(type: type))
+        let decode: any TSExpr = TSIdentExpr(self.name(type: type))
 
         let typeArgs = type.genericArgs
         if typeArgs.count > 0 {
@@ -158,23 +161,21 @@ struct DecodeFunctionBuilder {
             )
         }
 
-        return .call(
+        return TSCallExpr(
             callee: decode,
-            arguments: [TSFunctionArgument(expr)]
+            args: [expr]
         )
     }
 
-    private func callHeigherOrderDecode(types: [any SType], callee: TSExpr, json: TSExpr) throws -> TSExpr {
-        var args: [TSFunctionArgument] = [
-            TSFunctionArgument(json)
-        ]
+    private func callHeigherOrderDecode(types: [any SType], callee: any TSExpr, json: any TSExpr) throws -> any TSExpr {
+        var args: [any TSExpr] = [json]
 
         for type in types {
             let decode = try self.access(type: type)
-            args.append(TSFunctionArgument(decode))
+            args.append(decode)
         }
 
-        return .call(callee: callee, arguments: args)
+        return TSCallExpr(callee: callee, args: args)
     }
 
 }

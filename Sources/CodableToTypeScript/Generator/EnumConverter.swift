@@ -1,59 +1,62 @@
 import SwiftTypeReader
-import TSCodeModule
+import TypeScriptAST
 
 struct EnumConverter {
     var converter: TypeConverter
 
     func transpile(type: EnumDecl, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
-        let genericParameters = converter.transpileGenericParameters(
+        let genericParams = converter.transpileGenericParameters(
             type: type, kind: kind
         )
 
         if type.caseElements.isEmpty {
             return TSTypeDecl(
+                modifiers: [.export],
                 name: converter.transpiledName(of: type, kind: kind),
-                genericParameters: genericParameters,
-                type: .named("never")
+                genericParams: genericParams,
+                type: TSIdentType.never
             )
         } else if type.hasStringRawValue() {
-            let items: [TSType] = type.caseElements.map { (ce) in
-                .stringLiteral(ce.name)
+            let items: [any TSType] = type.caseElements.map { (ce) in
+                TSStringLiteralType(ce.name)
             }
 
             return TSTypeDecl(
+                modifiers: [.export],
                 name: converter.transpiledName(of: type, kind: kind),
-                genericParameters: genericParameters,
-                type: .union(items)
+                genericParams: genericParams,
+                type: TSUnionType(items)
             )
         }
 
-        let items: [TSType] = try type.caseElements.map { (ce) in
-            .record(try transpile(caseElement: ce, kind: kind))
+        let items: [any TSType] = try type.caseElements.map { (ce) in
+            try transpile(caseElement: ce, kind: kind)
         }
 
         return TSTypeDecl(
+            modifiers: [.export],
             name: converter.transpiledName(of: type, kind: kind),
-            genericParameters: genericParameters,
-            type: .union(items)
+            genericParams: genericParams,
+            type: TSUnionType(items)
         )
     }
 
     private func transpile(
         caseElement: EnumCaseElementDecl,
         kind: TypeConverter.TypeKind
-    ) throws -> TSRecordType {
-        var outerFields: [TSRecordType.Field] = []
+    ) throws -> TSObjectType {
+        var outerFields: [TSObjectType.Field] = []
 
         switch kind {
         case .type:
             outerFields.append(
-                .init(name: "kind", type: .stringLiteral(caseElement.name))
+                .init(name: "kind", type: TSStringLiteralType(caseElement.name))
             )
         case .json:
             break
         }
 
-        var innerFields: [TSRecordType.Field] = []
+        var innerFields: [TSObjectType.Field] = []
 
         for value in caseElement.associatedValues {
             let (type, isOptionalField) = try converter.transpileFieldTypeReference(
@@ -62,19 +65,19 @@ struct EnumConverter {
 
             innerFields.append(.init(
                 name: value.codableLabel,
-                type: type,
-                isOptional: isOptionalField
+                isOptional: isOptionalField,
+                type: type
             ))
         }
 
         outerFields.append(
             .init(
                 name: caseElement.name,
-                type: .record(innerFields)
+                type: TSObjectType(innerFields)
             )
         )
 
-        return TSRecordType(outerFields)
+        return TSObjectType(outerFields)
     }
 
     struct DecodeFunc {
@@ -88,95 +91,95 @@ struct EnumConverter {
         var type: EnumDecl
         var builder: DecodeFunctionBuilder
 
-        private func condCode(caseElement ce: EnumCaseElementDecl) -> TSExpr {
-            return .infixOperator(
-                .stringLiteral(ce.name),
+        private func condCode(caseElement ce: EnumCaseElementDecl) -> any TSExpr {
+            return TSInfixOperatorExpr(
+                TSStringLiteralExpr(ce.name),
                 "in",
-                .identifier("json")
+                TSIdentExpr("json")
             )
         }
 
         private func decodeCaseObject(
             caseElement ce: EnumCaseElementDecl,
-            json: TSExpr
-        ) throws -> TSExpr {
-            var fields: [TSObjectField] = []
+            json: any TSExpr
+        ) throws -> any TSExpr {
+            var fields: [TSObjectExpr.Field] = []
 
             for value in ce.associatedValues {
                 let label = value.codableLabel
-                var expr: TSExpr = .memberAccess(base: json, name: label)
+                var expr: any TSExpr = TSMemberExpr(base: json, name: TSIdentExpr(label))
 
                 expr = try builder.decodeField(type: value.interfaceType, expr: expr)
 
-                let field = TSObjectField(
-                    name: .identifier(label), value: expr
+                let field = TSObjectExpr.Field(
+                    name: label, value: expr
                 )
                 fields.append(field)
             }
 
-            return .object(fields)
+            return TSObjectExpr(fields)
         }
 
-        private func thenCode(caseElement ce: EnumCaseElementDecl) throws -> TSStmt {
-            var block: [TSBlockItem] = []
+        private func thenCode(caseElement ce: EnumCaseElementDecl) throws -> TSBlockStmt {
+            var block: [any ASTNode] = []
 
             let varDecl = TSVarDecl(
-                kind: "const", name: "j",
-                initializer: .memberAccess(
-                    base: .identifier("json"),
-                    name: ce.name
+                kind: .const, name: "j",
+                initializer: TSMemberExpr(
+                    base: TSIdentExpr("json"),
+                    name: TSIdentExpr(ce.name)
                 )
             )
             if !ce.associatedValues.isEmpty {
-                block.append(.decl(.var(varDecl)))
+                block.append(varDecl)
             }
 
-            let fields: [TSObjectField] = [
+            let fields: [TSObjectExpr.Field] = [
                 .init(
-                    name: .identifier("kind"),
-                    value: .stringLiteral(ce.name)
+                    name: "kind",
+                    value: TSStringLiteralExpr(ce.name)
                 ),
                 .init(
-                    name: .identifier(ce.name),
+                    name: ce.name,
                     value: try decodeCaseObject(
                         caseElement: ce,
-                        json: .identifier("j")
+                        json: TSIdentExpr("j")
                     )
                 )
             ]
-            block.append(.stmt(.return(.object(fields))))
-            return .block(block)
+            block.append(TSReturnStmt(TSObjectExpr(fields)))
+            return TSBlockStmt(block)
         }
 
-        private func lastElseCode() -> TSStmt {
-            return .block([
-                .stmt(.throw(.new(
-                    callee: .identifier("Error"),
-                    arguments: [
-                        TSFunctionArgument(.stringLiteral("unknown kind"))
-                    ]
-                )))
+        private func lastElseCode() -> TSBlockStmt {
+            return TSBlockStmt([
+                TSThrowStmt(
+                    TSNewExpr(
+                        callee: TSIdentType.error,
+                        args: [
+                            TSStringLiteralExpr("unknown kind")
+                        ]
+                    )
+                )
             ])
         }
 
         func generate() throws -> TSFunctionDecl {
-            var decl = builder.signature(type: type)
+            let decl = builder.signature(type: type)
 
-            var topStmt: TSStmt?
+            var topStmt: (any TSStmt)?
 
-            func appendElse(stmt: TSStmt) {
-                if case .if(let top) = topStmt {
-                    topStmt = .if(appendElse(stmt: stmt, to: top))
+            func appendElse(stmt: any TSStmt) {
+                if let top = topStmt?.asIf {
+                    topStmt = appendElse(stmt: stmt, to: top)
                 } else {
                     topStmt = stmt
                 }
             }
 
-            func appendElse(stmt: TSStmt, to ifStmt: TSIfStmt) -> TSIfStmt {
-                var ifStmt = ifStmt
-
-                if case .if(let nextIf) = ifStmt.else {
-                    ifStmt.else = .if(appendElse(stmt: stmt, to: nextIf))
+            func appendElse(stmt: any TSStmt, to ifStmt: TSIfStmt) -> TSIfStmt {
+                if let nextIf = ifStmt.else?.asIf {
+                    ifStmt.else = appendElse(stmt: stmt, to: nextIf)
                 } else {
                     ifStmt.else = stmt
                 }
@@ -191,13 +194,13 @@ struct EnumConverter {
                     else: nil
                 )
 
-                appendElse(stmt: .if(ifSt))
+                appendElse(stmt: ifSt)
             }
 
             appendElse(stmt: lastElseCode())
 
             if let top = topStmt {
-                decl.items.append(.stmt(top))
+                decl.body.elements.append(top)
             }
 
             return decl

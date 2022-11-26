@@ -1,11 +1,11 @@
 import SwiftTypeReader
-import TSCodeModule
+import TypeScriptAST
 
 struct StructConverter {
     var converter: TypeConverter
 
     func transpile(type: StructDecl, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
-        var fields: [TSRecordType.Field] = []
+        var fields: [TSObjectType.Field] = []
 
         for property in type.storedProperties {
             let (type, isOptionalField) = try converter.transpileFieldTypeReference(
@@ -14,44 +14,45 @@ struct StructConverter {
 
             fields.append(.init(
                 name: property.name,
-                type: type,
-                isOptional: isOptionalField
+                isOptional: isOptionalField,
+                type: type
             ))
         }
 
         return TSTypeDecl(
+            modifiers: [.export],
             name: converter.transpiledName(of: type, kind: kind),
-            genericParameters: converter.transpileGenericParameters(type: type, kind: kind),
-            type: .record(TSRecordType(fields))
+            genericParams: converter.transpileGenericParameters(type: type, kind: kind),
+            type: TSObjectType(fields)
         )
     }
 
     func generateDecodeFunc(type: StructDecl) throws -> TSFunctionDecl {
         let builder = converter.decodeFunction()
-        var decl = builder.signature(type: type)
+        let decl = builder.signature(type: type)
 
-        var fields: [TSObjectField] = []
+        var fields: [TSObjectExpr.Field] = []
 
         for field in type.storedProperties {
-            var expr: TSExpr = .memberAccess(
-                base: .identifier("json"),
-                name: field.name
+            var expr: any TSExpr = TSMemberExpr(
+                base: TSIdentExpr("json"),
+                name: TSIdentExpr(field.name)
             )
 
             expr = try builder.decodeField(type: field.interfaceType, expr: expr)
 
             fields.append(
                 .init(
-                    name: .identifier(field.name),
+                    name: field.name,
                     value: expr
                 )
             )
         }
 
-        decl.items = [
-            .stmt(.return(.object(fields)))
-        ]
-
+        decl.body.elements.append(
+            TSReturnStmt(TSObjectExpr(fields))
+        )
+        
         return  decl
     }
 
