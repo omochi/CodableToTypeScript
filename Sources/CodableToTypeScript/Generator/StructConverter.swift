@@ -20,6 +20,7 @@ struct StructConverter {
         }
 
         return TSTypeDecl(
+            modifiers: [.export],
             name: converter.transpiledName(of: type, kind: kind),
             genericParams: converter.transpileGenericParameters(type: type, kind: kind),
             type: TSObjectType(fields)
@@ -28,7 +29,7 @@ struct StructConverter {
 
     func generateDecodeFunc(type: StructDecl) throws -> TSFunctionDecl {
         let builder = converter.decodeFunction()
-        var decl = builder.signature(type: type)
+        let decl = builder.signature(type: type)
 
         var fields: [TSObjectExpr.Field] = []
 

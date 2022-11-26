@@ -45,6 +45,7 @@ struct HelperLibraryGenerator {
         switch entry {
         case .identityFunction:
             let decl = TSFunctionDecl(
+                modifiers: [.export],
                 name: name(entry),
                 genericParams: ["T"],
                 params: [.init(name: "json", type: TSIdentType("T"))],
@@ -56,6 +57,7 @@ struct HelperLibraryGenerator {
             return decl
         case .optionalFieldDecodeFunction:
             let decl = TSFunctionDecl(
+                modifiers: [.export],
                 name: name(entry),
                 genericParams: ["T", "U"],
                 params: [
@@ -76,6 +78,7 @@ struct HelperLibraryGenerator {
             return decl
         case .optionalDecodeFunction:
             let decl = TSFunctionDecl(
+                modifiers: [.export],
                 name: name(entry),
                 genericParams: [.init("T"), .init("U")],
                 params: [
@@ -96,6 +99,7 @@ struct HelperLibraryGenerator {
             return decl
         case .arrayDecodeFunction:
             let decl = TSFunctionDecl(
+                modifiers: [.export],
                 name: name(entry),
                 genericParams: ["T", "U"],
                 params: [
@@ -119,6 +123,7 @@ struct HelperLibraryGenerator {
             return decl
         case .dictionaryDecodeFunction:
             let decl = TSFunctionDecl(
+                modifiers: [.export],
                 name: name(entry),
                 genericParams: ["T", "U"],
                 params: [

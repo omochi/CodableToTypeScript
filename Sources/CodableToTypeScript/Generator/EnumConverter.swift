@@ -11,6 +11,7 @@ struct EnumConverter {
 
         if type.caseElements.isEmpty {
             return TSTypeDecl(
+                modifiers: [.export],
                 name: converter.transpiledName(of: type, kind: kind),
                 genericParams: genericParams,
                 type: TSIdentType.never
@@ -21,6 +22,7 @@ struct EnumConverter {
             }
 
             return TSTypeDecl(
+                modifiers: [.export],
                 name: converter.transpiledName(of: type, kind: kind),
                 genericParams: genericParams,
                 type: TSUnionType(items)
@@ -32,6 +34,7 @@ struct EnumConverter {
         }
 
         return TSTypeDecl(
+            modifiers: [.export],
             name: converter.transpiledName(of: type, kind: kind),
             genericParams: genericParams,
             type: TSUnionType(items)

@@ -70,6 +70,7 @@ struct DecodeFunctionBuilder {
         }
 
         return TSFunctionDecl(
+            modifiers: [.export],
             name: self.name(type: type.declaredInterfaceType),
             genericParams: genericParameters,
             params: parameters,
