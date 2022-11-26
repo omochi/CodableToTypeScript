@@ -8,7 +8,6 @@ final class HelperLibraryTests: XCTestCase {
         let code = gen.generateHelperLibrary()
 
         let actual = code.print()
-        print(actual)
 
         XCTAssertTrue(actual.contains("""
 export function identity<T>(json: T): T

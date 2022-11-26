@@ -29,8 +29,7 @@ let package = Package(
             name: "CodableToTypeScriptTests",
             dependencies: [
                 .target(name: "TestUtils"),
-                .target(name: "CodableToTypeScript"),
-                .target(name: "TypeScriptAST")
+                .target(name: "CodableToTypeScript")
             ]
         ),
     ]
