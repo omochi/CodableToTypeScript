@@ -9,7 +9,7 @@ struct HelperLibraryGenerator {
         case dictionaryDecodeFunction
     }
 
-    var converter: TypeConverter
+    var generator: CodeGenerator
 
     let identityFunctionName = "identity"
     let optionalFieldDecodeFunctionName = "OptionalField_decode"
@@ -168,7 +168,7 @@ struct HelperLibraryGenerator {
     }
 
     private func tDecoderName() -> String {
-        converter.decodeFunction().name(base: "T")
+        generator.decodeFunction().name(base: "T")
     }
 
     private func tDecoderParameter() -> TSFunctionType.Param {
@@ -183,7 +183,7 @@ struct HelperLibraryGenerator {
 
     private func callTDecoder() -> any TSExpr {
         return TSCallExpr(
-            callee: TSIdentExpr(converter.decodeFunction().name(base: "T")),
+            callee: TSIdentExpr(generator.decodeFunction().name(base: "T")),
             args: [TSIdentExpr("json")]
         )
     }

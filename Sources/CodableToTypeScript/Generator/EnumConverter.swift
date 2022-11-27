@@ -2,17 +2,21 @@ import SwiftTypeReader
 import TypeScriptAST
 
 struct EnumConverter {
-    var converter: TypeConverter
+    init(generator: CodeGenerator) {
+        self.gen = generator
+    }
 
-    func transpile(type: EnumDecl, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
-        let genericParams = converter.transpileGenericParameters(
-            type: type, kind: kind
+    var gen: CodeGenerator
+
+    func transpile(type: EnumDecl, target: GenerationTarget) throws -> TSTypeDecl {
+        let genericParams = try gen.transpileGenericParameters(
+            type: type, target: target
         )
 
         if type.caseElements.isEmpty {
             return TSTypeDecl(
                 modifiers: [.export],
-                name: converter.transpiledName(of: type, kind: kind),
+                name: try gen.transpileTypeName(type: type, target: target),
                 genericParams: genericParams,
                 type: TSIdentType.never
             )
@@ -23,19 +27,19 @@ struct EnumConverter {
 
             return TSTypeDecl(
                 modifiers: [.export],
-                name: converter.transpiledName(of: type, kind: kind),
+                name: try gen.transpileTypeName(type: type, target: target),
                 genericParams: genericParams,
                 type: TSUnionType(items)
             )
         }
 
         let items: [any TSType] = try type.caseElements.map { (ce) in
-            try transpile(caseElement: ce, kind: kind)
+            try transpile(caseElement: ce, target: target)
         }
 
         return TSTypeDecl(
             modifiers: [.export],
-            name: converter.transpiledName(of: type, kind: kind),
+            name: try gen.transpileTypeName(type: type, target: target),
             genericParams: genericParams,
             type: TSUnionType(items)
         )
@@ -43,12 +47,12 @@ struct EnumConverter {
 
     private func transpile(
         caseElement: EnumCaseElementDecl,
-        kind: TypeConverter.TypeKind
+        target: GenerationTarget
     ) throws -> TSObjectType {
         var outerFields: [TSObjectType.Field] = []
 
-        switch kind {
-        case .type:
+        switch target {
+        case .entity:
             outerFields.append(
                 .init(name: "kind", type: TSStringLiteralType(caseElement.name))
             )
@@ -59,8 +63,8 @@ struct EnumConverter {
         var innerFields: [TSObjectType.Field] = []
 
         for value in caseElement.associatedValues {
-            let (type, isOptionalField) = try converter.transpileFieldTypeReference(
-                type: value.interfaceType, kind: kind
+            let (type, isOptionalField) = try gen.transpileFieldTypeReference(
+                type: value.interfaceType, target: target
             )
 
             innerFields.append(.init(
@@ -81,13 +85,13 @@ struct EnumConverter {
     }
 
     struct DecodeFunc {
-        init(converter: TypeConverter, type: EnumDecl) {
-            self.converter = converter
+        init(generator: CodeGenerator, type: EnumDecl) {
+            self.gen = generator
             self.type = type
-            self.builder = converter.decodeFunction()
+            self.builder = generator.decodeFunction()
         }
 
-        var converter: TypeConverter
+        var gen: CodeGenerator
         var type: EnumDecl
         var builder: DecodeFunctionBuilder
 
@@ -165,7 +169,7 @@ struct EnumConverter {
         }
 
         func generate() throws -> TSFunctionDecl {
-            let decl = builder.signature(type: type)
+            let decl = try builder.signature(type: type)
 
             var topStmt: (any TSStmt)?
 

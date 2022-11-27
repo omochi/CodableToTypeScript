@@ -2,14 +2,18 @@ import SwiftTypeReader
 import TypeScriptAST
 
 struct StructConverter {
-    var converter: TypeConverter
+    init(generator: CodeGenerator) {
+        self.gen = generator
+    }
 
-    func transpile(type: StructDecl, kind: TypeConverter.TypeKind) throws -> TSTypeDecl {
+    var gen: CodeGenerator
+
+    func transpile(type: StructDecl, target: GenerationTarget) throws -> TSTypeDecl {
         var fields: [TSObjectType.Field] = []
 
         for property in type.storedProperties {
-            let (type, isOptionalField) = try converter.transpileFieldTypeReference(
-                type: property.interfaceType, kind: kind
+            let (type, isOptionalField) = try gen.transpileFieldTypeReference(
+                type: property.interfaceType, target: target
             )
 
             fields.append(.init(
@@ -21,15 +25,15 @@ struct StructConverter {
 
         return TSTypeDecl(
             modifiers: [.export],
-            name: converter.transpiledName(of: type, kind: kind),
-            genericParams: converter.transpileGenericParameters(type: type, kind: kind),
+            name: try gen.transpileTypeName(type: type, target: target),
+            genericParams: try gen.transpileGenericParameters(type: type, target: target),
             type: TSObjectType(fields)
         )
     }
 
     func generateDecodeFunc(type: StructDecl) throws -> TSFunctionDecl {
-        let builder = converter.decodeFunction()
-        let decl = builder.signature(type: type)
+        let builder = gen.decodeFunction()
+        let decl = try builder.signature(type: type)
 
         var fields: [TSObjectExpr.Field] = []
 

@@ -2,11 +2,11 @@ import SwiftTypeReader
 import TypeScriptAST
 
 struct DecodeFunctionBuilder {
-    init(converter: TypeConverter) {
-        self.c = converter
+    init(generator: CodeGenerator) {
+        self.gen = generator
     }
 
-    var c: TypeConverter
+    var gen: CodeGenerator
 
     func name(type: any SType) -> String {
         let base = type.namePath().convert()
@@ -17,9 +17,9 @@ struct DecodeFunctionBuilder {
         return "\(base)_decode"
     }
 
-    func signature(type: any TypeDecl) -> TSFunctionDecl {
-        let typeName = c.transpiledName(of: type, kind: .type)
-        let jsonName = c.transpiledName(of: type, kind: .json)
+    func signature(type: any TypeDecl) throws -> TSFunctionDecl {
+        let typeName = try gen.transpileTypeName(type: type, target: .entity)
+        let jsonName = try gen.transpileTypeName(type: type, target: .json)
 
         let typeParameters: [GenericParamDecl] = type.genericParams.items
 
@@ -31,7 +31,7 @@ struct DecodeFunctionBuilder {
                 TSIdentType(param.name)
             )
             jsonArgs.append(
-                TSIdentType(c.transpiledName(of: param, kind: .json))
+                TSIdentType(try gen.transpileTypeName(type: param, target: .json))
             )
         }
 
@@ -40,7 +40,7 @@ struct DecodeFunctionBuilder {
             genericParameters.append(param.name)
         }
         for param in typeParameters {
-            let name = c.transpiledName(of: param, kind: .json)
+            let name = try gen.transpileTypeName(type: param, target: .json)
             genericParameters.append(name)
         }
 
@@ -53,7 +53,7 @@ struct DecodeFunctionBuilder {
         let result: any TSType = TSIdentType(typeName, genericArgs: typeArgs)
 
         for param in typeParameters {
-            let jsonName = c.transpiledName(of: param, kind: .json)
+            let jsonName = try gen.transpileTypeName(type: param, target: .json)
             let decodeType: any TSType = TSFunctionType(
                 params: [.init(name: "json", type: TSIdentType(jsonName))],
                 result: TSIdentType(param.name)
@@ -83,9 +83,9 @@ struct DecodeFunctionBuilder {
         func makeClosure() throws -> any TSExpr {
             let param = TSFunctionType.Param(
                 name: "json",
-                type: try c.transpileTypeReference(type, kind: .json)
+                type: try gen.transpileTypeReference(type, target: .json)
             )
-            let ret = try c.transpileTypeReference(type, kind: .type)
+            let ret = try gen.transpileTypeReference(type, target: .entity)
             let expr = try decodeValue(type: type, expr: TSIdentExpr("json"))
             return TSClosureExpr(
                 params: [param],
@@ -96,8 +96,8 @@ struct DecodeFunctionBuilder {
             )
         }
 
-        if try c.hasEmptyDecoder(type: type) {
-            return c.helperLibrary().access(.identityFunction)
+        guard try gen.hasJSONType(type: type) else {
+            return gen.helperLibrary().access(.identityFunction)
         }
 
         if !type.genericArgs.isEmpty {
@@ -108,10 +108,10 @@ struct DecodeFunctionBuilder {
 
     func decodeField(type: any SType, expr: any TSExpr) throws -> any TSExpr {
         if let (wrapped, _) = type.unwrapOptional(limit: 1) {
-            if try c.hasEmptyDecoder(type: wrapped) { return expr }
+            guard try gen.hasJSONType(type: wrapped) else { return expr }
             return try callHeigherOrderDecode(
                 types: [wrapped],
-                callee: c.helperLibrary().access(.optionalFieldDecodeFunction),
+                callee: gen.helperLibrary().access(.optionalFieldDecodeFunction),
                 json: expr
             )
         }
@@ -120,9 +120,9 @@ struct DecodeFunctionBuilder {
     }
 
     func decodeValue(type: any SType, expr: any TSExpr) throws -> any TSExpr {
-        let lib = c.helperLibrary()
+        let lib = gen.helperLibrary()
         if let (wrapped, _) = type.unwrapOptional(limit: nil) {
-            if try c.hasEmptyDecoder(type: wrapped) { return expr }
+            guard try gen.hasJSONType(type: wrapped) else { return expr }
             return try callHeigherOrderDecode(
                 types: [wrapped],
                 callee: lib.access(.optionalDecodeFunction),
@@ -130,7 +130,7 @@ struct DecodeFunctionBuilder {
             )
         }
         if let (_, element) = type.asArray() {
-            if try c.hasEmptyDecoder(type: element) { return expr }
+            guard try gen.hasJSONType(type: element) else { return expr }
             return try callHeigherOrderDecode(
                 types: [element],
                 callee: lib.access(.arrayDecodeFunction),
@@ -138,7 +138,7 @@ struct DecodeFunctionBuilder {
             )
         }
         if let (_, value) = type.asDictionary() {
-            if try c.hasEmptyDecoder(type: value) { return expr }
+            guard try gen.hasJSONType(type: value) else { return expr }
             return try callHeigherOrderDecode(
                 types: [value],
                 callee: lib.access(.dictionaryDecodeFunction),
@@ -146,7 +146,7 @@ struct DecodeFunctionBuilder {
             )
         }
 
-        if try c.hasEmptyDecoder(type: type) {
+        guard try gen.hasJSONType(type: type) else {
             return expr
         }
 
