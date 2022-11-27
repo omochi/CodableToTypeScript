@@ -1,7 +1,7 @@
 import SwiftTypeReader
 import TypeScriptAST
 
-struct StructConverter {
+struct OldStructConverter {
     init(generator: CodeGenerator) {
         self.gen = generator
     }

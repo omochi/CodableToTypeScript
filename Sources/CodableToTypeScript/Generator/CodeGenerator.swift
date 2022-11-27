@@ -3,20 +3,30 @@ import SwiftTypeReader
 import TypeScriptAST
 
 public final class CodeGenerator {
+    private final class RequestToken: HashableFromIdentity {
+        unowned let gen: CodeGenerator
+        init(gen: CodeGenerator) {
+            self.gen = gen
+        }
+    }
+
+    private var requestToken: RequestToken!
     public let context: Context
     public let typeMap: TypeMap
-    private let emptyDecodeEvaluator: EmptyDecodeEvaluator
+    private let typeConverterProvider: TypeConverterProvider
 
     public init(
         context: Context,
-        typeMap: TypeMap = .default
+        typeConverterProvider: TypeConverterProvider = TypeConverterProvider()
     ) {
         self.context = context
-        self.typeMap = typeMap
-        self.emptyDecodeEvaluator = EmptyDecodeEvaluator(
-            evaluator: context.evaluator,
-            typeMap: typeMap
-        )
+        self.typeMap = typeConverterProvider.typeMap
+        self.typeConverterProvider = typeConverterProvider
+        self.requestToken = RequestToken(gen: self)
+    }
+
+    public func converter(for type: any SType) throws -> any TypeConverter {
+        return try typeConverterProvider.provide(generator: self, type: type)
     }
 
     public func generateTypeOwnDeclarations(type: any TypeDecl) throws -> TypeOwnDeclarations {
@@ -28,32 +38,47 @@ public final class CodeGenerator {
     }
 
     public func hasJSONType(type: any SType) throws -> Bool {
-        return try !emptyDecodeEvaluator.evaluate(type)
+        return try context.evaluator(
+            HasJSONTypeRequest(token: requestToken, type: type)
+        )
     }
 
-    public func hasJSONType(type: any TypeDecl) throws -> Bool {
-        return try hasJSONType(type: type.declaredInterfaceType)
+    private struct HasJSONTypeRequest: Request {
+        var token: RequestToken
+        @AnyTypeStorage var type: any SType
+
+        func evaluate(on evaluator: RequestEvaluator) throws -> Bool {
+            do {
+                let converter = try token.gen.converter(for: type)
+                return try converter.hasJSONType()
+            } catch {
+                switch error {
+                case is CycleRequestError: return true
+                default: throw error
+                }
+            }
+        }
     }
 
     public func generateTypeDeclaration(type: any TypeDecl, target: GenerationTarget) throws -> TSTypeDecl {
         switch type {
         case let type as EnumDecl:
-            return try EnumConverter(generator: self).transpile(type: type, target: target)
+            return try OldEnumConverter(generator: self).transpile(type: type, target: target)
         case let type as StructDecl:
-            return try StructConverter(generator: self).transpile(type: type, target: target)
+            return try OldStructConverter(generator: self).transpile(type: type, target: target)
         default:
             throw MessageError("unsupported type: \(type)")
         }
     }
 
     public func generateDecodeFunction(type: any TypeDecl) throws -> TSFunctionDecl? {
-        guard try hasJSONType(type: type) else { return nil }
+        guard try hasJSONType(type: type.declaredInterfaceType) else { return nil }
 
         switch type {
         case let type as EnumDecl:
-            return try EnumConverter.DecodeFunc(generator: self, type: type).generate()
+            return try OldEnumConverter.DecodeFunc(generator: self, type: type).generate()
         case let type as StructDecl:
-            return try StructConverter(generator: self).generateDecodeFunc(type: type)
+            return try OldStructConverter(generator: self).generateDecodeFunc(type: type)
         default:
             throw MessageError("unsupported type: \(type)")
         }

@@ -26,8 +26,13 @@ class GenerateTestCaseBase: XCTestCase {
             _ = try Reader(context: context, module: module)
                 .read(source: source, file: URL(fileURLWithPath: "main.swift"))
 
+            let typeConverterProvider = TypeConverterProvider(
+                typeMap: typeMap ?? .default
+            )
+
             let gen = CodeGenerator(
-                context: context, typeMap: typeMap ?? .default
+                context: context,
+                typeConverterProvider: typeConverterProvider
             )
 
             func generate(type: any TypeDecl) throws -> TSSourceFile {

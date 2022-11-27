@@ -1,7 +1,7 @@
 import SwiftTypeReader
 import TypeScriptAST
 
-struct EnumConverter {
+struct OldEnumConverter {
     init(generator: CodeGenerator) {
         self.gen = generator
     }
