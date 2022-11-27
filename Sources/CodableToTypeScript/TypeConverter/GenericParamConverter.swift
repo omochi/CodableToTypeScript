@@ -1,8 +1,9 @@
 import SwiftTypeReader
 
 struct GenericParamConverter: TypeConverter {
-    var gen: CodeGenerator
-    var type: GenericParamType
+    var generator: CodeGenerator
+    var param: GenericParamType
+    var type: any SType { param }
 
     func hasJSONType() throws -> Bool {
         return true

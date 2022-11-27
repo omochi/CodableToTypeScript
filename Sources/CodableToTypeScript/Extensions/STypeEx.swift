@@ -1,16 +1,18 @@
 import SwiftTypeReader
 
 extension TypeDecl {
-    var genericParams: GenericParamList {
-        if let self = self as? any GenericContext {
-            return self.genericParams
-        } else {
-            return GenericParamList()
-        }
-    }
-
     func namePath() -> NamePath {
         return declaredInterfaceType.namePath()
+    }
+
+    func walk(_ body: (any TypeDecl) throws -> Void) rethrows {
+        try body(self)
+
+        guard let nominal = asNominalType else { return }
+
+        for type in nominal.types {
+            try type.walk(body)
+        }
     }
 }
 
@@ -28,6 +30,14 @@ extension NominalTypeDecl {
 }
 
 extension SType {
+    var typeDecl: (any TypeDecl)? {
+        switch self {
+        case let type as any NominalType: return type.nominalTypeDecl
+        case let param as GenericParamType: return param.decl
+        default: return nil
+        }
+    }
+
     var genericArgs: [any SType] {
         if let self = self.asNominal {
             return self.genericArgs

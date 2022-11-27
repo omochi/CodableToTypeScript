@@ -1,7 +1,7 @@
 import SwiftTypeReader
 
 struct ErrorTypeConverter: TypeConverter {
-    var gen: CodeGenerator
+    var generator: CodeGenerator
     var type: any SType
 
     func hasJSONType() throws -> Bool {

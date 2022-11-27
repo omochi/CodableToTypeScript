@@ -15,33 +15,33 @@ public struct TypeConverterProvider {
     public var customProvider: CustomProvider?
 
     public func provide(
-        generator gen: CodeGenerator,
+        generator: CodeGenerator,
         type: any SType
     ) throws -> any TypeConverter {
         let repr = type.toTypeRepr(containsModule: false)
 
         if let customProvider,
-           let converter = customProvider(gen, type)
+           let converter = customProvider(generator, type)
         {
             return converter
         } else if let mapped = typeMap.map(repr: repr) {
-            return RawTypeConverter(
-                generator: gen, type: type, tsType: mapped
+            return StaticConverter(
+                generator: generator, type: type, tsName: mapped
             )
         } else if type.isStandardLibraryType("Optional") {
-            return OptionalConverter(gen: gen, type: type)
+            return OptionalConverter(generator: generator, type: type)
         } else if type.isStandardLibraryType("Array") {
-            return ArrayConverter(gen: gen, type: type)
+            return ArrayConverter(generator: generator, type: type)
         } else if type.isStandardLibraryType("Dictionary") {
-            return DictionaryConverter(gen: gen, type: type)
+            return DictionaryConverter(generator: generator, type: type)
         } else if let type = type.asEnum {
-            return EnumConverter(gen: gen, type: type)
+            return EnumConverter(generator: generator, enum: type)
         } else if let type = type.asStruct {
-            return StructConverter(gen: gen, type: type)
+            return StructConverter(generator: generator, struct: type)
         } else if let type = type.asGenericParam {
-            return GenericParamConverter(gen: gen, type: type)
+            return GenericParamConverter(generator: generator, param: type)
         } else if let type = type.asError {
-            return ErrorTypeConverter(gen: gen, type: type)
+            return ErrorTypeConverter(generator: generator, type: type)
         } else {
             throw MessageError("Unsupported type: \(type)")
         }

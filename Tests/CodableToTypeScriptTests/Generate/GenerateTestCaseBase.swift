@@ -36,7 +36,7 @@ class GenerateTestCaseBase: XCTestCase {
             )
 
             func generate(type: any TypeDecl) throws -> TSSourceFile {
-                let code = try gen.generateTypeDeclarationFile(type: type)
+                let code = try gen.converter(for: type.declaredInterfaceType).source()
                 let imports = try code.buildAutoImportDecls(
                     symbolTable: SymbolTable(),
                     defaultFile: ".."

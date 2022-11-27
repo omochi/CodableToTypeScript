@@ -1,23 +1,23 @@
 import TypeScriptAST
 
 public struct TypeOwnDeclarations {
-    public var type: TSTypeDecl
+    public var entityType: TSTypeDecl
     public var jsonType: TSTypeDecl?
     public var decodeFunction: TSFunctionDecl?
 
     public init(
-        type: TSTypeDecl,
+        entityType: TSTypeDecl,
         jsonType: TSTypeDecl?,
         decodeFunction: TSFunctionDecl?
     ) {
-        self.type = type
+        self.entityType = entityType
         self.jsonType = jsonType
         self.decodeFunction = decodeFunction
     }
 
     public var decls: [any TSDecl] {
         var decls: [any TSDecl] = [
-            type
+            entityType
         ]
 
         if let decl = jsonType {
