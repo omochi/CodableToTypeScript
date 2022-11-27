@@ -6,6 +6,6 @@ struct ArrayConverter: TypeConverter {
 
     func hasJSONType() throws -> Bool {
         let (_, element) = type.asArray()!
-        return try gen.hasJSONType(type: element)
+        return try gen.converter(for: element).hasJSONType()
     }
 }

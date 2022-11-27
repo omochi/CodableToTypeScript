@@ -6,6 +6,6 @@ struct OptionalConverter: TypeConverter {
 
     func hasJSONType() throws -> Bool {
         let (wrapped, _) = type.unwrapOptional(limit: nil)!
-        return try gen.hasJSONType(type: wrapped)
+        return try gen.converter(for: wrapped).hasJSONType()
     }
 }

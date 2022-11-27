@@ -6,6 +6,6 @@ struct DictionaryConverter: TypeConverter {
 
     func hasJSONType() throws -> Bool {
         let (_, value) = type.asDictionary()!
-        return try gen.hasJSONType(type: value)
+        return try gen.converter(for: value).hasJSONType()
     }
 }

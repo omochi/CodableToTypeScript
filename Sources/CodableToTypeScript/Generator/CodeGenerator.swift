@@ -25,22 +25,25 @@ public final class CodeGenerator {
         self.requestToken = RequestToken(gen: self)
     }
 
-    public func converter(for type: any SType) throws -> any TypeConverter {
+    private func implConverter(for type: any SType) throws -> any TypeConverter {
         return try typeConverterProvider.provide(generator: self, type: type)
     }
 
-    public func generateTypeOwnDeclarations(type: any TypeDecl) throws -> TypeOwnDeclarations {
-        return TypeOwnDeclarations(
-            type: try generateTypeDeclaration(type: type, target: .entity),
-            jsonType: try generateTypeDeclaration(type: type, target: .json),
-            decodeFunction: try generateDecodeFunction(type: type)
-        )
+    public func converter(for type: any SType) throws -> any TypeConverter {
+        let impl = try self.implConverter(for: type)
+        return ProxyConverterWrapper(gen: self, type: type, impl: impl)
     }
 
-    public func hasJSONType(type: any SType) throws -> Bool {
-        return try context.evaluator(
-            HasJSONTypeRequest(token: requestToken, type: type)
-        )
+    private struct ProxyConverterWrapper: TypeConverter {
+        var gen: CodeGenerator
+        var type: any SType
+        var impl: any TypeConverter
+
+        func hasJSONType() throws -> Bool {
+            return try gen.context.evaluator(
+                HasJSONTypeRequest(token: gen.requestToken, type: type)
+            )
+        }
     }
 
     private struct HasJSONTypeRequest: Request {
@@ -49,7 +52,7 @@ public final class CodeGenerator {
 
         func evaluate(on evaluator: RequestEvaluator) throws -> Bool {
             do {
-                let converter = try token.gen.converter(for: type)
+                let converter = try token.gen.implConverter(for: type)
                 return try converter.hasJSONType()
             } catch {
                 switch error {
@@ -58,6 +61,14 @@ public final class CodeGenerator {
                 }
             }
         }
+    }
+
+    public func generateTypeOwnDeclarations(type: any TypeDecl) throws -> TypeOwnDeclarations {
+        return TypeOwnDeclarations(
+            type: try generateTypeDeclaration(type: type, target: .entity),
+            jsonType: try generateTypeDeclaration(type: type, target: .json),
+            decodeFunction: try generateDecodeFunction(type: type)
+        )
     }
 
     public func generateTypeDeclaration(type: any TypeDecl, target: GenerationTarget) throws -> TSTypeDecl {
@@ -72,7 +83,7 @@ public final class CodeGenerator {
     }
 
     public func generateDecodeFunction(type: any TypeDecl) throws -> TSFunctionDecl? {
-        guard try hasJSONType(type: type.declaredInterfaceType) else { return nil }
+        guard try converter(for: type.declaredInterfaceType).hasJSONType() else { return nil }
 
         switch type {
         case let type as EnumDecl:
@@ -165,7 +176,7 @@ public final class CodeGenerator {
         case .entity:
             return type.namePath().convert()
         case .json:
-            guard try hasJSONType(type: type) else {
+            guard try converter(for: type).hasJSONType() else {
                 return try transpileTypeName(type: type, target: .entity)
             }
             let base = try transpileTypeName(type: type, target: .entity)

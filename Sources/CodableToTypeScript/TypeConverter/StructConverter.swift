@@ -6,7 +6,7 @@ struct StructConverter: TypeConverter {
 
     func hasJSONType() throws -> Bool {
         for field in type.decl.storedProperties {
-            if try gen.hasJSONType(type: field.interfaceType) {
+            if try gen.converter(for: field.interfaceType).hasJSONType() {
                 return true
             }
         }

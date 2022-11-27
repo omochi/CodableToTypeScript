@@ -96,7 +96,7 @@ struct DecodeFunctionBuilder {
             )
         }
 
-        guard try gen.hasJSONType(type: type) else {
+        guard try gen.converter(for: type).hasJSONType() else {
             return gen.helperLibrary().access(.identityFunction)
         }
 
@@ -108,7 +108,7 @@ struct DecodeFunctionBuilder {
 
     func decodeField(type: any SType, expr: any TSExpr) throws -> any TSExpr {
         if let (wrapped, _) = type.unwrapOptional(limit: 1) {
-            guard try gen.hasJSONType(type: wrapped) else { return expr }
+            guard try gen.converter(for: wrapped).hasJSONType() else { return expr }
             return try callHeigherOrderDecode(
                 types: [wrapped],
                 callee: gen.helperLibrary().access(.optionalFieldDecodeFunction),
@@ -122,7 +122,7 @@ struct DecodeFunctionBuilder {
     func decodeValue(type: any SType, expr: any TSExpr) throws -> any TSExpr {
         let lib = gen.helperLibrary()
         if let (wrapped, _) = type.unwrapOptional(limit: nil) {
-            guard try gen.hasJSONType(type: wrapped) else { return expr }
+            guard try gen.converter(for: wrapped).hasJSONType() else { return expr }
             return try callHeigherOrderDecode(
                 types: [wrapped],
                 callee: lib.access(.optionalDecodeFunction),
@@ -130,7 +130,7 @@ struct DecodeFunctionBuilder {
             )
         }
         if let (_, element) = type.asArray() {
-            guard try gen.hasJSONType(type: element) else { return expr }
+            guard try gen.converter(for: element).hasJSONType() else { return expr }
             return try callHeigherOrderDecode(
                 types: [element],
                 callee: lib.access(.arrayDecodeFunction),
@@ -138,7 +138,7 @@ struct DecodeFunctionBuilder {
             )
         }
         if let (_, value) = type.asDictionary() {
-            guard try gen.hasJSONType(type: value) else { return expr }
+            guard try gen.converter(for: value).hasJSONType() else { return expr }
             return try callHeigherOrderDecode(
                 types: [value],
                 callee: lib.access(.dictionaryDecodeFunction),
@@ -146,7 +146,7 @@ struct DecodeFunctionBuilder {
             )
         }
 
-        guard try gen.hasJSONType(type: type) else {
+        guard try gen.converter(for: type).hasJSONType() else {
             return expr
         }
 
