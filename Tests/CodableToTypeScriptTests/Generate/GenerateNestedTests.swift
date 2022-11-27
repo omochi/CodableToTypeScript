@@ -4,11 +4,12 @@ import SwiftTypeReader
 
 final class GenerateNestedTests: GenerateTestCaseBase {
     func testNestedTypeProperty() throws {
-        let typeMap = TypeMap { (repr) in
+        let typeMap = TypeMap { (type) in
+            let repr = type.toTypeRepr(containsModule: false)
             if let ident = repr.asIdent,
                ident.elements.last?.name == "ID"
             {
-                return "string"
+                return .init(name: "string")
             }
 
             return nil

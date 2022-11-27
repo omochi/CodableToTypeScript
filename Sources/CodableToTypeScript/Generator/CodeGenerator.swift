@@ -12,7 +12,6 @@ public final class CodeGenerator {
 
     internal var requestToken: RequestToken!
     public let context: Context
-    public let typeMap: TypeMap
     private let typeConverterProvider: TypeConverterProvider
 
     public init(
@@ -20,7 +19,6 @@ public final class CodeGenerator {
         typeConverterProvider: TypeConverterProvider = TypeConverterProvider()
     ) {
         self.context = context
-        self.typeMap = typeConverterProvider.typeMap
         self.typeConverterProvider = typeConverterProvider
         self.requestToken = RequestToken(gen: self)
     }

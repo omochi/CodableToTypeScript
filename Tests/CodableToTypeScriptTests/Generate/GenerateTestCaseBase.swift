@@ -13,21 +13,27 @@ class GenerateTestCaseBase: XCTestCase {
     var prints: Prints { .one }
 
     func assertGenerate(
+        context: Context? = nil,
         source: String,
         typeSelector: TypeSelector = .last(file: #file, line: #line),
         typeMap: TypeMap? = nil,
+        typeConverterProvider: TypeConverterProvider? = nil,
         expecteds: [String] = [],
         unexpecteds: [String] = [],
         file: StaticString = #file,
         line: UInt = #line
     ) throws {
-        try withExtendedLifetime(Context()) { context in
+        let context = context ?? Context()
+
+        try withExtendedLifetime(context) { context in
             let module = context.getOrCreateModule(name: "main")
             _ = try Reader(context: context, module: module)
                 .read(source: source, file: URL(fileURLWithPath: "main.swift"))
 
-            let typeConverterProvider = TypeConverterProvider(
-                typeMap: typeMap ?? .default
+            let typeMap = typeMap ?? .default
+
+            let typeConverterProvider = typeConverterProvider ?? TypeConverterProvider(
+                typeMap: typeMap
             )
 
             let gen = CodeGenerator(

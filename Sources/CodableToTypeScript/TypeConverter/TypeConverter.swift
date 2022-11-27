@@ -67,7 +67,6 @@ extension TypeConverter {
 
     // MARK: - extensions
     public func genericArgs() throws -> [any TypeConverter] {
-        guard let type = type.asNominal else { return [] }
         return try type.genericArgs.map { (type) in
             try generator.converter(for: type)
         }

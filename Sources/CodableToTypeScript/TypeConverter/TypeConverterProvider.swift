@@ -18,16 +18,12 @@ public struct TypeConverterProvider {
         generator: CodeGenerator,
         type: any SType
     ) throws -> any TypeConverter {
-        let repr = type.toTypeRepr(containsModule: false)
-
         if let customProvider,
            let converter = customProvider(generator, type)
         {
             return converter
-        } else if let mapped = typeMap.map(repr: repr) {
-            return StaticConverter(
-                generator: generator, type: type, tsName: mapped
-            )
+        } else if let entry = typeMap.map(type: type) {
+            return TypeMapConverter(generator: generator, type: type, entry: entry)
         } else if type.isStandardLibraryType("Optional") {
             return OptionalConverter(generator: generator, type: type)
         } else if type.isStandardLibraryType("Array") {

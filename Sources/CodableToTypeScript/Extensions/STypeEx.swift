@@ -41,6 +41,14 @@ extension SType {
     var genericArgs: [any SType] {
         if let self = self.asNominal {
             return self.genericArgs
+        } else if let self = self.asError {
+            guard let repr = self.repr as? IdentTypeRepr,
+                  let element = repr.elements.last,
+                  let context = self.context else
+            {
+                return []
+            }
+            return element.genericArgs.map { $0.resolve(from: context) }
         } else {
             return []
         }

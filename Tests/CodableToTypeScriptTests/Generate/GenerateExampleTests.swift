@@ -207,11 +207,13 @@ struct S {
     var b: K
 }
 """,
-            typeMap: TypeMap { (repr) in
+            typeMap: TypeMap { (type) in
+                let repr = type.toTypeRepr(containsModule: false)
+
                 if let ident = repr.asIdent,
                    ident.elements.last?.name == "D"
                 {
-                    return "string";
+                    return TypeMap.Entry(name: "string")
                 }
 
                 return nil
