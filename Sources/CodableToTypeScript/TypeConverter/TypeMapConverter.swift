@@ -16,13 +16,6 @@ public struct TypeMapConverter: TypeConverter {
     public var type: any SType
     private var entry: TypeMap.Entry
 
-    public func hasJSONType() throws -> Bool {
-        if let _ = entry.decode {
-            return true
-        }
-        return false
-    }
-
     public func name(for target: GenerationTarget) throws -> String {
         switch target {
         case .entity:
@@ -30,6 +23,13 @@ public struct TypeMapConverter: TypeConverter {
         case .json:
             return try `default`.name(for: .json)
         }
+    }
+
+    public func hasDecode() throws -> Bool {
+        if let _ = entry.decode {
+            return true
+        }
+        return false
     }
 
     public func decodeName() throws -> String {

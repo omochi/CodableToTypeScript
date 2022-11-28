@@ -9,15 +9,15 @@ struct ArrayConverter: TypeConverter {
         let (_, element) = type.asArray()!
         return try generator.converter(for: element)
     }
-
-    func hasJSONType() throws -> Bool {
-        return try element().hasJSONType()
-    }
-
+    
     func type(for target: GenerationTarget) throws -> any TSType {
         return TSArrayType(
             try element().type(for: target)
         )
+    }
+
+    func hasDecode() throws -> Bool {
+        return try element().hasDecode()
     }
 
     func decodeName() throws -> String? {
@@ -25,7 +25,7 @@ struct ArrayConverter: TypeConverter {
     }
 
     func callDecode(json: TSExpr) throws -> TSExpr {
-        guard try hasJSONType() else { return json }
+        guard try hasDecode() else { return json }
         let decodeName = try decodeName().unwrap(name: "decode name")
         return try generator.callDecode(
             callee: TSIdentExpr(decodeName),

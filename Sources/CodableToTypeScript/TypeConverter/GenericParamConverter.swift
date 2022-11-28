@@ -5,7 +5,7 @@ struct GenericParamConverter: TypeConverter {
     var param: GenericParamType
     var type: any SType { param }
 
-    func hasJSONType() throws -> Bool {
+    func hasDecode() throws -> Bool {
         return true
     }
 }

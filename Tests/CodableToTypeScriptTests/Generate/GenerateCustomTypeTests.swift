@@ -146,16 +146,16 @@ export type S = {
     struct DateConverter: TypeConverter {
         var generator: CodeGenerator
         var type: any SType
-
-        func hasJSONType() throws -> Bool {
-            return true
-        }
-
+        
         func name(for target: GenerationTarget) throws -> String {
             switch target {
             case .entity: return "Date"
             case .json: return try `default`.name(for: .json)
             }
+        }
+
+        func hasDecode() throws -> Bool {
+            return true
         }
 
         func decodeName() throws -> String {

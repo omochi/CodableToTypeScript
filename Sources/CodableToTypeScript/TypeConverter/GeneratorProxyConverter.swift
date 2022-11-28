@@ -11,12 +11,6 @@ struct GeneratorProxyConverter: TypeConverter {
         return try impl.name(for: target)
     }
 
-    func hasJSONType() throws -> Bool {
-        return try generator.context.evaluator(
-            CodeGenerator.HasJSONTypeRequest(token: generator.requestToken, type: type)
-        )
-    }
-
     func type(for target: GenerationTarget) throws -> any TSType {
         return try impl.type(for: target)
     }
@@ -27,6 +21,12 @@ struct GeneratorProxyConverter: TypeConverter {
 
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         return try impl.typeDecl(for: target)
+    }
+
+    func hasDecode() throws -> Bool {
+        return try generator.context.evaluator(
+            CodeGenerator.HasDecodeRequest(token: generator.requestToken, type: type)
+        )
     }
 
     func decodeName() throws -> String? {

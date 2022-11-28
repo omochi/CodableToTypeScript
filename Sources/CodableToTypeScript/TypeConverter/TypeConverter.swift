@@ -9,6 +9,7 @@ public protocol TypeConverter {
     func type(for target: GenerationTarget) throws -> any TSType
     func fieldType(for target: GenerationTarget) throws -> (type: any TSType, isOptional: Bool)
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl?
+    func hasDecode() throws -> Bool
     func decodeName() throws -> String
     func boundDecode() throws -> any TSExpr
     func callDecode(json: any TSExpr) throws -> any TSExpr
@@ -27,6 +28,10 @@ extension TypeConverter {
 
     public func name(for target: GenerationTarget) throws -> String {
         return try `default`.name(for: target)
+    }
+
+    public func hasJSONType() throws -> Bool {
+        return try `default`.hasJSONType()
     }
 
     public func type(for target: GenerationTarget) throws -> any TSType {

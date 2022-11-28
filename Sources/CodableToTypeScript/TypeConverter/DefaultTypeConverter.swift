@@ -38,6 +38,14 @@ public struct DefaultTypeConverter {
         return "\(entityName)_JSON"
     }
 
+    public func hasJSONType() throws -> Bool {
+        let converter = try self.converter()
+        if try converter.hasDecode() {
+            return true
+        }
+        return false
+    }
+
     public func type(for target: GenerationTarget) throws -> any TSType {
         let converter = try self.converter()
         let name = try converter.name(for: target)
@@ -63,7 +71,7 @@ public struct DefaultTypeConverter {
 
     public func decodeName() throws -> String {
         let converter = try self.converter()
-        guard try converter.hasJSONType() else {
+        guard try converter.hasDecode() else {
             throw MessageError("no decoder")
         }
         let entityName = try converter.name(for: .entity)
@@ -77,7 +85,7 @@ public struct DefaultTypeConverter {
     public func boundDecode() throws -> any TSExpr {
         let converter = try self.converter()
 
-        guard try converter.hasJSONType() else {
+        guard try converter.hasDecode() else {
             return generator.helperLibrary().access(.identityFunction)
         }
 
@@ -107,7 +115,7 @@ public struct DefaultTypeConverter {
 
     public func callDecode(json: any TSExpr) throws -> any TSExpr {
         let converter = try self.converter()
-        guard try converter.hasJSONType() else {
+        guard try converter.hasDecode() else {
             return json
         }
         let decodeName = try converter.decodeName()
@@ -125,7 +133,7 @@ public struct DefaultTypeConverter {
     public func decodeSignature() throws -> TSFunctionDecl? {
         let converter = try self.converter()
 
-        guard try converter.hasJSONType() else { return nil }
+        guard try converter.hasDecode() else { return nil }
 
         let entityName = try converter.name(for: .entity)
         let jsonName = try converter.name(for: .json)

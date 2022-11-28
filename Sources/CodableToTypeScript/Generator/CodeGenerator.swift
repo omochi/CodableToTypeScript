@@ -48,14 +48,14 @@ public final class CodeGenerator {
         }
     }
 
-    internal struct HasJSONTypeRequest: Request {
+    internal struct HasDecodeRequest: Request {
         var token: RequestToken
         @AnyTypeStorage var type: any SType
 
         func evaluate(on evaluator: RequestEvaluator) throws -> Bool {
             do {
                 let converter = try token.gen.implConverter(for: type)
-                return try converter.hasJSONType()
+                return try converter.hasDecode()
             } catch {
                 switch error {
                 case is CycleRequestError: return true

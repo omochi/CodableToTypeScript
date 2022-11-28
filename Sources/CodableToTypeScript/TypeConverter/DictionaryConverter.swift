@@ -10,14 +10,14 @@ struct DictionaryConverter: TypeConverter {
         return try generator.converter(for: value)
     }
 
-    func hasJSONType() throws -> Bool {
-        return try value().hasJSONType()
-    }
-
     func type(for target: GenerationTarget) throws -> any TSType {
         return TSDictionaryType(
             try value().type(for: target)
         )
+    }
+
+    func hasDecode() throws -> Bool {
+        return try value().hasDecode()
     }
 
     func decodeName() throws -> String? {
@@ -25,7 +25,7 @@ struct DictionaryConverter: TypeConverter {
     }
 
     func callDecode(json: TSExpr) throws -> TSExpr {
-        guard try hasJSONType() else { return json }
+        guard try hasDecode() else { return json }
         let decodeName = try decodeName().unwrap(name: "decode name")
         return try generator.callDecode(
             callee: TSIdentExpr(decodeName),

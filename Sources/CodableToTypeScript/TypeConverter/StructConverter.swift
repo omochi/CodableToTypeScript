@@ -6,15 +6,6 @@ struct StructConverter: TypeConverter {
     var `struct`: StructType
     var type: any SType { `struct` }
 
-    func hasJSONType() throws -> Bool {
-        for field in `struct`.decl.storedProperties {
-            if try generator.converter(for: field.interfaceType).hasJSONType() {
-                return true
-            }
-        }
-        return false
-    }
-
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         switch target {
         case .entity: break
@@ -41,6 +32,15 @@ struct StructConverter: TypeConverter {
             genericParams: try genericParams().map { try $0.name(for: target) },
             type: TSObjectType(fields)
         )
+    }
+
+    func hasDecode() throws -> Bool {
+        for field in `struct`.decl.storedProperties {
+            if try generator.converter(for: field.interfaceType).hasDecode() {
+                return true
+            }
+        }
+        return false
     }
 
     func decodeDecl() throws -> TSFunctionDecl? {

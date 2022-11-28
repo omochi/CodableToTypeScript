@@ -7,16 +7,6 @@ struct EnumConverter: TypeConverter {
     
     var type: any SType { `enum` }
 
-    func hasJSONType() throws -> Bool {
-        if `enum`.decl.caseElements.isEmpty {
-            return false
-        } else if `enum`.hasStringRawValue() {
-            return false
-        } else {
-            return true
-        }
-    }
-
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         switch target {
         case .entity: break
@@ -94,6 +84,16 @@ struct EnumConverter: TypeConverter {
         )
 
         return TSObjectType(outerFields)
+    }
+
+    func hasDecode() throws -> Bool {
+        if `enum`.decl.caseElements.isEmpty {
+            return false
+        } else if `enum`.hasStringRawValue() {
+            return false
+        } else {
+            return true
+        }
     }
 
     func decodeDecl() throws -> TSFunctionDecl? {
