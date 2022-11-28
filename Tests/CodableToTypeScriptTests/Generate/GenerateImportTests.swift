@@ -6,10 +6,10 @@ final class GenerateImportTests: GenerateTestCaseBase {
         var typeMap = TypeMap.default
 
         typeMap.table.merge([
-            "A": "A",
-            "B": "B",
-            "C": "C",
-            "Y": "Y"
+            "A": .init(name: "A"),
+            "B": .init(name: "B"),
+            "C": .init(name: "C"),
+            "Y": .init(name: "Y")
         ], uniquingKeysWith: { $1 })
 
         try assertGenerate(

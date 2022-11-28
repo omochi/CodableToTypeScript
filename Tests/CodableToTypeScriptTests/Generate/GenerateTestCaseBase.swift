@@ -13,25 +13,36 @@ class GenerateTestCaseBase: XCTestCase {
     var prints: Prints { .none }
 
     func assertGenerate(
+        context: Context? = nil,
         source: String,
         typeSelector: TypeSelector = .last(file: #file, line: #line),
         typeMap: TypeMap? = nil,
+        typeConverterProvider: TypeConverterProvider? = nil,
         expecteds: [String] = [],
         unexpecteds: [String] = [],
         file: StaticString = #file,
         line: UInt = #line
     ) throws {
-        try withExtendedLifetime(Context()) { context in
+        let context = context ?? Context()
+
+        try withExtendedLifetime(context) { context in
             let module = context.getOrCreateModule(name: "main")
             _ = try Reader(context: context, module: module)
                 .read(source: source, file: URL(fileURLWithPath: "main.swift"))
 
+            let typeMap = typeMap ?? .default
+
+            let typeConverterProvider = typeConverterProvider ?? TypeConverterProvider(
+                typeMap: typeMap
+            )
+
             let gen = CodeGenerator(
-                context: context, typeMap: typeMap ?? .default
+                context: context,
+                typeConverterProvider: typeConverterProvider
             )
 
             func generate(type: any TypeDecl) throws -> TSSourceFile {
-                let code = try gen.generateTypeDeclarationFile(type: type)
+                let code = try gen.converter(for: type.declaredInterfaceType).source()
                 let imports = try code.buildAutoImportDecls(
                     symbolTable: SymbolTable(),
                     defaultFile: ".."

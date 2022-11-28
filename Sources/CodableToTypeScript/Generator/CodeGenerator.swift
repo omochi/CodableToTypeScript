@@ -2,86 +2,89 @@ import Foundation
 import SwiftTypeReader
 import TypeScriptAST
 
-public struct CodeGenerator {
-    public let context: Context
-
-    public var typeMap: TypeMap {
-        didSet {
-            // reset cache
-            typeConverter = TypeConverter(
-                context: context, typeMap: typeMap
-            )
+public final class CodeGenerator {
+    internal final class RequestToken: HashableFromIdentity {
+        unowned let gen: CodeGenerator
+        init(gen: CodeGenerator) {
+            self.gen = gen
         }
     }
 
-    private var typeConverter: TypeConverter
+    internal var requestToken: RequestToken!
+    public let context: Context
+    private let typeConverterProvider: TypeConverterProvider
 
     public init(
         context: Context,
-        typeMap: TypeMap = .default
+        typeConverterProvider: TypeConverterProvider = TypeConverterProvider()
     ) {
         self.context = context
-        self.typeMap = typeMap
-        self.typeConverter = TypeConverter(context: context, typeMap: typeMap)
+        self.typeConverterProvider = typeConverterProvider
+        self.requestToken = RequestToken(gen: self)
     }
 
-    public func generateTypeOwnDeclarations(type: any TypeDecl) throws -> TypeOwnDeclarations {
-        try typeConverter.generateTypeOwnDeclarations(type: type)
+    public func converter(for type: any SType) throws -> any TypeConverter {
+        return try context.evaluator(
+            ConverterRequest(token: requestToken, type: type)
+        )
     }
 
-    public func generateTypeDeclaration(type: any TypeDecl) throws -> TSTypeDecl {
-        try typeConverter.generateTypeDeclaration(type: type)
+    public func converter(for decl: any TypeDecl) throws -> any TypeConverter {
+        return try converter(for: decl.declaredInterfaceType)
     }
 
-    public func hasTranspiledJSONType(type: any SType) throws -> Bool {
-        try !typeConverter.hasEmptyDecoder(type: type)
+    private func implConverter(for type: any SType) throws -> any TypeConverter {
+        return try typeConverterProvider.provide(generator: self, type: type)
     }
 
-    public func hasTranspiledJSONType(type: any TypeDecl) throws -> Bool {
-        try !typeConverter.hasEmptyDecoder(type: type)
+    internal struct ConverterRequest: Request {
+        var token: RequestToken
+        @AnyTypeStorage var type: any SType
+        private var gen: CodeGenerator { token.gen }
+
+        func evaluate(on evaluator: RequestEvaluator) throws -> any TypeConverter {
+            let impl = try gen.implConverter(for: type)
+            return GeneratorProxyConverter(generator: gen, type: type, impl: impl)
+        }
     }
 
-    public func generateJSONTypeDeclaration(type: any TypeDecl) throws -> TSTypeDecl? {
-        try typeConverter.generateJSONTypeDeclaration(type: type)
-    }
+    internal struct HasDecodeRequest: Request {
+        var token: RequestToken
+        @AnyTypeStorage var type: any SType
 
-    public func generateDecodeFunction(type: any TypeDecl) throws -> TSFunctionDecl? {
-        try typeConverter.generateDecodeFunction(type: type)
-    }
-
-    public func generateTypeDeclarationFile(type: any TypeDecl) throws -> TSSourceFile {
-        var decls: [any ASTNode] = []
-
-        func walk(type: any TypeDecl) throws {
-            decls += try generateTypeOwnDeclarations(type: type).decls
-
-            for type in type.asNominalType?.types ?? [] {
-                try walk(type: type)
+        func evaluate(on evaluator: RequestEvaluator) throws -> Bool {
+            do {
+                let converter = try token.gen.implConverter(for: type)
+                return try converter.hasDecode()
+            } catch {
+                switch error {
+                case is CycleRequestError: return true
+                default: throw error
+                }
             }
         }
-
-        try walk(type: type)
-
-        return TSSourceFile(decls)
     }
 
-    public func transpileTypeReference(type: any SType) throws -> any TSType {
-        return try typeConverter.transpileTypeReference(type, kind: .type)
-    }
-
-    public func transpileTypeReferenceToJSON(type: any SType) throws -> any TSType {
-        return try typeConverter.transpileTypeReference(type, kind: .json)
+    func helperLibrary() -> HelperLibraryGenerator {
+        return HelperLibraryGenerator(generator: self)
     }
 
     public func generateHelperLibrary() -> TSSourceFile {
-        return typeConverter.helperLibrary().generate()
+        return helperLibrary().generate()
     }
 
-    public func generateDecodeFieldExpression(type: any SType, expr: any TSExpr) throws -> any TSExpr {
-        return try typeConverter.decodeFunction().decodeField(type: type, expr: expr)
-    }
+    public func callDecode(
+        callee: any TSExpr,
+        genericArgs: [any SType],
+        json: any TSExpr
+    ) throws -> any TSExpr {
+        var args: [any TSExpr] = [json]
 
-    public func generateDecodeValueExpression(type: any SType, expr: any TSExpr) throws -> any TSExpr {
-        return try typeConverter.decodeFunction().decodeValue(type: type, expr: expr)
+        for arg in genericArgs {
+            let decode = try converter(for: arg).boundDecode()
+            args.append(decode)
+        }
+
+        return TSCallExpr(callee: callee, args: args)
     }
 }

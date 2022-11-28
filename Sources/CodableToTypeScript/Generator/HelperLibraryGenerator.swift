@@ -9,7 +9,7 @@ struct HelperLibraryGenerator {
         case dictionaryDecodeFunction
     }
 
-    var converter: TypeConverter
+    var generator: CodeGenerator
 
     let identityFunctionName = "identity"
     let optionalFieldDecodeFunctionName = "OptionalField_decode"
@@ -114,7 +114,7 @@ struct HelperLibraryGenerator {
                                 base: TSIdentExpr("json"), name: TSIdentExpr("map")
                             ),
                             args: [
-                                TSIdentExpr(tDecoderName())
+                                tDecoderName()
                             ]
                         )
                     )
@@ -150,7 +150,7 @@ struct HelperLibraryGenerator {
                                     TSAssignExpr(
                                         TSSubscriptExpr(base: TSIdentExpr("result"), key: TSIdentExpr("k")),
                                         TSCallExpr(
-                                            callee: TSIdentExpr(tDecoderName()),
+                                            callee: tDecoderName(),
                                             args: [
                                                 TSSubscriptExpr(base: TSIdentExpr("json"), key: TSIdentExpr("k"))
                                             ]
@@ -167,13 +167,15 @@ struct HelperLibraryGenerator {
         }
     }
 
-    private func tDecoderName() -> String {
-        converter.decodeFunction().name(base: "T")
+    private func tDecoderName() -> TSIdentExpr {
+        return TSIdentExpr(
+            DefaultTypeConverter.decodeName(entityName: "T")
+        )
     }
 
     private func tDecoderParameter() -> TSFunctionType.Param {
         return TSFunctionType.Param(
-            name: tDecoderName(),
+            name: tDecoderName().name,
             type: TSFunctionType(
                 params: [.init(name: "json", type: TSIdentType("T"))],
                 result: TSIdentType("U")
@@ -183,7 +185,7 @@ struct HelperLibraryGenerator {
 
     private func callTDecoder() -> any TSExpr {
         return TSCallExpr(
-            callee: TSIdentExpr(converter.decodeFunction().name(base: "T")),
+            callee: tDecoderName(),
             args: [TSIdentExpr("json")]
         )
     }
