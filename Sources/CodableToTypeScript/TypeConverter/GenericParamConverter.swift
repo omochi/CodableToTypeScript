@@ -8,4 +8,8 @@ struct GenericParamConverter: TypeConverter {
     func hasDecode() throws -> Bool {
         return true
     }
+
+    func hasEncode() throws -> Bool {
+        return true
+    }
 }

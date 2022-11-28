@@ -4,14 +4,17 @@ public struct TypeMap {
     public struct Entry {
         public init(
             name: String,
-            decode: String? = nil
+            decode: String? = nil,
+            encode: String? = nil
         ) {
             self.name = name
             self.decode = decode
+            self.encode = encode
         }
 
         public var name: String
         public var decode: String?
+        public var encode: String?
     }
 
     public typealias MapFunction = (any SType) -> Entry?

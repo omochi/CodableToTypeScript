@@ -29,14 +29,11 @@ struct OptionalConverter: TypeConverter {
     }
 
     func decodeName() throws -> String? {
-        return generator.helperLibrary().name(.optionalDecodeFunction)
+        return generator.helperLibrary().name(.optionalDecode)
     }
 
     func callDecode(json: any TSExpr) throws -> any TSExpr {
-        guard try hasDecode() else { return json }
-        let decodeName = try decodeName().unwrap(name: "decode name")
-        return try generator.callDecode(
-            callee: TSIdentExpr(decodeName),
+        return try `default`.callDecode(
             genericArgs: [try wrapped(limit: nil).type],
             json: json
         )
@@ -44,11 +41,37 @@ struct OptionalConverter: TypeConverter {
 
     func callDecodeField(json: any TSExpr) throws -> any TSExpr {
         guard try hasDecode() else { return json }
-        let decodeName = generator.helperLibrary().name(.optionalFieldDecodeFunction)
+        let decodeName = generator.helperLibrary().name(.optionalFieldDecode)
         return try generator.callDecode(
             callee: TSIdentExpr(decodeName),
             genericArgs: [try wrapped(limit: 1).type],
             json: json
         )
     }
+
+    func hasEncode() throws -> Bool {
+        return try wrapped(limit: nil).hasEncode()
+    }
+
+    func encodeName() throws -> String {
+        return generator.helperLibrary().name(.optionalEncode)
+    }
+
+    func callEncode(entity: any TSExpr) throws -> any TSExpr {
+        return try `default`.callEncode(
+            genericArgs: [try wrapped(limit: nil).type],
+            entity: entity
+        )
+    }
+
+    func callEncodeField(entity: any TSExpr) throws -> any TSExpr {
+        guard try hasEncode() else { return entity }
+        let encodeName = generator.helperLibrary().name(.optionalFieldEncode)
+        return try generator.callEncode(
+            callee: TSIdentExpr(encodeName),
+            genericArgs: [try wrapped(limit: 1).type],
+            entity: entity
+        )
+    }
+
 }

@@ -52,4 +52,35 @@ struct GeneratorProxyConverter: TypeConverter {
     func decodeDecl() throws -> TSFunctionDecl? {
         return try impl.decodeDecl()
     }
+
+    func hasEncode() throws -> Bool {
+        return try generator.context.evaluator(
+            CodeGenerator.HasEncodeRequest(token: generator.requestToken, type: type)
+        )
+    }
+
+    func encodeName() throws -> String {
+        return try impl.encodeName()
+    }
+
+    func boundEncode() throws -> TSExpr {
+        return try impl.boundEncode()
+    }
+
+    func callEncode(entity: any TSExpr) throws -> any TSExpr {
+        return try impl.callEncode(entity: entity)
+    }
+
+    func callEncodeField(entity: any TSExpr) throws -> any TSExpr {
+        return try impl.callEncodeField(entity: entity)
+    }
+
+    func encodeSignature() throws -> TSFunctionDecl? {
+        return try impl.encodeSignature()
+    }
+
+    func encodeDecl() throws -> TSFunctionDecl? {
+        return try impl.encodeDecl()
+    }
+
 }

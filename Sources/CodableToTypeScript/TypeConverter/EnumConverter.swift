@@ -7,6 +7,8 @@ struct EnumConverter: TypeConverter {
     
     var type: any SType { `enum` }
 
+    private var decl: EnumDecl { `enum`.decl }
+
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         switch target {
         case .entity: break
@@ -16,15 +18,15 @@ struct EnumConverter: TypeConverter {
 
         let genericParams = try self.genericParams().map { try $0.name(for: target) }
 
-        if `enum`.decl.caseElements.isEmpty {
+        if decl.caseElements.isEmpty {
             return TSTypeDecl(
                 modifiers: [.export],
                 name: try name(for: target),
                 genericParams: genericParams,
                 type: TSIdentType.never
             )
-        } else if `enum`.decl.hasStringRawValue() {
-            let items: [any TSType] = `enum`.decl.caseElements.map { (ce) in
+        } else if decl.hasStringRawValue() {
+            let items: [any TSType] = decl.caseElements.map { (ce) in
                 TSStringLiteralType(ce.name)
             }
 
@@ -36,7 +38,7 @@ struct EnumConverter: TypeConverter {
             )
         }
 
-        let items: [any TSType] = try `enum`.decl.caseElements.map { (ce) in
+        let items: [any TSType] = try decl.caseElements.map { (ce) in
             try transpile(caseElement: ce, target: target)
         }
 
@@ -87,13 +89,13 @@ struct EnumConverter: TypeConverter {
     }
 
     func hasDecode() throws -> Bool {
-        if `enum`.decl.caseElements.isEmpty {
+        if decl.caseElements.isEmpty {
             return false
-        } else if `enum`.hasStringRawValue() {
+        } else if decl.hasStringRawValue() {
             return false
-        } else {
-            return true
         }
+
+        return true
     }
 
     func decodeDecl() throws -> TSFunctionDecl? {
@@ -103,6 +105,27 @@ struct EnumConverter: TypeConverter {
             type: `enum`.decl
         ).generate()
     }
+
+    func hasEncode() throws -> Bool {
+        if decl.caseElements.isEmpty {
+            return false
+        } else if decl.hasStringRawValue() {
+            return false
+        }
+
+        for caseElement in decl.caseElements {
+            for value in caseElement.associatedValues {
+                let value = try generator.converter(for: value.interfaceType)
+                if try value.hasEncode() {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
+    // TODO: encodeDecl
 }
 
 private struct DecodeFuncGen {

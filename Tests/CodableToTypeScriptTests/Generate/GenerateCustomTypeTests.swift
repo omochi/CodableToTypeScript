@@ -161,6 +161,14 @@ export type S = {
         func decodeName() throws -> String {
             return "Date_decode"
         }
+
+        func hasEncode() throws -> Bool {
+            return true
+        }
+
+        func encodeName() throws -> String {
+            return "Date_encode"
+        }
     }
 
     func testCustomTypeConverter() throws {

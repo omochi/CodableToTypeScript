@@ -16,6 +16,13 @@ public protocol TypeConverter {
     func callDecodeField(json: any TSExpr) throws -> any TSExpr
     func decodeSignature() throws -> TSFunctionDecl?
     func decodeDecl() throws -> TSFunctionDecl?
+    func hasEncode() throws -> Bool
+    func encodeName() throws -> String
+    func boundEncode() throws -> any TSExpr
+    func callEncode(entity: any TSExpr) throws -> any TSExpr
+    func callEncodeField(entity: any TSExpr) throws -> any TSExpr
+    func encodeSignature() throws -> TSFunctionDecl?
+    func encodeDecl() throws -> TSFunctionDecl?
     func ownDecls() throws -> TypeOwnDeclarations
     func source() throws -> TSSourceFile
 }
@@ -70,6 +77,30 @@ extension TypeConverter {
         return try `default`.decodeDecl()
     }
 
+    public func encodeName() throws -> String {
+        return try `default`.encodeName()
+    }
+
+    public func boundEncode() throws -> any TSExpr {
+        return try `default`.boundEncode()
+    }
+
+    public func callEncode(entity: any TSExpr) throws -> any TSExpr {
+        return try `default`.callEncode(entity: entity)
+    }
+
+    public func callEncodeField(entity: any TSExpr) throws -> any TSExpr {
+        return try `default`.callEncodeField(entity: entity)
+    }
+
+    public func encodeSignature() throws -> TSFunctionDecl? {
+        return try `default`.encodeSignature()
+    }
+
+    public func encodeDecl() throws -> TSFunctionDecl? {
+        return try `default`.encodeDecl()
+    }
+
     // MARK: - extensions
     public func genericArgs() throws -> [any TypeConverter] {
         return try type.genericArgs.map { (type) in
@@ -92,7 +123,8 @@ extension TypeConverter {
         return TypeOwnDeclarations(
             entityType: try typeDecl(for: .entity).unwrap(name: "entity type decl"),
             jsonType: try typeDecl(for: .json),
-            decodeFunction: try decodeDecl()
+            decodeFunction: try decodeDecl(),
+            encodeFunction: try encodeDecl()
         )
     }
 

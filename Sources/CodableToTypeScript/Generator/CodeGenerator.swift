@@ -4,9 +4,9 @@ import TypeScriptAST
 
 public final class CodeGenerator {
     internal final class RequestToken: HashableFromIdentity {
-        unowned let gen: CodeGenerator
-        init(gen: CodeGenerator) {
-            self.gen = gen
+        unowned let generator: CodeGenerator
+        init(generator: CodeGenerator) {
+            self.generator = generator
         }
     }
 
@@ -20,7 +20,7 @@ public final class CodeGenerator {
     ) {
         self.context = context
         self.typeConverterProvider = typeConverterProvider
-        self.requestToken = RequestToken(gen: self)
+        self.requestToken = RequestToken(generator: self)
     }
 
     public func converter(for type: any SType) throws -> any TypeConverter {
@@ -40,11 +40,11 @@ public final class CodeGenerator {
     internal struct ConverterRequest: Request {
         var token: RequestToken
         @AnyTypeStorage var type: any SType
-        private var gen: CodeGenerator { token.gen }
+        private var generator: CodeGenerator { token.generator }
 
         func evaluate(on evaluator: RequestEvaluator) throws -> any TypeConverter {
-            let impl = try gen.implConverter(for: type)
-            return GeneratorProxyConverter(generator: gen, type: type, impl: impl)
+            let impl = try generator.implConverter(for: type)
+            return GeneratorProxyConverter(generator: generator, type: type, impl: impl)
         }
     }
 
@@ -54,8 +54,25 @@ public final class CodeGenerator {
 
         func evaluate(on evaluator: RequestEvaluator) throws -> Bool {
             do {
-                let converter = try token.gen.implConverter(for: type)
+                let converter = try token.generator.implConverter(for: type)
                 return try converter.hasDecode()
+            } catch {
+                switch error {
+                case is CycleRequestError: return true
+                default: throw error
+                }
+            }
+        }
+    }
+
+    internal struct HasEncodeRequest: Request {
+        var token: RequestToken
+        @AnyTypeStorage var type: any SType
+
+        func evaluate(on evaluator: RequestEvaluator) throws -> Bool {
+            do {
+                let converter = try token.generator.implConverter(for: type)
+                return try converter.hasEncode()
             } catch {
                 switch error {
                 case is CycleRequestError: return true
@@ -83,6 +100,21 @@ public final class CodeGenerator {
         for arg in genericArgs {
             let decode = try converter(for: arg).boundDecode()
             args.append(decode)
+        }
+
+        return TSCallExpr(callee: callee, args: args)
+    }
+
+    public func callEncode(
+        callee: any TSExpr,
+        genericArgs: [any SType],
+        entity: any TSExpr
+    ) throws -> any TSExpr {
+        var args: [any TSExpr] = [entity]
+
+        for arg in genericArgs {
+            let encode = try converter(for: arg).boundEncode()
+            args.append(encode)
         }
 
         return TSCallExpr(callee: callee, args: args)
