@@ -42,4 +42,8 @@ public struct TypeMapConverter: TypeConverter {
         }
         return false
     }
+
+    public func encodeName() throws -> String {
+        return try entry.encode.unwrap(name: "entry.encode")
+    }
 }

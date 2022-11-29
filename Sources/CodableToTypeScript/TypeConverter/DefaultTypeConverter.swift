@@ -109,7 +109,7 @@ public struct DefaultTypeConverter {
             return try makeClosure()
         }
         return TSIdentExpr(
-            try converter.encodeName()
+            try converter.decodeName()
         )
     }
 
@@ -122,7 +122,7 @@ public struct DefaultTypeConverter {
         guard try converter.hasDecode() else {
             return json
         }
-        let decodeName = try converter.encodeName()
+        let decodeName = try converter.decodeName()
         return try generator.callDecode(
             callee: TSIdentExpr(decodeName),
             genericArgs: genericArgs,
@@ -179,7 +179,7 @@ public struct DefaultTypeConverter {
                 result: TSIdentType(try param.name(for: .entity))
             )
 
-            let decodeName = try param.encodeName()
+            let decodeName = try param.decodeName()
 
             params.append(
                 .init(

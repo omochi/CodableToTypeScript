@@ -9,24 +9,42 @@ final class HelperLibraryTests: XCTestCase {
 
         let actual = code.print()
 
+//        print(actual)
+
         XCTAssertTrue(actual.contains("""
 export function identity<T>(json: T): T
 """))
 
         XCTAssertTrue(actual.contains("""
-export function OptionalField_decode<T, U>(json: T | undefined, T_decode: (json: T) => U): U | undefined
+export function OptionalField_decode<T, T_JSON>(json: T_JSON | undefined, T_decode: (json: T_JSON) => T): T | undefined
 """))
 
         XCTAssertTrue(actual.contains("""
-export function Optional_decode<T, U>(json: T | null, T_decode: (json: T) => U): U | null
+export function OptionalField_encode<T, T_JSON>(entity: T | undefined, T_encode: (entity: T) => T_JSON): T_JSON | undefined
 """))
 
         XCTAssertTrue(actual.contains("""
-export function Array_decode<T, U>(json: T[], T_decode: (json: T) => U): U[]
+export function Optional_decode<T, T_JSON>(json: T_JSON | null, T_decode: (json: T_JSON) => T): T | null
 """))
 
         XCTAssertTrue(actual.contains("""
-export function Dictionary_decode<T, U>(json: { [key: string]: T; }, T_decode: (json: T) => U): { [key: string]: U; }
+export function Optional_encode<T, T_JSON>(entity: T | null, T_encode: (entity: T) => T_JSON): T_JSON | null
+"""))
+
+        XCTAssertTrue(actual.contains("""
+export function Array_decode<T, T_JSON>(json: T_JSON[], T_decode: (json: T_JSON) => T): T[]
+"""))
+
+        XCTAssertTrue(actual.contains("""
+export function Array_encode<T, T_JSON>(entity: T[], T_encode: (entity: T) => T_JSON): T_JSON[]
+"""))
+
+        XCTAssertTrue(actual.contains("""
+export function Dictionary_decode<T, T_JSON>(json: { [key: string]: T_JSON; }, T_decode: (json: T_JSON) => T): { [key: string]: T; }
+"""))
+
+        XCTAssertTrue(actual.contains("""
+export function Dictionary_encode<T, T_JSON>(entity: { [key: string]: T; }, T_encode: (entity: T) => T_JSON): { [key: string]: T_JSON; }
 """))
     }
 }
