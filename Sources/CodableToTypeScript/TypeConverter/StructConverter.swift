@@ -71,4 +71,43 @@ struct StructConverter: TypeConverter {
 
         return decl
     }
+
+    func hasEncode() throws -> Bool {
+        for field in `struct`.decl.storedProperties {
+            if try generator.converter(for: field.interfaceType).hasEncode() {
+                return true
+            }
+        }
+        return false
+    }
+
+    func encodeDecl() throws -> TSFunctionDecl? {
+        guard let decl = try encodeSignature() else { return nil }
+
+        var fields: [TSObjectExpr.Field] = []
+
+        for field in `struct`.decl.storedProperties {
+            var expr: any TSExpr = TSMemberExpr(
+                base: TSIdentExpr("entity"),
+                name: TSIdentExpr(field.name)
+            )
+
+            expr = try generator.converter(for: field.interfaceType)
+                .callEncodeField(entity: expr)
+
+            fields.append(
+                .init(
+                    name: field.name,
+                    value: expr
+                )
+            )
+        }
+
+        decl.body.elements.append(
+            TSReturnStmt(TSObjectExpr(fields))
+        )
+
+        return decl
+    }
+
 }

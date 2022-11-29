@@ -7,4 +7,8 @@ struct ErrorTypeConverter: TypeConverter {
     func hasDecode() throws -> Bool {
         throw MessageError("Error type can't be evaluated: \(type)")
     }
+
+    func hasEncode() throws -> Bool {
+        throw MessageError("Error type can't be evaluated: \(type)")
+    }
 }

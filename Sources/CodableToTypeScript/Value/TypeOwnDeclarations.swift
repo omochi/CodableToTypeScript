@@ -4,15 +4,18 @@ public struct TypeOwnDeclarations {
     public var entityType: TSTypeDecl
     public var jsonType: TSTypeDecl?
     public var decodeFunction: TSFunctionDecl?
+    public var encodeFunction: TSFunctionDecl?
 
     public init(
         entityType: TSTypeDecl,
         jsonType: TSTypeDecl?,
-        decodeFunction: TSFunctionDecl?
+        decodeFunction: TSFunctionDecl?,
+        encodeFunction: TSFunctionDecl?
     ) {
         self.entityType = entityType
         self.jsonType = jsonType
         self.decodeFunction = decodeFunction
+        self.encodeFunction = encodeFunction
     }
 
     public var decls: [any TSDecl] {
@@ -25,6 +28,10 @@ public struct TypeOwnDeclarations {
         }
 
         if let decl = decodeFunction {
+            decls.append(decl)
+        }
+
+        if let decl = encodeFunction {
             decls.append(decl)
         }
 

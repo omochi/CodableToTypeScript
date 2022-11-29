@@ -105,11 +105,6 @@ extension SType {
         guard let self = self.asNominal else { return false }
         return self.nominalTypeDecl.isStandardLibraryType(name)
     }
-
-    func hasStringRawValue() -> Bool {
-        guard let self = self.asNominal else { return false }
-        return self.nominalTypeDecl.hasStringRawValue()
-    }
 }
 
 extension ParamDecl {

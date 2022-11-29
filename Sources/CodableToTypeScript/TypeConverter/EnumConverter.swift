@@ -7,6 +7,8 @@ struct EnumConverter: TypeConverter {
     
     var type: any SType { `enum` }
 
+    private var decl: EnumDecl { `enum`.decl }
+
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         switch target {
         case .entity: break
@@ -16,15 +18,15 @@ struct EnumConverter: TypeConverter {
 
         let genericParams = try self.genericParams().map { try $0.name(for: target) }
 
-        if `enum`.decl.caseElements.isEmpty {
+        if decl.caseElements.isEmpty {
             return TSTypeDecl(
                 modifiers: [.export],
                 name: try name(for: target),
                 genericParams: genericParams,
                 type: TSIdentType.never
             )
-        } else if `enum`.decl.hasStringRawValue() {
-            let items: [any TSType] = `enum`.decl.caseElements.map { (ce) in
+        } else if decl.hasStringRawValue() {
+            let items: [any TSType] = decl.caseElements.map { (ce) in
                 TSStringLiteralType(ce.name)
             }
 
@@ -36,7 +38,7 @@ struct EnumConverter: TypeConverter {
             )
         }
 
-        let items: [any TSType] = try `enum`.decl.caseElements.map { (ce) in
+        let items: [any TSType] = try decl.caseElements.map { (ce) in
             try transpile(caseElement: ce, target: target)
         }
 
@@ -87,17 +89,44 @@ struct EnumConverter: TypeConverter {
     }
 
     func hasDecode() throws -> Bool {
-        if `enum`.decl.caseElements.isEmpty {
+        if decl.caseElements.isEmpty {
             return false
-        } else if `enum`.hasStringRawValue() {
+        } else if decl.hasStringRawValue() {
             return false
-        } else {
-            return true
         }
+
+        return true
     }
 
     func decodeDecl() throws -> TSFunctionDecl? {
         return try DecodeFuncGen(
+            generator: generator,
+            converter: self,
+            type: `enum`.decl
+        ).generate()
+    }
+
+    func hasEncode() throws -> Bool {
+        if decl.caseElements.isEmpty {
+            return false
+        } else if decl.hasStringRawValue() {
+            return false
+        }
+
+        for caseElement in decl.caseElements {
+            for value in caseElement.associatedValues {
+                let value = try generator.converter(for: value.interfaceType)
+                if try value.hasEncode() {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
+    func encodeDecl() throws -> TSFunctionDecl? {
+        return try EncodeFuncGen(
             generator: generator,
             converter: self,
             type: `enum`.decl
@@ -223,6 +252,84 @@ private struct DecodeFuncGen {
             decl.body.elements.append(top)
         }
 
+        return decl
+    }
+}
+
+private struct EncodeFuncGen {
+    var generator: CodeGenerator
+    var converter: EnumConverter
+    var type: EnumDecl
+
+    func encodeCaseValue(element: EnumCaseElementDecl) throws -> TSObjectExpr {
+        var fields: [TSObjectExpr.Field] = []
+
+        for value in element.associatedValues {
+            var expr: any TSExpr = TSMemberExpr(base: TSIdentExpr("e"), name: TSIdentExpr(value.codableLabel))
+
+            expr = try generator.converter(for: value.interfaceType).callEncodeField(entity: expr)
+
+            fields.append(.init(
+                name: value.codableLabel,
+                value: expr
+            ))
+        }
+
+        return TSObjectExpr(fields)
+    }
+
+    func caseBody(element: EnumCaseElementDecl) throws -> [any ASTNode] {
+        var code: [any ASTNode] = []
+
+        if !element.associatedValues.isEmpty {
+            let e = TSVarDecl(
+                kind: .const, name: "e",
+                initializer: TSMemberExpr(base: TSIdentExpr("entity"), name: TSIdentExpr(element.name))
+            )
+            code.append(e)
+        }
+
+        let innerObject = try encodeCaseValue(element: element)
+
+        let outerObject = TSObjectExpr([
+            .init(name: element.name, value: innerObject)
+        ])
+
+        code.append(TSReturnStmt(outerObject))
+        return code
+    }
+
+    func generate() throws -> TSFunctionDecl? {
+        guard let decl = try converter.encodeSignature() else { return nil }
+
+        let `switch` = TSSwitchStmt(
+            expr: TSMemberExpr(base: TSIdentExpr("entity"), name: TSIdentExpr("kind"))
+        )
+
+        for caseElement in type.caseElements {
+            `switch`.cases.append(
+                TSCaseStmt(expr: TSStringLiteralExpr(caseElement.name), elements: [
+                    TSBlockStmt(try caseBody(element: caseElement))
+                ])
+            )
+        }
+
+        `switch`.cases.append(
+            TSDefaultStmt(elements: [
+                TSVarDecl(
+                    kind: .const, name: "check", type: TSIdentType.never,
+                    initializer: TSIdentExpr("entity")
+                ),
+                TSThrowStmt(TSNewExpr(callee: TSIdentType.error, args: [
+                    TSInfixOperatorExpr(
+                        TSStringLiteralExpr("invalid case: "), "+",
+                        TSIdentExpr("check")
+                    )
+                ]))
+            ])
+        )
+
+        decl.body.elements.append(`switch`)
         return decl
     }
 }

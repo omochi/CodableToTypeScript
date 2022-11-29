@@ -21,16 +21,28 @@ struct DictionaryConverter: TypeConverter {
     }
 
     func decodeName() throws -> String? {
-        return generator.helperLibrary().name(.dictionaryDecodeFunction)
+        return generator.helperLibrary().name(.dictionaryDecode)
     }
 
-    func callDecode(json: TSExpr) throws -> TSExpr {
-        guard try hasDecode() else { return json }
-        let decodeName = try decodeName().unwrap(name: "decode name")
-        return try generator.callDecode(
-            callee: TSIdentExpr(decodeName),
+    func callDecode(json: any TSExpr) throws -> any TSExpr {
+        return try `default`.callDecode(
             genericArgs: [try value().type],
             json: json
+        )
+    }
+
+    func hasEncode() throws -> Bool {
+        return try value().hasEncode()
+    }
+
+    func encodeName() throws -> String {
+        return generator.helperLibrary().name(.dictionaryEncode)
+    }
+
+    func callEncode(entity: any TSExpr) throws -> any TSExpr {
+        return try `default`.callEncode(
+            genericArgs: [try value().type],
+            entity: entity
         )
     }
 }

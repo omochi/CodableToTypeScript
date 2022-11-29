@@ -72,7 +72,7 @@ public struct DefaultTypeConverter {
     public func decodeName() throws -> String {
         let converter = try self.converter()
         guard try converter.hasDecode() else {
-            throw MessageError("no decoder")
+            throw MessageError("no decode")
         }
         let entityName = try converter.name(for: .entity)
         return Self.decodeName(entityName: entityName)
@@ -86,7 +86,7 @@ public struct DefaultTypeConverter {
         let converter = try self.converter()
 
         guard try converter.hasDecode() else {
-            return generator.helperLibrary().access(.identityFunction)
+            return generator.helperLibrary().access(.identity)
         }
 
         func makeClosure() throws -> any TSExpr {
@@ -114,6 +114,10 @@ public struct DefaultTypeConverter {
     }
 
     public func callDecode(json: any TSExpr) throws -> any TSExpr {
+        return try callDecode(genericArgs: type.genericArgs, json: json)
+    }
+
+    public func callDecode(genericArgs: [any SType], json: any TSExpr) throws -> any TSExpr {
         let converter = try self.converter()
         guard try converter.hasDecode() else {
             return json
@@ -121,7 +125,7 @@ public struct DefaultTypeConverter {
         let decodeName = try converter.decodeName()
         return try generator.callDecode(
             callee: TSIdentExpr(decodeName),
-            genericArgs: type.genericArgs,
+            genericArgs: genericArgs,
             json: json
         )
     }
@@ -160,7 +164,7 @@ public struct DefaultTypeConverter {
             decodeGenericParams.append(try param.name(for: .json))
         }
 
-        var parameters: [TSFunctionType.Param] = [
+        var params: [TSFunctionType.Param] = [
             .init(
                 name: "json",
                 type: TSIdentType(jsonName, genericArgs: jsonArgs)
@@ -177,7 +181,7 @@ public struct DefaultTypeConverter {
 
             let decodeName = try param.decodeName()
 
-            parameters.append(
+            params.append(
                 .init(
                     name: decodeName,
                     type: decodeType
@@ -189,7 +193,7 @@ public struct DefaultTypeConverter {
             modifiers: [.export],
             name: try decodeName(),
             genericParams: decodeGenericParams,
-            params: parameters,
+            params: params,
             result: result,
             body: TSBlockStmt()
         )
@@ -197,6 +201,141 @@ public struct DefaultTypeConverter {
 
     public func decodeDecl() throws -> TSFunctionDecl? {
         guard let _ = try decodeSignature() else { return nil }
+        throw MessageError("Unsupported type: \(type)")
+    }
+
+    public func encodeName() throws -> String {
+        let converter = try self.converter()
+        guard try converter.hasEncode() else {
+            throw MessageError("no encode")
+        }
+        let entityName = try converter.name(for: .entity)
+        return Self.encodeName(entityName: entityName)
+    }
+
+    public static func encodeName(entityName: String) -> String {
+        return "\(entityName)_encode"
+    }
+
+    public func boundEncode() throws -> any TSExpr {
+        let converter = try self.converter()
+
+        guard try converter.hasEncode() else {
+            return generator.helperLibrary().access(.identity)
+        }
+
+        func makeClosure() throws -> any TSExpr {
+            let param = TSFunctionType.Param(
+                name: "entity",
+                type: try converter.type(for: .entity)
+            )
+            let result = try converter.type(for: .json)
+            let expr = try converter.callEncode(entity: TSIdentExpr("entity"))
+            return TSClosureExpr(
+                params: [param],
+                result: result,
+                body: TSBlockStmt([
+                    TSReturnStmt(expr)
+                ])
+            )
+        }
+
+        if !type.genericArgs.isEmpty {
+            return try makeClosure()
+        }
+        return TSIdentExpr(
+            try converter.encodeName()
+        )
+    }
+
+    public func callEncode(entity: any TSExpr) throws -> any TSExpr {
+        return try callEncode(genericArgs: type.genericArgs, entity: entity)
+    }
+
+    public func callEncode(genericArgs: [any SType], entity: any TSExpr) throws -> any TSExpr {
+        let converter = try self.converter()
+        guard try converter.hasEncode() else {
+            return entity
+        }
+        let encodeName = try converter.encodeName()
+        return try generator.callEncode(
+            callee: TSIdentExpr(encodeName),
+            genericArgs: genericArgs,
+            entity: entity
+        )
+    }
+
+    public func callEncodeField(entity: any TSExpr) throws -> any TSExpr {
+        return try converter().callEncode(entity: entity)
+    }
+
+    public func encodeSignature() throws -> TSFunctionDecl? {
+        let converter = try self.converter()
+
+        guard try converter.hasEncode() else { return nil }
+
+        let entityName = try converter.name(for: .entity)
+        let jsonName = try converter.name(for: .json)
+
+        let genericParams = try converter.genericParams()
+
+        var entityArgs: [any TSType] = []
+        var jsonArgs: [any TSType] = []
+
+        for param in genericParams {
+            entityArgs.append(
+                TSIdentType(try param.name(for: .entity))
+            )
+            jsonArgs.append(
+                TSIdentType(try param.name(for: .json))
+            )
+        }
+
+        var encodeGenericParams: [String] = []
+        for param in genericParams {
+            encodeGenericParams.append(try param.name(for: .entity))
+        }
+        for param in genericParams {
+            encodeGenericParams.append(try param.name(for: .json))
+        }
+
+        var params: [TSFunctionType.Param] = [
+            .init(
+                name: "entity",
+                type: TSIdentType(entityName, genericArgs: entityArgs)
+            )
+        ]
+        let result: any TSType = TSIdentType(jsonName, genericArgs: jsonArgs)
+
+        for param in genericParams {
+            let entityName = try param.name(for: .entity)
+            let encodeType: any TSType = TSFunctionType(
+                params: [.init(name: "entity", type: TSIdentType(entityName))],
+                result: TSIdentType(try param.name(for: .json))
+            )
+
+            let encodeName = try param.encodeName()
+
+            params.append(
+                .init(
+                    name: encodeName,
+                    type: encodeType
+                )
+            )
+        }
+
+        return TSFunctionDecl(
+            modifiers: [.export],
+            name: try encodeName(),
+            genericParams: encodeGenericParams,
+            params: params,
+            result: result,
+            body: TSBlockStmt()
+        )
+    }
+
+    public func encodeDecl() throws -> TSFunctionDecl? {
+        guard let _ = try encodeSignature() else { return nil }
         throw MessageError("Unsupported type: \(type)")
     }
 }

@@ -35,4 +35,15 @@ public struct TypeMapConverter: TypeConverter {
     public func decodeName() throws -> String {
         return try entry.decode.unwrap(name: "entry.decode")
     }
+
+    public func hasEncode() throws -> Bool {
+        if let _ = entry.encode {
+            return true
+        }
+        return false
+    }
+
+    public func encodeName() throws -> String {
+        return try entry.encode.unwrap(name: "entry.encode")
+    }
 }
