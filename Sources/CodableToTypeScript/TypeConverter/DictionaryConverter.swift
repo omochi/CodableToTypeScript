@@ -3,10 +3,10 @@ import TypeScriptAST
 
 struct DictionaryConverter: TypeConverter {
     var generator: CodeGenerator
-    var type: any SType
+    var swiftType: any SType
 
     private func value() throws -> any TypeConverter {
-        let (_, value) = type.asDictionary()!
+        let (_, value) = swiftType.asDictionary()!
         return try generator.converter(for: value)
     }
 
@@ -26,7 +26,7 @@ struct DictionaryConverter: TypeConverter {
 
     func callDecode(json: any TSExpr) throws -> any TSExpr {
         return try `default`.callDecode(
-            genericArgs: [try value().type],
+            genericArgs: [try value().swiftType],
             json: json
         )
     }
@@ -41,7 +41,7 @@ struct DictionaryConverter: TypeConverter {
 
     func callEncode(entity: any TSExpr) throws -> any TSExpr {
         return try `default`.callEncode(
-            genericArgs: [try value().type],
+            genericArgs: [try value().swiftType],
             entity: entity
         )
     }

@@ -4,7 +4,7 @@ import TypeScriptAST
 struct StructConverter: TypeConverter {
     var generator: CodeGenerator
     var `struct`: StructType
-    var type: any SType { `struct` }
+    var swiftType: any SType { `struct` }
 
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         switch target {

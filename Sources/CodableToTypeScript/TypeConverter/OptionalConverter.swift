@@ -3,10 +3,10 @@ import TypeScriptAST
 
 struct OptionalConverter: TypeConverter {
     var generator: CodeGenerator
-    var type: any SType
+    var swiftType: any SType
 
     func wrapped(limit: Int?) throws -> any TypeConverter {
-        let (wrapped, _) = type.unwrapOptional(limit: limit)!
+        let (wrapped, _) = swiftType.unwrapOptional(limit: limit)!
         return try generator.converter(for: wrapped)
     }
 
@@ -34,7 +34,7 @@ struct OptionalConverter: TypeConverter {
 
     func callDecode(json: any TSExpr) throws -> any TSExpr {
         return try `default`.callDecode(
-            genericArgs: [try wrapped(limit: nil).type],
+            genericArgs: [try wrapped(limit: nil).swiftType],
             json: json
         )
     }
@@ -44,7 +44,7 @@ struct OptionalConverter: TypeConverter {
         let decodeName = generator.helperLibrary().name(.optionalFieldDecode)
         return try generator.callDecode(
             callee: TSIdentExpr(decodeName),
-            genericArgs: [try wrapped(limit: 1).type],
+            genericArgs: [try wrapped(limit: 1).swiftType],
             json: json
         )
     }
@@ -59,7 +59,7 @@ struct OptionalConverter: TypeConverter {
 
     func callEncode(entity: any TSExpr) throws -> any TSExpr {
         return try `default`.callEncode(
-            genericArgs: [try wrapped(limit: nil).type],
+            genericArgs: [try wrapped(limit: nil).swiftType],
             entity: entity
         )
     }
@@ -69,7 +69,7 @@ struct OptionalConverter: TypeConverter {
         let encodeName = generator.helperLibrary().name(.optionalFieldEncode)
         return try generator.callEncode(
             callee: TSIdentExpr(encodeName),
-            genericArgs: [try wrapped(limit: 1).type],
+            genericArgs: [try wrapped(limit: 1).swiftType],
             entity: entity
         )
     }

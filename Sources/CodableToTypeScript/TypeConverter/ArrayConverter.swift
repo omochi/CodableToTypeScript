@@ -3,10 +3,10 @@ import TypeScriptAST
 
 struct ArrayConverter: TypeConverter {
     var generator: CodeGenerator
-    var type: any SType
+    var swiftType: any SType
 
     private func element() throws -> any TypeConverter {
-        let (_, element) = type.asArray()!
+        let (_, element) = swiftType.asArray()!
         return try generator.converter(for: element)
     }
     
@@ -26,7 +26,7 @@ struct ArrayConverter: TypeConverter {
 
     func callDecode(json: any TSExpr) throws -> any TSExpr {
         return try `default`.callDecode(
-            genericArgs: [try element().type],
+            genericArgs: [try element().swiftType],
             json: json
         )
     }
@@ -41,7 +41,7 @@ struct ArrayConverter: TypeConverter {
 
     func callEncode(entity: any TSExpr) throws -> any TSExpr {
         return try `default`.callEncode(
-            genericArgs: [try element().type],
+            genericArgs: [try element().swiftType],
             entity: entity
         )
     }

@@ -4,7 +4,7 @@ import TypeScriptAST
 // It provides request cache layer
 struct GeneratorProxyConverter: TypeConverter {
     var generator: CodeGenerator
-    var type: any SType
+    var swiftType: any SType
     var impl: any TypeConverter
 
     func name(for target: GenerationTarget) throws -> String {
@@ -25,7 +25,7 @@ struct GeneratorProxyConverter: TypeConverter {
 
     func hasDecode() throws -> Bool {
         return try generator.context.evaluator(
-            CodeGenerator.HasDecodeRequest(token: generator.requestToken, type: type)
+            CodeGenerator.HasDecodeRequest(token: generator.requestToken, type: swiftType)
         )
     }
 
@@ -55,7 +55,7 @@ struct GeneratorProxyConverter: TypeConverter {
 
     func hasEncode() throws -> Bool {
         return try generator.context.evaluator(
-            CodeGenerator.HasEncodeRequest(token: generator.requestToken, type: type)
+            CodeGenerator.HasEncodeRequest(token: generator.requestToken, type: swiftType)
         )
     }
 

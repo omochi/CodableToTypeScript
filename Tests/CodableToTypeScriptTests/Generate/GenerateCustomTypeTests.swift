@@ -145,7 +145,7 @@ export type S = {
 
     struct DateConverter: TypeConverter {
         var generator: CodeGenerator
-        var type: any SType
+        var swiftType: any SType
         
         func name(for target: GenerationTarget) throws -> String {
             switch target {
@@ -178,7 +178,7 @@ export type S = {
                let element = ident.elements.last,
                element.name == "Date"
             {
-                return DateConverter(generator: gen, type: type)
+                return DateConverter(generator: gen, swiftType: type)
             }
             return nil
         }

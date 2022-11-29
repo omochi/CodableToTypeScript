@@ -5,7 +5,7 @@ struct EnumConverter: TypeConverter {
     var generator: CodeGenerator
     var `enum`: EnumType
     
-    var type: any SType { `enum` }
+    var swiftType: any SType { `enum` }
 
     private var decl: EnumDecl { `enum`.decl }
 

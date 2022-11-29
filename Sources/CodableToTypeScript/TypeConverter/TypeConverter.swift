@@ -3,7 +3,7 @@ import TypeScriptAST
 
 public protocol TypeConverter {
     var generator: CodeGenerator { get }
-    var type: any SType { get }
+    var swiftType: any SType { get }
     func name(for target: GenerationTarget) throws -> String
     func hasJSONType() throws -> Bool
     func type(for target: GenerationTarget) throws -> any TSType
@@ -30,7 +30,7 @@ public protocol TypeConverter {
 extension TypeConverter {
     // MARK: - defaults
     public var `default`: DefaultTypeConverter {
-        return DefaultTypeConverter(generator: generator, type: type)
+        return DefaultTypeConverter(generator: generator, type: swiftType)
     }
 
     public func name(for target: GenerationTarget) throws -> String {
@@ -103,13 +103,13 @@ extension TypeConverter {
 
     // MARK: - extensions
     public func genericArgs() throws -> [any TypeConverter] {
-        return try type.genericArgs.map { (type) in
+        return try swiftType.genericArgs.map { (type) in
             try generator.converter(for: type)
         }
     }
 
     public func genericParams() throws -> [any TypeConverter] {
-        guard let decl = self.type.typeDecl,
+        guard let decl = self.swiftType.typeDecl,
               let genericContext = decl as? any GenericContext else
         {
             return []
@@ -131,7 +131,7 @@ extension TypeConverter {
     public func source() throws -> TSSourceFile {
         var decls: [any ASTNode] = []
 
-        if let typeDecl = type.typeDecl {
+        if let typeDecl = swiftType.typeDecl {
             try typeDecl.walk { (type) in
                 let converter = try generator.converter(for: type.declaredInterfaceType)
                 decls += try converter.ownDecls().decls

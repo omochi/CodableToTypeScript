@@ -44,7 +44,7 @@ public final class CodeGenerator {
 
         func evaluate(on evaluator: RequestEvaluator) throws -> any TypeConverter {
             let impl = try generator.implConverter(for: type)
-            return GeneratorProxyConverter(generator: generator, type: type, impl: impl)
+            return GeneratorProxyConverter(generator: generator, swiftType: type, impl: impl)
         }
     }
 

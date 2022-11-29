@@ -8,12 +8,12 @@ public struct TypeMapConverter: TypeConverter {
         entry: TypeMap.Entry
     ) {
         self.generator = generator
-        self.type = type
+        self.swiftType = type
         self.entry = entry
     }
 
     public var generator: CodeGenerator
-    public var type: any SType
+    public var swiftType: any SType
     private var entry: TypeMap.Entry
 
     public func name(for target: GenerationTarget) throws -> String {

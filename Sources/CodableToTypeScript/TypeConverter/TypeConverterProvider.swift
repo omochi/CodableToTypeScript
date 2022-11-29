@@ -25,11 +25,11 @@ public struct TypeConverterProvider {
         } else if let entry = typeMap.map(type: type) {
             return TypeMapConverter(generator: generator, type: type, entry: entry)
         } else if type.isStandardLibraryType("Optional") {
-            return OptionalConverter(generator: generator, type: type)
+            return OptionalConverter(generator: generator, swiftType: type)
         } else if type.isStandardLibraryType("Array") {
-            return ArrayConverter(generator: generator, type: type)
+            return ArrayConverter(generator: generator, swiftType: type)
         } else if type.isStandardLibraryType("Dictionary") {
-            return DictionaryConverter(generator: generator, type: type)
+            return DictionaryConverter(generator: generator, swiftType: type)
         } else if let type = type.asEnum {
             return EnumConverter(generator: generator, enum: type)
         } else if let type = type.asStruct {
@@ -37,7 +37,7 @@ public struct TypeConverterProvider {
         } else if let type = type.asGenericParam {
             return GenericParamConverter(generator: generator, param: type)
         } else if let type = type.asError {
-            return ErrorTypeConverter(generator: generator, type: type)
+            return ErrorTypeConverter(generator: generator, swiftType: type)
         } else {
             throw MessageError("Unsupported type: \(type)")
         }
