@@ -25,6 +25,10 @@ public struct TypeMapConverter: TypeConverter {
         }
     }
 
+    public func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
+        return nil
+    }
+
     public func hasDecode() throws -> Bool {
         if let _ = entry.decode {
             return true
@@ -36,6 +40,10 @@ public struct TypeMapConverter: TypeConverter {
         return try entry.decode.unwrap(name: "entry.decode")
     }
 
+    public func decodeDecl() throws -> TSFunctionDecl? {
+        return nil
+    }
+
     public func hasEncode() throws -> Bool {
         if let _ = entry.encode {
             return true
@@ -45,5 +53,9 @@ public struct TypeMapConverter: TypeConverter {
 
     public func encodeName() throws -> String {
         return try entry.encode.unwrap(name: "entry.encode")
+    }
+
+    public func encodeDecl() throws -> TSFunctionDecl? {
+        return nil
     }
 }

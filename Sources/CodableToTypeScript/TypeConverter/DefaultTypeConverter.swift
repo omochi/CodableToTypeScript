@@ -60,15 +60,6 @@ public struct DefaultTypeConverter {
         return (type: type, isOptional: false)
     }
 
-    public func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
-        switch target {
-        case .entity: break
-        case .json:
-            guard try self.converter().hasJSONType() else { return nil }
-        }
-        throw MessageError("Unsupported type: \(type)")
-    }
-
     public func decodeName() throws -> String {
         let converter = try self.converter()
         guard try converter.hasDecode() else {
@@ -199,11 +190,6 @@ public struct DefaultTypeConverter {
         )
     }
 
-    public func decodeDecl() throws -> TSFunctionDecl? {
-        guard let _ = try decodeSignature() else { return nil }
-        throw MessageError("Unsupported type: \(type)")
-    }
-
     public func encodeName() throws -> String {
         let converter = try self.converter()
         guard try converter.hasEncode() else {
@@ -332,10 +318,5 @@ public struct DefaultTypeConverter {
             result: result,
             body: TSBlockStmt()
         )
-    }
-
-    public func encodeDecl() throws -> TSFunctionDecl? {
-        guard let _ = try encodeSignature() else { return nil }
-        throw MessageError("Unsupported type: \(type)")
     }
 }

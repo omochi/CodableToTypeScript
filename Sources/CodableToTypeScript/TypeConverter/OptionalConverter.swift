@@ -24,6 +24,10 @@ struct OptionalConverter: TypeConverter {
         )
     }
 
+    func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
+        throw MessageError("Unsupported type: \(swiftType)")
+    }
+
     func hasDecode() throws -> Bool {
         return try wrapped(limit: nil).hasDecode()
     }
@@ -47,6 +51,10 @@ struct OptionalConverter: TypeConverter {
             genericArgs: [try wrapped(limit: 1).swiftType],
             json: json
         )
+    }
+
+    func decodeDecl() throws -> TSFunctionDecl? {
+        throw MessageError("Unsupported type: \(swiftType)")
     }
 
     func hasEncode() throws -> Bool {
@@ -74,4 +82,7 @@ struct OptionalConverter: TypeConverter {
         )
     }
 
+    func encodeDecl() throws -> TSFunctionDecl? {
+        throw MessageError("Unsupported type: \(swiftType)")
+    }
 }

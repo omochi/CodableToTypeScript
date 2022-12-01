@@ -49,9 +49,9 @@ extension TypeConverter {
         return try `default`.fieldType(for: target)
     }
 
-    public func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
-        return try `default`.typeDecl(for: target)
-    }
+//    public func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
+//        return try `default`.typeDecl(for: target)
+//    }
 
     public func decodeName() throws -> String {
         return try `default`.decodeName()
@@ -71,10 +71,6 @@ extension TypeConverter {
 
     public func decodeSignature() throws -> TSFunctionDecl? {
         return try `default`.decodeSignature()
-    }
-
-    public func decodeDecl() throws -> TSFunctionDecl? {
-        return try `default`.decodeDecl()
     }
 
     public func encodeName() throws -> String {
@@ -97,10 +93,6 @@ extension TypeConverter {
         return try `default`.encodeSignature()
     }
 
-    public func encodeDecl() throws -> TSFunctionDecl? {
-        return try `default`.encodeDecl()
-    }
-
     // MARK: - extensions
     public func genericArgs() throws -> [any TypeConverter] {
         return try swiftType.genericArgs.map { (type) in
@@ -121,7 +113,7 @@ extension TypeConverter {
 
     public func ownDecls() throws -> TypeOwnDeclarations {
         return TypeOwnDeclarations(
-            entityType: try typeDecl(for: .entity).unwrap(name: "entity type decl"),
+            entityType: try typeDecl(for: .entity),
             jsonType: try typeDecl(for: .json),
             decodeFunction: try decodeDecl(),
             encodeFunction: try encodeDecl()
