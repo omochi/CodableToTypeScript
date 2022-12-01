@@ -16,6 +16,10 @@ struct ArrayConverter: TypeConverter {
         )
     }
 
+    func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
+        throw MessageError("Unsupported type: \(swiftType)")
+    }
+
     func hasDecode() throws -> Bool {
         return try element().hasDecode()
     }
@@ -31,6 +35,10 @@ struct ArrayConverter: TypeConverter {
         )
     }
 
+    func decodeDecl() throws -> TSFunctionDecl? {
+        throw MessageError("Unsupported type: \(swiftType)")
+    }
+
     func hasEncode() throws -> Bool {
         return try element().hasEncode()
     }
@@ -44,5 +52,9 @@ struct ArrayConverter: TypeConverter {
             genericArgs: [try element().swiftType],
             entity: entity
         )
+    }
+
+    func encodeDecl() throws -> TSFunctionDecl? {
+        throw MessageError("Unsupported type: \(swiftType)")
     }
 }

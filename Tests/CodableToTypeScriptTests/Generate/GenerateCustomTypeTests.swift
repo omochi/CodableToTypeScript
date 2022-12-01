@@ -1,6 +1,7 @@
 import XCTest
 import CodableToTypeScript
 import SwiftTypeReader
+import TypeScriptAST
 
 final class GenerateCustomTypeTests: GenerateTestCaseBase {
     func testCustomName() throws {
@@ -154,6 +155,10 @@ export type S = {
             }
         }
 
+        func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
+            return nil
+        }
+
         func hasDecode() throws -> Bool {
             return true
         }
@@ -162,12 +167,20 @@ export type S = {
             return "Date_decode"
         }
 
+        func decodeDecl() throws -> TSFunctionDecl? {
+            return nil
+        }
+
         func hasEncode() throws -> Bool {
             return true
         }
 
         func encodeName() throws -> String {
             return "Date_encode"
+        }
+
+        func encodeDecl() throws -> TSFunctionDecl? {
+            return nil
         }
     }
 
@@ -216,6 +229,61 @@ export function S_decode(json: S_JSON): S {
 }
 """
                    ]
+        )
+    }
+
+    func testMapUserType() throws {
+        var typeMap = TypeMap()
+        typeMap.table["S"] = .init(name: "V")
+        try assertGenerate(
+            source: """
+struct S {
+    var a: Int
+}
+""",
+            typeMap: typeMap,
+            unexpecteds: ["""
+export type S
+"""
+            ]
+        )
+    }
+
+    func testMapUserTypeCodec() throws {
+        var typeMap = TypeMap()
+        typeMap.table["S"] = .init(name: "V", decode: "V_decode", encode: "V_encode")
+        try assertGenerate(
+            source: """
+struct S {
+    var a: Int
+}
+""",
+            typeMap: typeMap,
+            unexpecteds: ["""
+export type S
+"""
+            ]
+        )
+    }
+
+    func testMapNestedUserType() throws {
+        var typeMap = TypeMap()
+        typeMap.table["K"] = .init(name: "V")
+        try assertGenerate(
+            source: """
+struct S {
+    struct K {
+    }
+    var a: Int
+}
+""",
+            typeMap: typeMap,
+            expecteds: ["""
+export type S
+"""],
+            unexpecteds: ["""
+export type S_K
+"""]
         )
     }
 }

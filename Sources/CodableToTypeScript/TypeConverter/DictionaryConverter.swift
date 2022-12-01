@@ -16,6 +16,10 @@ struct DictionaryConverter: TypeConverter {
         )
     }
 
+    func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
+        throw MessageError("Unsupported type: \(swiftType)")
+    }
+
     func hasDecode() throws -> Bool {
         return try value().hasDecode()
     }
@@ -31,6 +35,10 @@ struct DictionaryConverter: TypeConverter {
         )
     }
 
+    func decodeDecl() throws -> TSFunctionDecl? {
+        throw MessageError("Unsupported type: \(swiftType)")
+    }
+
     func hasEncode() throws -> Bool {
         return try value().hasEncode()
     }
@@ -44,5 +52,9 @@ struct DictionaryConverter: TypeConverter {
             genericArgs: [try value().swiftType],
             entity: entity
         )
+    }
+
+    func encodeDecl() throws -> TSFunctionDecl? {
+        throw MessageError("Unsupported type: \(swiftType)")
     }
 }
