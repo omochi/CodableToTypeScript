@@ -29,10 +29,6 @@ public final class CodeGenerator {
         )
     }
 
-    public func converter(for decl: any TypeDecl) throws -> any TypeConverter {
-        return try converter(for: decl.declaredInterfaceType)
-    }
-
     private func implConverter(for type: any SType) throws -> any TypeConverter {
         return try typeConverterProvider.provide(generator: self, type: type)
     }

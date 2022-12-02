@@ -2,12 +2,40 @@ import SwiftTypeReader
 import TypeScriptAST
 
 struct EnumConverter: TypeConverter {
+    init(generator: CodeGenerator, `enum`: EnumType) {
+        self.generator = generator
+        self.`enum` = `enum`
+
+        let decl = `enum`.decl
+
+        if decl.caseElements.isEmpty {
+            self.kind = .never
+            return
+        }
+
+        if let raw = decl.isRawRepresentable() {
+            if raw.isStandardLibraryType("String") {
+                self.kind = .string
+                return
+            }
+        }
+
+        self.kind = .normal
+    }
+
     var generator: CodeGenerator
     var `enum`: EnumType
     
     var swiftType: any SType { `enum` }
 
     private var decl: EnumDecl { `enum`.decl }
+    private var kind: Kind
+
+    enum Kind {
+        case never
+        case string
+        case normal
+    }
 
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         switch target {
@@ -18,14 +46,15 @@ struct EnumConverter: TypeConverter {
 
         let genericParams = try self.genericParams().map { try $0.name(for: target) }
 
-        if decl.caseElements.isEmpty {
+        switch kind {
+        case .never:
             return TSTypeDecl(
                 modifiers: [.export],
                 name: try name(for: target),
                 genericParams: genericParams,
                 type: TSIdentType.never
             )
-        } else if decl.hasStringRawValue() {
+        case .string:
             let items: [any TSType] = decl.caseElements.map { (ce) in
                 TSStringLiteralType(ce.name)
             }
@@ -36,6 +65,7 @@ struct EnumConverter: TypeConverter {
                 genericParams: genericParams,
                 type: TSUnionType(items)
             )
+        default: break
         }
 
         let items: [any TSType] = try decl.caseElements.map { (ce) in
@@ -89,13 +119,11 @@ struct EnumConverter: TypeConverter {
     }
 
     func hasDecode() throws -> Bool {
-        if decl.caseElements.isEmpty {
-            return false
-        } else if decl.hasStringRawValue() {
-            return false
+        switch kind {
+        case .never: return false
+        case .string: return false
+        case .normal: return true
         }
-
-        return true
     }
 
     func decodeDecl() throws -> TSFunctionDecl? {
@@ -107,10 +135,10 @@ struct EnumConverter: TypeConverter {
     }
 
     func hasEncode() throws -> Bool {
-        if decl.caseElements.isEmpty {
-            return false
-        } else if decl.hasStringRawValue() {
-            return false
+        switch kind {
+        case .never: return false
+        case .string: return false
+        case .normal: break
         }
 
         for caseElement in decl.caseElements {
