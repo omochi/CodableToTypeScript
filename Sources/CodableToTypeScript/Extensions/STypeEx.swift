@@ -1,12 +1,12 @@
 import SwiftTypeReader
 
 extension TypeDecl {
-    func namePath() -> NamePath {
+    internal func namePath() -> NamePath {
         return declaredInterfaceType.namePath()
     }
 
-    func walk(_ body: (any TypeDecl) throws -> Void) rethrows {
-        try body(self)
+    public func walk(_ body: (any TypeDecl) throws -> Bool) rethrows {
+        guard try body(self) else { return }
 
         guard let nominal = asNominalType else { return }
 
@@ -17,20 +17,26 @@ extension TypeDecl {
 }
 
 extension NominalTypeDecl {
-    func isStandardLibraryType(_ name: String) -> Bool {
+    public func isStandardLibraryType(_ name: String) -> Bool {
         return moduleContext.name == "Swift" &&
         self.name == name
     }
 
-    func hasStringRawValue() -> Bool {
-        return inheritedTypes.contains { (type) in
-            type.isStandardLibraryType("String")
+    public func isRawRepresentable() -> (any SType)? {
+        for type in inheritedTypes {
+            if type.isStandardLibraryType("String") { return type }
         }
+
+        if let property = find(name: "rawValue") as? VarDecl {
+            return property.interfaceType
+        }
+
+        return nil
     }
 }
 
 extension SType {
-    var typeDecl: (any TypeDecl)? {
+    internal var typeDecl: (any TypeDecl)? {
         switch self {
         case let type as any NominalType: return type.nominalTypeDecl
         case let param as GenericParamType: return param.decl
@@ -38,7 +44,7 @@ extension SType {
         }
     }
 
-    var genericArgs: [any SType] {
+    internal var genericArgs: [any SType] {
         if let self = self.asNominal {
             return self.genericArgs
         } else if let self = self.asError {
@@ -54,7 +60,7 @@ extension SType {
         }
     }
 
-    func namePath() -> NamePath {
+    internal func namePath() -> NamePath {
         let repr = toTypeRepr(containsModule: false)
 
         if let ident = repr.asIdent {
@@ -66,7 +72,7 @@ extension SType {
         }
     }
 
-    func unwrapOptional(limit: Int?) -> (wrapped: any SType, depth: Int)? {
+    internal func unwrapOptional(limit: Int?) -> (wrapped: any SType, depth: Int)? {
         var type: any SType = self
         var depth = 0
         while type.isStandardLibraryType("Optional"),
@@ -87,21 +93,21 @@ extension SType {
         return (wrapped: type, depth: depth)
     }
 
-    func asArray() -> (array: StructType, element: any SType)? {
+    internal func asArray() -> (array: StructType, element: any SType)? {
         guard isStandardLibraryType("Array"),
               let array = self.asStruct,
               let element = array.genericArgs[safe: 0] else { return nil }
         return (array: array, element: element)
     }
 
-    func asDictionary() -> (dictionary: StructType, value: any SType)? {
+    internal func asDictionary() -> (dictionary: StructType, value: any SType)? {
         guard isStandardLibraryType("Dictionary"),
               let dict = self.asStruct,
               let value = dict.genericArgs[safe: 1] else { return nil }
         return (dictionary: dict, value: value)
     }
 
-    func isStandardLibraryType(_ name: String) -> Bool {
+    public func isStandardLibraryType(_ name: String) -> Bool {
         guard let self = self.asNominal else { return false }
         return self.nominalTypeDecl.isStandardLibraryType(name)
     }

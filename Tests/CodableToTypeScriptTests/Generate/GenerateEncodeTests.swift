@@ -101,4 +101,31 @@ export function S_encode(entity: S): S_JSON {
 """]
         )
     }
+
+    func testAsOperatorIdentityEncode() throws {
+        try assertGenerate(
+            source: """
+enum E {
+    case a(Int)
+}
+
+struct S {
+    var a: E
+    var b: Date
+}
+""",
+            typeMap: dateTypeMap(),
+            expecteds: ["""
+export function S_encode(entity: S): S_JSON {
+    return {
+        a: entity.a as E_JSON,
+        b: Date_encode(entity.b)
+    };
+}
+"""
+            ]
+        )
+
+
+    }
 }

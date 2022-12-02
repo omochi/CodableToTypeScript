@@ -33,6 +33,14 @@ public struct TypeConverterProvider {
         } else if let type = type.asEnum {
             return EnumConverter(generator: generator, enum: type)
         } else if let type = type.asStruct {
+            if let raw = type.decl.isRawRepresentable() {
+                return RawRepresentableConverter(
+                    generator: generator,
+                    swiftType: type,
+                    rawValueType: try generator.converter(for: raw)
+                )
+            }
+
             return StructConverter(generator: generator, struct: type)
         } else if let type = type.asGenericParam {
             return GenericParamConverter(generator: generator, param: type)

@@ -60,6 +60,14 @@ public struct DefaultTypeConverter {
         return (type: type, isOptional: false)
     }
 
+    public func phantomType(for target: GenerationTarget, name: String) throws -> any TSType {
+        let body = try self.converter().type(for: target)
+        let tag = TSObjectType([
+            .init(name: name, type: TSIdentType.never)
+        ])
+        return TSIntersectionType([body, tag])
+    }
+
     public func decodeName() throws -> String {
         let converter = try self.converter()
         guard try converter.hasDecode() else {
@@ -111,7 +119,11 @@ public struct DefaultTypeConverter {
     public func callDecode(genericArgs: [any SType], json: any TSExpr) throws -> any TSExpr {
         let converter = try self.converter()
         guard try converter.hasDecode() else {
-            return json
+            var expr = json
+            if try converter.hasJSONType() {
+                expr = TSAsExpr(expr, try converter.type(for: .entity))
+            }
+            return expr
         }
         let decodeName = try converter.decodeName()
         return try generator.callDecode(
@@ -241,7 +253,11 @@ public struct DefaultTypeConverter {
     public func callEncode(genericArgs: [any SType], entity: any TSExpr) throws -> any TSExpr {
         let converter = try self.converter()
         guard try converter.hasEncode() else {
-            return entity
+            var expr = entity
+            if try converter.hasJSONType() {
+                expr = TSAsExpr(expr, try converter.type(for: .json))
+            }
+            return expr
         }
         let encodeName = try converter.encodeName()
         return try generator.callEncode(

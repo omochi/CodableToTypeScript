@@ -8,6 +8,7 @@ public protocol TypeConverter {
     func hasJSONType() throws -> Bool
     func type(for target: GenerationTarget) throws -> any TSType
     func fieldType(for target: GenerationTarget) throws -> (type: any TSType, isOptional: Bool)
+    func phantomType(for target: GenerationTarget, name: String) throws -> any TSType
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl?
     func hasDecode() throws -> Bool
     func decodeName() throws -> String
@@ -49,9 +50,9 @@ extension TypeConverter {
         return try `default`.fieldType(for: target)
     }
 
-//    public func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
-//        return try `default`.typeDecl(for: target)
-//    }
+    public func phantomType(for target: GenerationTarget, name: String) throws -> any TSType {
+        return try `default`.phantomType(for: target, name: name)
+    }
 
     public func decodeName() throws -> String {
         return try `default`.decodeName()
@@ -107,7 +108,7 @@ extension TypeConverter {
             return []
         }
         return try genericContext.genericParams.items.map { (param) in
-            try generator.converter(for: param)
+            try generator.converter(for: param.declaredInterfaceType)
         }
     }
 
@@ -127,6 +128,7 @@ extension TypeConverter {
             try typeDecl.walk { (type) in
                 let converter = try generator.converter(for: type.declaredInterfaceType)
                 decls += try converter.ownDecls().decls
+                return true
             }
         }
 
