@@ -160,7 +160,7 @@ private struct DecodeFuncGen {
             expr = try generator.converter(for: value.interfaceType)
                 .callDecodeField(json: expr)
 
-            let field = TSObjectExpr.Field(
+            let field = TSObjectExpr.Field.named(
                 name: label, value: expr
             )
             fields.append(field)
@@ -184,11 +184,11 @@ private struct DecodeFuncGen {
         }
 
         let fields: [TSObjectExpr.Field] = [
-            .init(
+            .named(
                 name: "kind",
                 value: TSStringLiteralExpr(ce.name)
             ),
-            .init(
+            .named(
                 name: ce.name,
                 value: try decodeCaseObject(
                     caseElement: ce,
@@ -269,7 +269,7 @@ private struct EncodeFuncGen {
 
             expr = try generator.converter(for: value.interfaceType).callEncodeField(entity: expr)
 
-            fields.append(.init(
+            fields.append(.named(
                 name: value.codableLabel,
                 value: expr
             ))
@@ -292,7 +292,7 @@ private struct EncodeFuncGen {
         let innerObject = try encodeCaseValue(element: element)
 
         let outerObject = TSObjectExpr([
-            .init(name: element.name, value: innerObject)
+            .named(name: element.name, value: innerObject)
         ])
 
         code.append(TSReturnStmt(outerObject))

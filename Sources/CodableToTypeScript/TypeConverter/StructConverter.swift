@@ -58,7 +58,7 @@ struct StructConverter: TypeConverter {
                 .callDecodeField(json: expr)
 
             fields.append(
-                .init(
+                .named(
                     name: field.name,
                     value: expr
                 )
@@ -96,7 +96,7 @@ struct StructConverter: TypeConverter {
                 .callEncodeField(entity: expr)
 
             fields.append(
-                .init(
+                .named(
                     name: field.name,
                     value: expr
                 )
