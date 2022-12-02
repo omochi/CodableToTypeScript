@@ -22,7 +22,7 @@ extension NominalTypeDecl {
         self.name == name
     }
 
-    public func isRawRepresentable() -> (any SType)? {
+    public func rawValueType() -> (any SType)? {
         for type in inheritedTypes {
             if type.isStandardLibraryType("String") { return type }
         }

@@ -13,7 +13,7 @@ struct EnumConverter: TypeConverter {
             return
         }
 
-        if let raw = decl.isRawRepresentable() {
+        if let raw = decl.rawValueType() {
             if raw.isStandardLibraryType("String") {
                 self.kind = .string
                 return
