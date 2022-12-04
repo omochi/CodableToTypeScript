@@ -7,25 +7,29 @@ struct RawRepresentableConverter: TypeConverter {
     var rawValueType: any TypeConverter
 
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
-        switch target {
-        case .entity: break
-        case .json:
-            guard try rawValueType.hasJSONType() else { return nil }
+        func make(name: String, type: any TSType) throws -> TSTypeDecl {
+            return TSTypeDecl(
+                modifiers: [.export],
+                name: name,
+                genericParams: try genericParams().map { try $0.name(for: target) },
+                type: type
+            )
         }
 
-        let name = try self.name(for: target)
-        let type = try rawValueType.phantomType(for: target, name: name)
-
-        return TSTypeDecl(
-            modifiers: [.export],
-            name: name,
-            genericParams: try genericParams().map { try $0.name(for: target) },
-            type: type
-        )
+        switch target {
+        case .entity:
+            let name = try self.name(for: target)
+            let type = try rawValueType.phantomType(for: target, name: name)
+            return try make(name: name, type: type)
+        case .json:
+            let name = try self.name(for: target)
+            let type = try rawValueType.type(for: target)
+            return try make(name: name, type: type)
+        }
     }
 
     func hasDecode() throws -> Bool {
-        return try rawValueType.hasJSONType()
+        return true
     }
 
     func decodeDecl() throws -> TSFunctionDecl? {
@@ -41,7 +45,7 @@ struct RawRepresentableConverter: TypeConverter {
     }
 
     func hasEncode() throws -> Bool {
-        return try rawValueType.hasJSONType()
+        return try rawValueType.hasEncode()
     }
 
     func encodeDecl() throws -> TSFunctionDecl? {

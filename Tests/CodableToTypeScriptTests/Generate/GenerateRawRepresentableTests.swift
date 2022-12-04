@@ -19,9 +19,17 @@ struct S: RawRepresentable {
 export type S = string & {
     S: never;
 }
+""", """
+export type S_JSON = string;
+""", """
+export function S_decode(json: S_JSON): S {
+    return json as S;
+}
 """]
         )
+    }
 
+    func testUseStoredProperty() throws {
         try assertGenerate(
             source: """
 struct S: RawRepresentable {
@@ -36,8 +44,18 @@ struct K {
 export type K = {
     a: S;
 }
-"""],
-            unexpecteds: []
+""", """
+export type K_JSON = {
+    a: S_JSON;
+};
+""", """
+export function K_decode(json: K_JSON): K {
+    return {
+        a: S_decode(json.a)
+    };
+}
+"""
+                       ]
         )
     }
 
@@ -51,6 +69,12 @@ struct S: RawRepresentable {
             expecteds: ["""
 export type S = string & {
     S: never;
+}
+""", """
+export type S_JSON = string;
+""", """
+export function S_decode(json: S_JSON): S {
+    return json as S;
 }
 """]
         )
@@ -67,6 +91,12 @@ struct S: RawRepresentable {
 export type S = string & {
     S: never;
 } | null;
+""", """
+export type S_JSON = string | null;
+""", """
+export function S_decode(json: S_JSON): S {
+    return json as S;
+}
 """]
         )
     }
@@ -81,6 +111,12 @@ struct S: RawRepresentable {
             expecteds: ["""
 export type S = string[] & {
     S: never;
+}
+""", """
+export type S_JSON = string[];
+""", """
+export function S_decode(json: S_JSON): S {
+    return json as S;
 }
 """]
         )
@@ -101,13 +137,13 @@ struct S: RawRepresentable {
 export type S = K & {
     S: never;
 };
-"""],
-            unexpecteds: ["""
-export type S_JSON
 """, """
-export function S_decode
-"""
-                         ]
+export type S_JSON = K;
+""", """
+export function S_decode(json: S_JSON): S {
+    return json as S;
+}
+"""]
         )
     }
 
@@ -127,19 +163,17 @@ export type S = E & {
     S: never;
 };
 """, """
-export type S_JSON = E_JSON & {
-    S_JSON: never;
-};
+export type S_JSON = E_JSON;
 """, """
 export function S_decode(json: S_JSON): S {
     return E_decode(json) as S;
 }
-""", """
-export function S_encode(entity: S): S_JSON {
-    return entity as E_JSON as S_JSON;
-}
 """
-                       ]
+                       ],
+            unexpecteds: ["""
+export function S_encode
+"""
+                         ]
         )
     }
 
@@ -160,9 +194,7 @@ export type S = K & {
     S: never;
 };
 """, """
-export type S_JSON = K_JSON & {
-    S_JSON: never;
-};
+export type S_JSON = K_JSON;
 """, """
 export function S_decode(json: S_JSON): S {
     return K_decode(json) as S;
@@ -189,9 +221,7 @@ export type S = Date & {
     S: never;
 };
 """, """
-export type S_JSON = Date_JSON & {
-    S_JSON: never;
-};
+export type S_JSON = Date_JSON;
 """, """
 export function S_decode(json: S_JSON): S {
     return Date_decode(json) as S;
@@ -221,9 +251,7 @@ export type S = K<number> & {
     S: never;
 };
 """, """
-export type S_JSON = K_JSON<number> & {
-    S_JSON: never;
-};
+export type S_JSON = K_JSON<number>;
 """, """
 export function S_decode(json: S_JSON): S {
     return K_decode(json, identity) as S;
@@ -253,9 +281,7 @@ export type S<U> = K<U> & {
     S: never;
 };
 """, """
-export type S_JSON<U_JSON> = K_JSON<U_JSON> & {
-    S_JSON: never;
-};
+export type S_JSON<U_JSON> = K_JSON<U_JSON>;
 """, """
 export function S_decode<U, U_JSON>(json: S_JSON<U_JSON>, U_decode: (json: U_JSON) => U): S<U> {
     return K_decode(json, U_decode) as S<U>;
@@ -281,9 +307,7 @@ export type S<T> = T & {
     S: never;
 };
 """, """
-export type S_JSON<T_JSON> = T_JSON & {
-    S_JSON: never;
-};
+export type S_JSON<T_JSON> = T_JSON;
 """, """
 export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S<T> {
     return T_decode(json) as S<T>;
@@ -315,26 +339,32 @@ export type User_ID = string & {
     User_ID: never;
 };
 """, """
+export type User_ID_JSON = string;
+""", """
+export function User_ID_decode(json: User_ID_JSON): User_ID {
+    return json as User_ID;
+}
+""", """
 export type User = {
     id: User_ID;
     date: Date;
 };
 """, """
 export type User_JSON = {
-    id: User_ID;
+    id: User_ID_JSON;
     date: Date_JSON;
 };
 """, """
 export function User_decode(json: User_JSON): User {
     return {
-        id: json.id,
+        id: User_ID_decode(json.id),
         date: Date_decode(json.date)
     };
 }
 """, """
 export function User_encode(entity: User): User_JSON {
     return {
-        id: entity.id,
+        id: entity.id as User_ID_JSON,
         date: Date_encode(entity.date)
     };
 }
