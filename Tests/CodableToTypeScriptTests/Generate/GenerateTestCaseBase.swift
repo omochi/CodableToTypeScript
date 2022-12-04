@@ -10,7 +10,7 @@ class GenerateTestCaseBase: XCTestCase {
         case all
     }
     // debug
-    var prints: Prints { .all }
+    var prints: Prints { .none }
 
     func assertGenerate(
         context: Context? = nil,
