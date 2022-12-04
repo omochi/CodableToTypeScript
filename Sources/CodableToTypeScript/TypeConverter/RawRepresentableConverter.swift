@@ -45,7 +45,7 @@ struct RawRepresentableConverter: TypeConverter {
     }
 
     func hasEncode() throws -> Bool {
-        return try rawValueType.hasJSONType()
+        return try rawValueType.hasEncode()
     }
 
     func encodeDecl() throws -> TSFunctionDecl? {

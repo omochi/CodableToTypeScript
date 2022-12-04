@@ -168,12 +168,12 @@ export type S_JSON = E_JSON;
 export function S_decode(json: S_JSON): S {
     return E_decode(json) as S;
 }
-""", """
-export function S_encode(entity: S): S_JSON {
-    return entity as E_JSON as S_JSON;
-}
 """
-                       ]
+                       ],
+            unexpecteds: ["""
+export function S_encode
+"""
+                         ]
         )
     }
 
