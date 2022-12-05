@@ -68,6 +68,49 @@ export function S_decode(json: S_JSON): S {
         )
     }
 
+    func testCustomCoding() throws {
+        var typeMap = TypeMap.default
+        typeMap.table["Date"] = .init(
+            name: "Date",
+            jsonType: "string",
+            decode: "Date_decode",
+            encode: "Date_encode"
+        )
+
+        try assertGenerate(
+            source: """
+struct S {
+    var a: Date
+}
+""",
+            typeMap: typeMap,
+            expecteds: ["""
+export type S = {
+    a: Date;
+};
+""", """
+export type S_JSON = {
+    a: string;
+};
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        a: Date_decode(json.a)
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return {
+        a: Date_encode(entity.a)
+    };
+}
+""", """
+import { Date_decode, Date_encode }
+"""
+                       ]
+        )
+    }
+
     func testCustomGenericDecode() throws {
         var typeMap = TypeMap.default
         typeMap.table["Date"] = .init(name: "Date", decode: "Date_decode")
@@ -224,6 +267,16 @@ export function S_decode(json: S_JSON): S {
         b: Array_decode(json.b, Date_decode),
         c: Array_decode(json.c, (json: Date_JSON[]): Date[] => {
             return Array_decode(json, Date_decode);
+        })
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return {
+        a: Date_encode(entity.a),
+        b: Array_encode(entity.b, Date_encode),
+        c: Array_encode(entity.c, (entity: Date[]): Date_JSON[] => {
+            return Array_encode(entity, Date_encode);
         })
     };
 }

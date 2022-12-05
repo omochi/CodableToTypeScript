@@ -71,7 +71,7 @@ class GenerateTestCaseBase: XCTestCase {
             for expected in expecteds {
                 if !actual.contains(expected) {
                     XCTFail(
-                        "No expected text: \(expected)",
+                        "No expected text: \(expected). actual: \(actual)",
                         file: file, line: line
                     )
                 }
