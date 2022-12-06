@@ -213,7 +213,7 @@ struct S {
                 if let ident = repr.asIdent,
                    ident.elements.last?.name == "D"
                 {
-                    return TypeMap.Entry(name: "string")
+                    return .identity(name: "string")
                 }
 
                 return nil

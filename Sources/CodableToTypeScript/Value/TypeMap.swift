@@ -2,20 +2,29 @@ import SwiftTypeReader
 
 public struct TypeMap {
     public struct Entry {
-        public init(
-            name: String,
-            jsonType: String? = nil,
-            decode: String? = nil,
-            encode: String? = nil
-        ) {
-            self.name = name
-            self.jsonType = jsonType
-            self.decode = decode
-            self.encode = encode
+        public static func identity(name: String) -> Entry {
+            return Entry(
+                entityType: name,
+                jsonType: name
+            )
         }
 
-        public var name: String
-        public var jsonType: String?
+        public static func coding(
+            entityType: String,
+            jsonType: String,
+            decode: String?,
+            encode: String?
+        ) -> Entry {
+            return Entry(
+                entityType: entityType,
+                jsonType: jsonType,
+                decode: decode,
+                encode: encode
+            )
+        }
+
+        public var entityType: String
+        public var jsonType: String
         public var decode: String?
         public var encode: String?
     }
@@ -27,12 +36,12 @@ public struct TypeMap {
     )
 
     public static let defaultTable: [String: Entry] = [
-        "Void": Entry(name: "void"),
-        "Bool": Entry(name: "boolean"),
-        "Int": Entry(name: "number"),
-        "Float": Entry(name: "number"),
-        "Double": Entry(name: "number"),
-        "String": Entry(name: "string")
+        "Void": .identity(name: "void"),
+        "Bool": .identity(name: "boolean"),
+        "Int": .identity(name: "number"),
+        "Float": .identity(name: "number"),
+        "Double": .identity(name: "number"),
+        "String": .identity(name: "string")
     ]
 
     public init(

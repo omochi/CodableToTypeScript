@@ -6,7 +6,7 @@ import TypeScriptAST
 final class GenerateCustomTypeMapTests: GenerateTestCaseBase {
     func testCustomName() throws {
         var typeMap = TypeMap.default
-        typeMap.table["URL"] = .init(name: "string")
+        typeMap.table["URL"] = .identity(name: "string")
 
         try assertGenerate(
             source: """
@@ -30,117 +30,9 @@ export type S = {
 
     func testCustomDecodeSimple() throws {
         var typeMap = TypeMap.default
-        typeMap.table["Date"] = .init(name: "Date", decode: "Date_decode")
-
-        try assertGenerate(
-            source: """
-struct S {
-    var a: Date
-}
-""",
-            typeMap: typeMap,
-            expecteds: ["""
-export type S = {
-    a: Date;
-};
-""", """
-export type S_JSON = {
-    a: Date_JSON;
-};
-""", """
-export function S_decode(json: S_JSON): S {
-    return {
-        a: Date_decode(json.a)
-    };
-}
-"""
-                       ],
-            unexpecteds: ["""
-export function S_encode
-"""]
-        )
-    }
-
-    func testCustomDecodeComplex() throws {
-        var typeMap = TypeMap.default
-        typeMap.table["Date"] = .init(name: "Date", decode: "Date_decode")
-
-        try assertGenerate(
-            source: """
-struct S {
-    var a: Date
-    var b: [Date]
-    var c: [[Date]]
-}
-""",
-            typeMap: typeMap,
-            expecteds: ["""
-export type S = {
-    a: Date;
-    b: Date[];
-    c: Date[][];
-};
-""", """
-export type S_JSON = {
-    a: Date_JSON;
-    b: Date_JSON[];
-    c: Date_JSON[][];
-};
-""", """
-export function S_decode(json: S_JSON): S {
-    return {
-        a: Date_decode(json.a),
-        b: Array_decode(json.b, Date_decode),
-        c: Array_decode(json.c, (json: Date_JSON[]): Date[] => {
-            return Array_decode(json, Date_decode);
-        })
-    };
-}
-"""
-                       ]
-        )
-    }
-
-    func testCustomEncode() throws {
-        var typeMap = TypeMap.default
-        typeMap.table["Date"] = .init(name: "Date", encode: "Date_encode")
-
-        try assertGenerate(
-            source: """
-struct S {
-    var a: Date
-}
-""",
-            typeMap: typeMap,
-            expecteds: ["""
-export type S = {
-    a: Date;
-};
-""", """
-export type S_JSON = {
-    a: Date_JSON;
-};
-""", """
-export function S_encode(entity: S): S_JSON {
-    return {
-        a: Date_encode(entity.a)
-    };
-}
-"""
-                       ],
-            unexpecteds: ["""
-export function S_decode
-"""]
-        )
-    }
-
-    func testCustomCoding() throws {
-        var typeMap = TypeMap.default
-        typeMap.table["Date"] = .init(
-            name: "Date",
-            jsonType: "string",
-            decode: "Date_decode",
-            encode: "Date_encode"
+        typeMap.table["Date"] = .coding(
+            entityType: "Date", jsonType: "string",
+            decode: "Date_decode", encode: nil
         )
 
         try assertGenerate(
@@ -164,14 +56,129 @@ export function S_decode(json: S_JSON): S {
         a: Date_decode(json.a)
     };
 }
+"""
+                       ],
+            unexpecteds: ["""
+export function S_encode
+"""]
+        )
+    }
+
+    func testCustomDecodeComplex() throws {
+        var typeMap = TypeMap.default
+        typeMap.table["Date"] = .coding(
+            entityType: "Date", jsonType: "string",
+            decode: "Date_decode", encode: nil
+        )
+
+        try assertGenerate(
+            source: """
+struct S {
+    var a: Date
+    var b: [Date]
+    var c: [[Date]]
+}
+""",
+            typeMap: typeMap,
+            expecteds: ["""
+export type S = {
+    a: Date;
+    b: Date[];
+    c: Date[][];
+};
+""", """
+export type S_JSON = {
+    a: string;
+    b: string[];
+    c: string[][];
+};
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        a: Date_decode(json.a),
+        b: Array_decode(json.b, Date_decode),
+        c: Array_decode(json.c, (json: string[]): Date[] => {
+            return Array_decode(json, Date_decode);
+        })
+    };
+}
+"""
+                       ]
+        )
+    }
+
+    func testCustomEncode() throws {
+        var typeMap = TypeMap.default
+        typeMap.table["Date"] = .coding(
+            entityType: "Date", jsonType: "string",
+            decode: nil, encode: "Date_encode"
+        )
+
+        try assertGenerate(
+            source: """
+struct S {
+    var a: Date
+}
+""",
+            typeMap: typeMap,
+            expecteds: ["""
+export type S = {
+    a: Date;
+};
+""", """
+export type S_JSON = {
+    a: string;
+};
 """, """
 export function S_encode(entity: S): S_JSON {
     return {
         a: Date_encode(entity.a)
     };
 }
-""", """
+"""
+                       ],
+            unexpecteds: ["""
+export function S_decode
+"""]
+        )
+    }
+
+    func testCustomCoding() throws {
+        var typeMap = TypeMap.default
+        typeMap.table["Date"] = .coding(
+            entityType: "Date", jsonType: "string",
+            decode: "Date_decode", encode: "Date_encode"
+        )
+
+        try assertGenerate(
+            source: """
+struct S {
+    var a: Date
+}
+""",
+            typeMap: typeMap,
+            expecteds: ["""
 import { Date_decode, Date_encode }
+""", """
+export type S = {
+    a: Date;
+};
+""", """
+export type S_JSON = {
+    a: string;
+};
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        a: Date_decode(json.a)
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return {
+        a: Date_encode(entity.a)
+    };
+}
 """
                        ]
         )
@@ -179,8 +186,14 @@ import { Date_decode, Date_encode }
 
     func testCustomGenericDecode() throws {
         var typeMap = TypeMap.default
-        typeMap.table["Date"] = .init(name: "Date", decode: "Date_decode")
-        typeMap.table["Vector2"] = .init(name: "Vector2", decode: "Vector2_decode")
+        typeMap.table["Date"] = .coding(
+            entityType: "Date", jsonType: "string",
+            decode: "Date_decode", encode: "Date_encode"
+        )
+        typeMap.table["Vector2"] = .coding(
+            entityType: "Vector2", jsonType: "Vector2_JSON",
+            decode: "Vector2_decode", encode: "Vector2_encode"
+        )
 
         try assertGenerate(
             source: """
@@ -200,7 +213,7 @@ export type S = {
 """, """
 export type S_JSON = {
     a: Vector2_JSON<number>;
-    b: Vector2_JSON<Date_JSON>;
+    b: Vector2_JSON<string>;
     c: Vector2_JSON<Vector2_JSON<number>>[];
 };
 """, """
@@ -227,7 +240,7 @@ export function S_decode(json: S_JSON): S {
             guard let repr = repr.asIdent,
                   let element = repr.elements.last else { return nil }
             if element.name.hasSuffix("ID") {
-                return .init(name: "string")
+                return .identity(name: "string")
             }
             return nil
         }
@@ -254,7 +267,7 @@ export type S = {
 
     func testMapUserType() throws {
         var typeMap = TypeMap()
-        typeMap.table["S"] = .init(name: "V")
+        typeMap.table["S"] = .identity(name: "V")
         try assertGenerate(
             source: """
 struct S {
@@ -271,7 +284,10 @@ export type S
 
     func testMapUserTypeCodec() throws {
         var typeMap = TypeMap()
-        typeMap.table["S"] = .init(name: "V", decode: "V_decode", encode: "V_encode")
+        typeMap.table["S"] = .coding(
+            entityType: "V", jsonType: "V_JSON",
+            decode: "V_decode", encode: "V_encode"
+        )
         try assertGenerate(
             source: """
 struct S {
@@ -288,7 +304,7 @@ export type S
 
     func testMapNestedUserType() throws {
         var typeMap = TypeMap()
-        typeMap.table["K"] = .init(name: "V")
+        typeMap.table["K"] = .identity(name: "V")
         try assertGenerate(
             source: """
 struct S {
