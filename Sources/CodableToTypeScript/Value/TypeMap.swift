@@ -4,15 +4,18 @@ public struct TypeMap {
     public struct Entry {
         public init(
             name: String,
+            jsonType: String? = nil,
             decode: String? = nil,
             encode: String? = nil
         ) {
             self.name = name
+            self.jsonType = jsonType
             self.decode = decode
             self.encode = encode
         }
 
         public var name: String
+        public var jsonType: String?
         public var decode: String?
         public var encode: String?
     }

@@ -21,6 +21,9 @@ public struct TypeMapConverter: TypeConverter {
         case .entity:
             return entry.name
         case .json:
+            if let jsonName = entry.jsonType {
+                return jsonName
+            }
             return try `default`.name(for: .json)
         }
     }
