@@ -3,7 +3,7 @@ import CodableToTypeScript
 import SwiftTypeReader
 import TypeScriptAST
 
-final class GenerateCustomTypeTests: GenerateTestCaseBase {
+final class GenerateCustomTypeMapTests: GenerateTestCaseBase {
     func testCustomName() throws {
         var typeMap = TypeMap.default
         typeMap.table["URL"] = .init(name: "string")
@@ -249,105 +249,6 @@ export type S = {
 };
 """
                        ]
-        )
-    }
-
-
-    struct DateConverter: TypeConverter {
-        var generator: CodeGenerator
-        var swiftType: any SType
-        
-        func name(for target: GenerationTarget) throws -> String {
-            switch target {
-            case .entity: return "Date"
-            case .json: return try `default`.name(for: .json)
-            }
-        }
-
-        func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
-            return nil
-        }
-
-        func hasDecode() throws -> Bool {
-            return true
-        }
-
-        func decodeName() throws -> String {
-            return "Date_decode"
-        }
-
-        func decodeDecl() throws -> TSFunctionDecl? {
-            return nil
-        }
-
-        func hasEncode() throws -> Bool {
-            return true
-        }
-
-        func encodeName() throws -> String {
-            return "Date_encode"
-        }
-
-        func encodeDecl() throws -> TSFunctionDecl? {
-            return nil
-        }
-    }
-
-    func testCustomTypeConverter() throws {
-        let typeConverterProvider = TypeConverterProvider { (gen, type) in
-            let repr = type.toTypeRepr(containsModule: false)
-            if let ident = repr.asIdent,
-               let element = ident.elements.last,
-               element.name == "Date"
-            {
-                return DateConverter(generator: gen, swiftType: type)
-            }
-            return nil
-        }
-
-        try assertGenerate(
-            source: """
-struct S {
-    var a: Date
-    var b: [Date]
-    var c: [[Date]]
-}
-""",
-        typeConverterProvider: typeConverterProvider,
-        expecteds: ["""
-export type S = {
-    a: Date;
-    b: Date[];
-    c: Date[][];
-};
-""", """
-export type S_JSON = {
-    a: Date_JSON;
-    b: Date_JSON[];
-    c: Date_JSON[][];
-};
-""", """
-export function S_decode(json: S_JSON): S {
-    return {
-        a: Date_decode(json.a),
-        b: Array_decode(json.b, Date_decode),
-        c: Array_decode(json.c, (json: Date_JSON[]): Date[] => {
-            return Array_decode(json, Date_decode);
-        })
-    };
-}
-""", """
-export function S_encode(entity: S): S_JSON {
-    return {
-        a: Date_encode(entity.a),
-        b: Array_encode(entity.b, Date_encode),
-        c: Array_encode(entity.c, (entity: Date[]): Date_JSON[] => {
-            return Array_encode(entity, Date_encode);
-        })
-    };
-}
-"""
-                   ]
         )
     }
 
