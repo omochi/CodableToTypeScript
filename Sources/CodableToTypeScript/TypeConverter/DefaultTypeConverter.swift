@@ -43,6 +43,9 @@ public struct DefaultTypeConverter {
         if try converter.hasDecode() {
             return true
         }
+        if try converter.hasEncode() {
+            return true
+        }
         return false
     }
 
