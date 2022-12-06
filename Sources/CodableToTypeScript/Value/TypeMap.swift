@@ -1,23 +1,37 @@
 import SwiftTypeReader
 
 public struct TypeMap {
-    public struct Entry {
-        public init(
-            name: String,
-            jsonType: String? = nil,
-            decode: String? = nil,
-            encode: String? = nil
-        ) {
-            self.name = name
-            self.jsonType = jsonType
-            self.decode = decode
-            self.encode = encode
+    public enum Entry {
+        case identity(name: String)
+        case coding(entityType: String, jsonType: String, decode: String?, encode: String?)
+
+        internal var entityType: String {
+            switch self {
+            case .identity(name: let name): return name
+            case .coding(entityType: let name, _, _, _): return name
+            }
         }
 
-        public var name: String
-        public var jsonType: String?
-        public var decode: String?
-        public var encode: String?
+        internal var jsonType: String {
+            switch self {
+            case .identity(name: let name): return name
+            case .coding(_, jsonType: let name, _, _): return name
+            }
+        }
+
+        internal var decode: String? {
+            switch self {
+            case .identity: return nil
+            case .coding(_, _, decode: let name, _): return name
+            }
+        }
+
+        internal var encode: String? {
+            switch self {
+            case .identity: return nil
+            case .coding(_, _, _, encode: let name): return name
+            }
+        }
     }
 
     public typealias MapFunction = (any SType) -> Entry?
@@ -27,12 +41,12 @@ public struct TypeMap {
     )
 
     public static let defaultTable: [String: Entry] = [
-        "Void": Entry(name: "void"),
-        "Bool": Entry(name: "boolean"),
-        "Int": Entry(name: "number"),
-        "Float": Entry(name: "number"),
-        "Double": Entry(name: "number"),
-        "String": Entry(name: "string")
+        "Void": .identity(name: "void"),
+        "Bool": .identity(name: "boolean"),
+        "Int": .identity(name: "number"),
+        "Float": .identity(name: "number"),
+        "Double": .identity(name: "number"),
+        "String": .identity(name: "string")
     ]
 
     public init(

@@ -19,12 +19,9 @@ public struct TypeMapConverter: TypeConverter {
     public func name(for target: GenerationTarget) throws -> String {
         switch target {
         case .entity:
-            return entry.name
+            return entry.entityType
         case .json:
-            if let jsonName = entry.jsonType {
-                return jsonName
-            }
-            return try `default`.name(for: .json)
+            return entry.jsonType
         }
     }
 
