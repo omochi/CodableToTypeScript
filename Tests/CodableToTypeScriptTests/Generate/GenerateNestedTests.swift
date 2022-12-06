@@ -9,7 +9,7 @@ final class GenerateNestedTests: GenerateTestCaseBase {
             if let ident = repr.asIdent,
                ident.elements.last?.name == "ID"
             {
-                return .init(name: "string")
+                return .identity(name: "string")
             }
 
             return nil

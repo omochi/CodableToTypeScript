@@ -4,7 +4,10 @@ import CodableToTypeScript
 final class GenerateEncodeTests: GenerateTestCaseBase {
     func dateTypeMap() -> TypeMap {
         var typeMap = TypeMap()
-        typeMap.table["Date"] = .init(name: "Date", decode: "Date_decode", encode: "Date_encode")
+        typeMap.table["Date"] = .coding(
+            entityType: "Date", jsonType: "string",
+            decode: "Date_decode", encode: "Date_encode"
+        )
         return typeMap
     }
 
@@ -32,7 +35,7 @@ export type E_JSON = {
     a: {};
 } | {
     b: {
-        _0: Date_JSON;
+        _0: string;
     };
 };
 """, """
@@ -82,17 +85,17 @@ export type S = {
 };
 """, """
 export type S_JSON = {
-    a: Date_JSON;
-    b?: Date_JSON;
-    c?: Date_JSON | null;
-    d: Date_JSON[];
+    a: string;
+    b?: string;
+    c?: string | null;
+    d: string[];
 };
 """, """
 export function S_encode(entity: S): S_JSON {
     return {
         a: Date_encode(entity.a),
         b: OptionalField_encode(entity.b, Date_encode),
-        c: OptionalField_encode(entity.c, (entity: Date | null): Date_JSON | null => {
+        c: OptionalField_encode(entity.c, (entity: Date | null): string | null => {
             return Optional_encode(entity, Date_encode);
         }),
         d: Array_encode(entity.d, Date_encode)

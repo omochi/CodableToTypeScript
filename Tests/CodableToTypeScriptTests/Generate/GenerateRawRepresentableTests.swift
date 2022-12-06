@@ -4,7 +4,10 @@ import CodableToTypeScript
 final class GenerateRawRepresentableTests: GenerateTestCaseBase {
     func dateTypeMap() -> TypeMap {
         var typeMap = TypeMap()
-        typeMap.table["Date"] = .init(name: "Date", decode: "Date_decode", encode: "Date_encode")
+        typeMap.table["Date"] = .coding(
+            entityType: "Date", jsonType: "string",
+            decode: "Date_decode", encode: "Date_encode"
+        )
         return typeMap
     }
 
@@ -221,7 +224,7 @@ export type S = Date & {
     S: never;
 };
 """, """
-export type S_JSON = Date_JSON;
+export type S_JSON = string;
 """, """
 export function S_decode(json: S_JSON): S {
     return Date_decode(json) as S;
@@ -352,7 +355,7 @@ export type User = {
 """, """
 export type User_JSON = {
     id: User_ID_JSON;
-    date: Date_JSON;
+    date: string;
 };
 """, """
 export function User_decode(json: User_JSON): User {
