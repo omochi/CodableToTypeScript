@@ -48,6 +48,10 @@ export function E_decode(json: E_JSON): E {
     }
 }
 """
+            ],
+            unexpecteds: ["""
+export function E_decode
+"""
             ]
         )
     }
