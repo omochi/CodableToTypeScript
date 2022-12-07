@@ -28,8 +28,8 @@ struct RawRepresentableConverter: TypeConverter {
         }
     }
 
-    func hasDecode() throws -> Bool {
-        return true
+    func decodePresence() throws -> CodecPresence {
+        return .required
     }
 
     func decodeDecl() throws -> TSFunctionDecl? {

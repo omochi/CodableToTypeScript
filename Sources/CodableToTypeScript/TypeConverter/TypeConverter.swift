@@ -11,6 +11,7 @@ public protocol TypeConverter {
     func phantomType(for target: GenerationTarget, name: String) throws -> any TSType
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl?
     func hasDecode() throws -> Bool
+    func decodePresence() throws -> CodecPresence
     func decodeName() throws -> String
     func boundDecode() throws -> any TSExpr
     func callDecode(json: any TSExpr) throws -> any TSExpr
@@ -52,6 +53,10 @@ extension TypeConverter {
 
     public func phantomType(for target: GenerationTarget, name: String) throws -> any TSType {
         return try `default`.phantomType(for: target, name: name)
+    }
+
+    public func hasDecode() throws -> Bool {
+        return try `default`.hasDecode()
     }
 
     public func decodeName() throws -> String {

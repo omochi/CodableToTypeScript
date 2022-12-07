@@ -9,7 +9,7 @@ struct ErrorTypeConverter: TypeConverter {
         throw MessageError("Error type can't be converted: \(swiftType)")
     }
 
-    func hasDecode() throws -> Bool {
+    func decodePresence() throws -> CodecPresence {
         throw MessageError("Error type can't be evaluated: \(swiftType)")
     }
 

@@ -238,7 +238,71 @@ export function S_encode(entity: S): S_JSON {
         )
     }
 
-    func testBoundGeneric() throws {
+    func testBoundGenericDecodeEncode() throws {
+        try assertGenerate(
+            source: """
+struct K<T> {
+    var a: T
+}
+
+struct S: RawRepresentable {
+    var rawValue: K<Date>
+}
+""",
+            typeMap: dateTypeMap(),
+            expecteds: ["""
+export type S = K<Date> & {
+    S: never;
+};
+""", """
+export type S_JSON = K_JSON<string>;
+""", """
+export function S_decode(json: S_JSON): S {
+    return K_decode(json, Date_decode) as S;
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return K_encode(entity, Date_encode) as S_JSON;
+}
+"""
+                       ]
+        )
+    }
+
+    func testBoundGenericDecodeOnly() throws {
+        try assertGenerate(
+            source: """
+enum E { case a }
+
+struct K<T> {
+    var a: T
+}
+
+struct S: RawRepresentable {
+    var rawValue: K<E>
+}
+""",
+            expecteds: ["""
+export type S = K<E> & {
+    S: never;
+};
+""", """
+export type S_JSON = K_JSON<E_JSON>;
+""", """
+export function S_decode(json: S_JSON): S {
+    return K_decode(json, E_decode) as S;
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return K_encode(entity, identity) as S_JSON;
+}
+"""
+                       ]
+        )
+    }
+
+    // TODO: conditional decode
+    func _testBoundGenericIdentity() throws {
         try assertGenerate(
             source: """
 struct K<T> {
@@ -257,7 +321,7 @@ export type S = K<number> & {
 export type S_JSON = K_JSON<number>;
 """, """
 export function S_decode(json: S_JSON): S {
-    return K_decode(json, identity) as S;
+    return json as K<number> as S;
 }
 """, """
 export function S_encode(entity: S): S_JSON {

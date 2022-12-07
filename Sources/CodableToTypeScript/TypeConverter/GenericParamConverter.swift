@@ -14,6 +14,10 @@ struct GenericParamConverter: TypeConverter {
         return true
     }
 
+    func decodePresence() throws -> CodecPresence {
+        return .conditional
+    }
+
     func decodeDecl() throws -> TSFunctionDecl? {
         throw MessageError("Unsupported type: \(swiftType)")
     }

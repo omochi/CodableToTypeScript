@@ -34,13 +34,29 @@ struct StructConverter: TypeConverter {
         )
     }
 
-    func hasDecode() throws -> Bool {
-        for field in `struct`.decl.storedProperties {
-            if try generator.converter(for: field.interfaceType).hasDecode() {
-                return true
+    func decodePresence() throws -> CodecPresence {
+        /*
+         FIXME: see contextual type instead of interface type here.
+         */
+        let fields = try `struct`.decl.storedProperties.map {
+            try generator.converter(for: $0.interfaceType)
+        }
+
+        var result: CodecPresence = .identity
+
+        for field in fields {
+            switch try field.decodePresence() {
+            case .identity: break
+            case .required: return .required
+            case .conditional:
+                /*
+                 FIXME: temporary impl for backward compatiblity.
+                 */
+                result = .required
             }
         }
-        return false
+
+        return result
     }
 
     func decodeDecl() throws -> TSFunctionDecl? {

@@ -20,8 +20,8 @@ struct ArrayConverter: TypeConverter {
         throw MessageError("Unsupported type: \(swiftType)")
     }
 
-    func hasDecode() throws -> Bool {
-        return try element().hasDecode()
+    func decodePresence() throws -> CodecPresence {
+        return try element().decodePresence()
     }
 
     func decodeName() throws -> String? {

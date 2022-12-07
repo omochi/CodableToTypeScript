@@ -27,7 +27,8 @@ export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSO
         )
     }
 
-    func testParameterTranspile() throws {
+    // TODO: conditional decode
+    func _testParamIdentity() throws {
         try assertGenerate(
             source: """
 struct K<T> {
@@ -46,12 +47,42 @@ export type S = {
 export type S_JSON = {
     a: K_JSON<number>;
 };
+"""
+            ],
+            unexpecteds: ["""
+export function S_decode
+"""
+            ]
+        )
+    }
+
+    func testParamDecode() throws {
+        try assertGenerate(
+            source: """
+enum E { case a }
+
+struct K<T> {
+    var a: T
+}
+
+struct S {
+    var a: K<E>
+}
+""",
+            expecteds: ["""
+export type S = {
+    a: K<E>;
+};
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        a: K_decode(json.a, identity)
+        a: K_decode(json.a, E_decode)
     };
 }
+""", """
+export type S_JSON = {
+    a: K_JSON<E_JSON>;
+};
 """
             ]
         )

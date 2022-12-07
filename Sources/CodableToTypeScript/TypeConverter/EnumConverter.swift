@@ -118,11 +118,11 @@ struct EnumConverter: TypeConverter {
         return TSObjectType(outerFields)
     }
 
-    func hasDecode() throws -> Bool {
+    func decodePresence() throws -> CodecPresence {
         switch kind {
-        case .never: return false
-        case .string: return false
-        case .normal: return true
+        case .never: return .identity
+        case .string: return .identity
+        case .normal: return .required
         }
     }
 

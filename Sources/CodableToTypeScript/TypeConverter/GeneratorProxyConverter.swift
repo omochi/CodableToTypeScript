@@ -28,8 +28,12 @@ struct GeneratorProxyConverter: TypeConverter {
     }
 
     func hasDecode() throws -> Bool {
+        return try impl.hasDecode()
+    }
+
+    func decodePresence() throws -> CodecPresence {
         return try generator.context.evaluator(
-            CodeGenerator.HasDecodeRequest(token: generator.requestToken, type: swiftType)
+            CodeGenerator.DecodePresenceRequest(token: generator.requestToken, type: swiftType)
         )
     }
 
