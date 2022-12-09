@@ -27,8 +27,7 @@ export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSO
         )
     }
 
-    // TODO: conditional decode
-    func _testParamIdentity() throws {
+    func testParamIdentity() throws {
         try assertGenerate(
             source: """
 struct K<T> {
@@ -74,15 +73,15 @@ export type S = {
     a: K<E>;
 };
 """, """
+export type S_JSON = {
+    a: K_JSON<E_JSON>;
+};
+""", """
 export function S_decode(json: S_JSON): S {
     return {
         a: K_decode(json.a, E_decode)
     };
 }
-""", """
-export type S_JSON = {
-    a: K_JSON<E_JSON>;
-};
 """
             ]
         )
@@ -299,10 +298,10 @@ export type S_JSON = {
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        i: K_decode(json.i, identity),
-        a: K_decode(json.a, identity),
+        i: json.i as K<number>,
+        a: json.a as K<A>,
         b: K_decode(json.b, B_decode),
-        c: K_decode(json.c, identity)
+        c: json.c as K<C>
     };
 }
 """
@@ -343,8 +342,8 @@ export type S_JSON = {
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        a: K_decode(json.a, identity),
-        b: K_decode(json.b, identity),
+        a: json.a as K<number | null>,
+        b: json.b as K<number[]>,
         c: K_decode(json.c, (json: E_JSON | null): E | null => {
             return Optional_decode(json, E_decode);
         }),

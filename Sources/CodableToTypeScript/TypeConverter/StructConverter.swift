@@ -35,11 +35,10 @@ struct StructConverter: TypeConverter {
     }
 
     func decodePresence() throws -> CodecPresence {
-        /*
-         FIXME: see contextual type instead of interface type here.
-         */
+        let map = `struct`.contextSubstitutionMap()
+
         let fields = try `struct`.decl.storedProperties.map {
-            try generator.converter(for: $0.interfaceType)
+            try generator.converter(for: $0.interfaceType.subst(map: map))
         }
 
         var result: CodecPresence = .identity
@@ -49,10 +48,7 @@ struct StructConverter: TypeConverter {
             case .identity: break
             case .required: return .required
             case .conditional:
-                /*
-                 FIXME: temporary impl for backward compatiblity.
-                 */
-                result = .required
+                result = .conditional
             }
         }
 

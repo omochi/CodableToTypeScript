@@ -301,8 +301,7 @@ export function S_encode(entity: S): S_JSON {
         )
     }
 
-    // TODO: conditional decode
-    func _testBoundGenericIdentity() throws {
+    func testBoundGenericIdentity() throws {
         try assertGenerate(
             source: """
 struct K<T> {
