@@ -27,7 +27,7 @@ export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSO
         )
     }
 
-    func testParameterTranspile() throws {
+    func testParamIdentity() throws {
         try assertGenerate(
             source: """
 struct K<T> {
@@ -42,14 +42,44 @@ struct S {
 export type S = {
     a: K<number>;
 };
+"""
+            ],
+            unexpecteds: ["""
+export type S_JSON
+""", """
+export function S_decode
+""", """
+export function S_encode
+"""
+            ]
+        )
+    }
+
+    func testParamDecode() throws {
+        try assertGenerate(
+            source: """
+enum E { case a }
+
+struct K<T> {
+    var a: T
+}
+
+struct S {
+    var a: K<E>
+}
+""",
+            expecteds: ["""
+export type S = {
+    a: K<E>;
+};
 """, """
 export type S_JSON = {
-    a: K_JSON<number>;
+    a: K_JSON<E_JSON>;
 };
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        a: K_decode(json.a, identity)
+        a: K_decode(json.a, E_decode)
     };
 }
 """
@@ -260,18 +290,18 @@ export type S = {
 };
 """, """
 export type S_JSON = {
-    i: K_JSON<number>;
-    a: K_JSON<A>;
+    i: K<number>;
+    a: K<A>;
     b: K_JSON<B_JSON>;
-    c: K_JSON<C>;
+    c: K<C>;
 };
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        i: K_decode(json.i, identity),
-        a: K_decode(json.a, identity),
+        i: json.i,
+        a: json.a,
         b: K_decode(json.b, B_decode),
-        c: K_decode(json.c, identity)
+        c: json.c
     };
 }
 """
@@ -304,16 +334,16 @@ export type S = {
 };
 """, """
 export type S_JSON = {
-    a: K_JSON<number | null>;
-    b: K_JSON<number[]>;
+    a: K<number | null>;
+    b: K<number[]>;
     c: K_JSON<E_JSON | null>;
     d: K_JSON<E_JSON[]>;
 };
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        a: K_decode(json.a, identity),
-        b: K_decode(json.b, identity),
+        a: json.a,
+        b: json.b,
         c: K_decode(json.c, (json: E_JSON | null): E | null => {
             return Optional_decode(json, E_decode);
         }),

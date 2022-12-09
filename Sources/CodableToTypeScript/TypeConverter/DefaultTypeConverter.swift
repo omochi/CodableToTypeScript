@@ -3,24 +3,27 @@ import TypeScriptAST
 
 /*
  It provides default impls of TypeConverter.
+
+ Don't call other method from own methods.
+ Call original methods via `converter()` object.
  */
 public struct DefaultTypeConverter {
     public init(generator: CodeGenerator, type: any SType) {
         self.generator = generator
-        self.type = type
+        self.swiftType = type
     }
 
     private var generator: CodeGenerator
-    public var type: any SType
+    public var swiftType: any SType
 
     private func converter() throws -> any TypeConverter {
-        return try generator.converter(for: type)
+        return try generator.converter(for: swiftType)
     }
 
     public func name(for target: GenerationTarget) throws -> String {
         switch target {
         case .entity:
-            return type.namePath().convert()
+            return swiftType.namePath().convert()
         case .json:
             let converter = try self.converter()
 
@@ -71,6 +74,18 @@ public struct DefaultTypeConverter {
         return TSIntersectionType([body, tag])
     }
 
+    public func hasDecode() throws -> Bool {
+        switch try self.converter().decodePresence() {
+        case .identity: return false
+        case .required: return true
+        case .conditional:
+            let args = try swiftType.genericArgs.map {
+                try self.generator.converter(for: $0)
+            }
+            return try args.contains { try $0.hasDecode() }
+        }
+    }
+
     public func decodeName() throws -> String {
         let converter = try self.converter()
         guard try converter.hasDecode() else {
@@ -107,7 +122,7 @@ public struct DefaultTypeConverter {
             )
         }
 
-        if !type.genericArgs.isEmpty {
+        if !swiftType.genericArgs.isEmpty {
             return try makeClosure()
         }
         return TSIdentExpr(
@@ -116,7 +131,7 @@ public struct DefaultTypeConverter {
     }
 
     public func callDecode(json: any TSExpr) throws -> any TSExpr {
-        return try callDecode(genericArgs: type.genericArgs, json: json)
+        return try callDecode(genericArgs: swiftType.genericArgs, json: json)
     }
 
     public func callDecode(genericArgs: [any SType], json: any TSExpr) throws -> any TSExpr {
@@ -205,6 +220,18 @@ public struct DefaultTypeConverter {
         )
     }
 
+    public func hasEncode() throws -> Bool {
+        switch try self.converter().encodePresence() {
+        case .identity: return false
+        case .required: return true
+        case .conditional:
+            let args = try swiftType.genericArgs.map {
+                try self.generator.converter(for: $0)
+            }
+            return try args.contains { try $0.hasEncode() }
+        }
+    }
+
     public func encodeName() throws -> String {
         let converter = try self.converter()
         guard try converter.hasEncode() else {
@@ -241,7 +268,7 @@ public struct DefaultTypeConverter {
             )
         }
 
-        if !type.genericArgs.isEmpty {
+        if !swiftType.genericArgs.isEmpty {
             return try makeClosure()
         }
         return TSIdentExpr(
@@ -250,7 +277,7 @@ public struct DefaultTypeConverter {
     }
 
     public func callEncode(entity: any TSExpr) throws -> any TSExpr {
-        return try callEncode(genericArgs: type.genericArgs, entity: entity)
+        return try callEncode(genericArgs: swiftType.genericArgs, entity: entity)
     }
 
     public func callEncode(genericArgs: [any SType], entity: any TSExpr) throws -> any TSExpr {

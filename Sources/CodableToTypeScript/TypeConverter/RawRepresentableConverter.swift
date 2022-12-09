@@ -2,6 +2,19 @@ import SwiftTypeReader
 import TypeScriptAST
 
 struct RawRepresentableConverter: TypeConverter {
+    init(
+        generator: CodeGenerator,
+        swiftType: any SType,
+        rawValueType raw: any SType
+    ) throws {
+        let map = swiftType.contextSubstitutionMap()
+        let raw = raw.subst(map: map)
+
+        self.generator = generator
+        self.swiftType = swiftType
+        self.rawValueType = try generator.converter(for: raw)
+    }
+
     var generator: CodeGenerator
     var swiftType: any SType
     var rawValueType: any TypeConverter
@@ -28,8 +41,8 @@ struct RawRepresentableConverter: TypeConverter {
         }
     }
 
-    func hasDecode() throws -> Bool {
-        return true
+    func decodePresence() throws -> CodecPresence {
+        return .required
     }
 
     func decodeDecl() throws -> TSFunctionDecl? {
@@ -44,8 +57,8 @@ struct RawRepresentableConverter: TypeConverter {
         return decl
     }
 
-    func hasEncode() throws -> Bool {
-        return try rawValueType.hasEncode()
+    func encodePresence() throws -> CodecPresence {
+        return try rawValueType.encodePresence()
     }
 
     func encodeDecl() throws -> TSFunctionDecl? {

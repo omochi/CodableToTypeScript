@@ -20,8 +20,8 @@ struct DictionaryConverter: TypeConverter {
         throw MessageError("Unsupported type: \(swiftType)")
     }
 
-    func hasDecode() throws -> Bool {
-        return try value().hasDecode()
+    func decodePresence() throws -> CodecPresence {
+        return try value().decodePresence()
     }
 
     func decodeName() throws -> String? {
@@ -39,8 +39,8 @@ struct DictionaryConverter: TypeConverter {
         throw MessageError("Unsupported type: \(swiftType)")
     }
 
-    func hasEncode() throws -> Bool {
-        return try value().hasEncode()
+    func encodePresence() throws -> CodecPresence {
+        return try value().encodePresence()
     }
 
     func encodeName() throws -> String {

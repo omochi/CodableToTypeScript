@@ -29,11 +29,11 @@ public struct TypeMapConverter: TypeConverter {
         return nil
     }
 
-    public func hasDecode() throws -> Bool {
+    public func decodePresence() throws -> CodecPresence {
         if let _ = entry.decode {
-            return true
+            return .required
         }
-        return false
+        return .identity
     }
 
     public func decodeName() throws -> String {
@@ -44,11 +44,11 @@ public struct TypeMapConverter: TypeConverter {
         return nil
     }
 
-    public func hasEncode() throws -> Bool {
+    public func encodePresence() throws -> CodecPresence {
         if let _ = entry.encode {
-            return true
+            return .required
         }
-        return false
+        return .identity
     }
 
     public func encodeName() throws -> String {
