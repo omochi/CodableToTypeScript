@@ -2,6 +2,19 @@ import SwiftTypeReader
 import TypeScriptAST
 
 struct RawRepresentableConverter: TypeConverter {
+    init(
+        generator: CodeGenerator,
+        swiftType: any SType,
+        rawValueType raw: any SType
+    ) throws {
+        let map = swiftType.contextSubstitutionMap()
+        let raw = raw.subst(map: map)
+
+        self.generator = generator
+        self.swiftType = swiftType
+        self.rawValueType = try generator.converter(for: raw)
+    }
+
     var generator: CodeGenerator
     var swiftType: any SType
     var rawValueType: any TypeConverter

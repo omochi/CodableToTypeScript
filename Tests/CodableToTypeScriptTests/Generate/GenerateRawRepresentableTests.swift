@@ -366,7 +366,7 @@ struct S<T>: RawRepresentable {
     var rawValue: T
 }
 """,
-        expecteds: ["""
+            expecteds: ["""
 export type S<T> = T & {
     S: never;
 };
@@ -383,6 +383,35 @@ export function S_encode<T, T_JSON>(entity: S<T>, T_encode: (entity: T) => T_JSO
 """
                    ]
         )
+    }
+
+    func testGenericParamApplyIdentity() throws {
+        try assertGenerate(
+            source: """
+struct S<T>: RawRepresentable {
+    var rawValue: T
+}
+
+struct K {
+    var a: S<Int>
+}
+""",
+            expecteds: ["""
+export type K_JSON = {
+    a: S_JSON<number>;
+}
+""", """
+export function K_decode(json: K_JSON): K {
+    return {
+        a: S_decode(json.a, identity)
+    };
+}
+"""],
+            unexpecteds: ["""
+export function K_encode
+"""]
+        )
+
     }
 
     func testNestedID() throws {
@@ -433,7 +462,10 @@ export function User_encode(entity: User): User_JSON {
     };
 }
 """
-                       ]
+                       ],
+            unexpecteds: ["""
+export function User_ID_encode
+"""]
         )
     }
 }
