@@ -65,8 +65,8 @@ struct OptionalConverter: TypeConverter {
         throw MessageError("Unsupported type: \(swiftType)")
     }
 
-    func hasEncode() throws -> Bool {
-        return try wrapped(limit: nil).hasEncode()
+    func encodePresence() throws -> CodecPresence {
+        return try wrapped(limit: nil).encodePresence()
     }
 
     func encodeName() throws -> String {

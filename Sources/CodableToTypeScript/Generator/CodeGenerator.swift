@@ -61,17 +61,17 @@ public final class CodeGenerator {
         }
     }
 
-    internal struct HasEncodeRequest: Request {
+    internal struct EncodePresenceRequest: Request {
         var token: RequestToken
         @AnyTypeStorage var type: any SType
 
-        func evaluate(on evaluator: RequestEvaluator) throws -> Bool {
+        func evaluate(on evaluator: RequestEvaluator) throws -> CodecPresence {
             do {
                 let converter = try token.generator.implConverter(for: type)
-                return try converter.hasEncode()
+                return try converter.encodePresence()
             } catch {
                 switch error {
-                case is CycleRequestError: return true
+                case is CycleRequestError: return .required
                 default: throw error
                 }
             }

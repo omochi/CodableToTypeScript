@@ -44,8 +44,8 @@ struct RawRepresentableConverter: TypeConverter {
         return decl
     }
 
-    func hasEncode() throws -> Bool {
-        return try rawValueType.hasEncode()
+    func encodePresence() throws -> CodecPresence {
+        return try rawValueType.encodePresence()
     }
 
     func encodeDecl() throws -> TSFunctionDecl? {

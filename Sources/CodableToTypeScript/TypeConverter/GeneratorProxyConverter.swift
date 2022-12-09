@@ -62,8 +62,12 @@ struct GeneratorProxyConverter: TypeConverter {
     }
 
     func hasEncode() throws -> Bool {
+        return try impl.hasEncode()
+    }
+
+    func encodePresence() throws -> CodecPresence {
         return try generator.context.evaluator(
-            CodeGenerator.HasEncodeRequest(token: generator.requestToken, type: swiftType)
+            CodeGenerator.EncodePresenceRequest(token: generator.requestToken, type: swiftType)
         )
     }
 

@@ -220,6 +220,18 @@ public struct DefaultTypeConverter {
         )
     }
 
+    public func hasEncode() throws -> Bool {
+        switch try self.converter().encodePresence() {
+        case .identity: return false
+        case .required: return true
+        case .conditional:
+            let args = try swiftType.genericArgs.map {
+                try self.generator.converter(for: $0)
+            }
+            return try args.contains { try $0.hasEncode() }
+        }
+    }
+
     public func encodeName() throws -> String {
         let converter = try self.converter()
         guard try converter.hasEncode() else {

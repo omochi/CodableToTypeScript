@@ -42,14 +42,14 @@ struct S {
 export type S = {
     a: K<number>;
 };
-""", """
-export type S_JSON = {
-    a: K_JSON<number>;
-};
 """
             ],
             unexpecteds: ["""
+export type S_JSON
+""", """
 export function S_decode
+""", """
+export function S_encode
 """
             ]
         )
@@ -290,18 +290,18 @@ export type S = {
 };
 """, """
 export type S_JSON = {
-    i: K_JSON<number>;
-    a: K_JSON<A>;
+    i: K<number>;
+    a: K<A>;
     b: K_JSON<B_JSON>;
-    c: K_JSON<C>;
+    c: K<C>;
 };
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        i: json.i as K<number>,
-        a: json.a as K<A>,
+        i: json.i,
+        a: json.a,
         b: K_decode(json.b, B_decode),
-        c: json.c as K<C>
+        c: json.c
     };
 }
 """
@@ -334,16 +334,16 @@ export type S = {
 };
 """, """
 export type S_JSON = {
-    a: K_JSON<number | null>;
-    b: K_JSON<number[]>;
+    a: K<number | null>;
+    b: K<number[]>;
     c: K_JSON<E_JSON | null>;
     d: K_JSON<E_JSON[]>;
 };
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        a: json.a as K<number | null>,
-        b: json.b as K<number[]>,
+        a: json.a,
+        b: json.b,
         c: K_decode(json.c, (json: E_JSON | null): E | null => {
             return Optional_decode(json, E_decode);
         }),

@@ -134,23 +134,32 @@ struct EnumConverter: TypeConverter {
         ).generate()
     }
 
-    func hasEncode() throws -> Bool {
+    func encodePresence() throws -> CodecPresence {
         switch kind {
-        case .never: return false
-        case .string: return false
+        case .never: return .identity
+        case .string: return .identity
         case .normal: break
         }
 
+        let map = `enum`.contextSubstitutionMap()
+
+        var result: CodecPresence = .identity
+
         for caseElement in decl.caseElements {
             for value in caseElement.associatedValues {
-                let value = try generator.converter(for: value.interfaceType)
-                if try value.hasEncode() {
-                    return true
+                let value = try generator.converter(
+                    for: value.interfaceType.subst(map: map)
+                )
+                switch try value.encodePresence() {
+                case .identity: break
+                case .required: return .required
+                case .conditional:
+                    result = .conditional
                 }
             }
         }
 
-        return false
+        return result
     }
 
     func encodeDecl() throws -> TSFunctionDecl? {

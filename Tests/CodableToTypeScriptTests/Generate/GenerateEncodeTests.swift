@@ -128,7 +128,5 @@ export function S_encode(entity: S): S_JSON {
 """
             ]
         )
-
-
     }
 }

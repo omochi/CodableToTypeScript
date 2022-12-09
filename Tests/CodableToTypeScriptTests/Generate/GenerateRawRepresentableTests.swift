@@ -292,12 +292,11 @@ export type S_JSON = K_JSON<E_JSON>;
 export function S_decode(json: S_JSON): S {
     return K_decode(json, E_decode) as S;
 }
-""", """
-export function S_encode(entity: S): S_JSON {
-    return K_encode(entity, identity) as S_JSON;
-}
 """
-                       ]
+                       ],
+            unexpecteds: ["""
+export function S_encode
+"""]
         )
     }
 
@@ -317,17 +316,16 @@ export type S = K<number> & {
     S: never;
 };
 """, """
-export type S_JSON = K_JSON<number>;
+export type S_JSON = K<number>;
 """, """
 export function S_decode(json: S_JSON): S {
-    return json as K<number> as S;
-}
-""", """
-export function S_encode(entity: S): S_JSON {
-    return K_encode(entity, identity) as S_JSON;
+    return json as S;
 }
 """
-                       ]
+                       ],
+            unexpecteds: ["""
+export function S_encode
+"""]
         )
     }
 

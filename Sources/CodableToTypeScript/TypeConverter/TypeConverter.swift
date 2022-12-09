@@ -19,6 +19,7 @@ public protocol TypeConverter {
     func decodeSignature() throws -> TSFunctionDecl?
     func decodeDecl() throws -> TSFunctionDecl?
     func hasEncode() throws -> Bool
+    func encodePresence() throws -> CodecPresence
     func encodeName() throws -> String
     func boundEncode() throws -> any TSExpr
     func callEncode(entity: any TSExpr) throws -> any TSExpr
@@ -77,6 +78,10 @@ extension TypeConverter {
 
     public func decodeSignature() throws -> TSFunctionDecl? {
         return try `default`.decodeSignature()
+    }
+
+    public func hasEncode() throws -> Bool {
+        return try `default`.hasEncode()
     }
 
     public func encodeName() throws -> String {
