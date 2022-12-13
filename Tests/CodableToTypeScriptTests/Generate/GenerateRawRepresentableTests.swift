@@ -468,4 +468,19 @@ export function User_ID_encode
 """]
         )
     }
+
+    func testPhantomString() throws {
+        try assertGenerate(
+            source: """
+struct ID<G>: RawRepresentable {
+    var rawValue: String
+}
+""",
+            expecteds: ["""
+export type ID<G> = string & {
+    ID: never;
+};
+"""]
+        )
+    }
 }
