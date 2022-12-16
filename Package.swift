@@ -1,9 +1,10 @@
-// swift-tools-version:5.6
+// swift-tools-version: 5.7
 
 import PackageDescription
 
 let package = Package(
     name: "CodableToTypeScript",
+    platforms: [.macOS(.v12)],
     products: [
         .library(
             name: "CodableToTypeScript",
@@ -12,7 +13,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/omochi/SwiftTypeReader", from: "2.2.0"),
-        .package(url: "https://github.com/omochi/TypeScriptAST", from: "1.4.0")
+        .package(url: "https://github.com/omochi/TypeScriptAST", from: "1.5.0")
     ],
     targets: [
         .target(
