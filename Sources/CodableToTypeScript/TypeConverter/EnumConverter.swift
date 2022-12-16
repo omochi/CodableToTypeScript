@@ -192,7 +192,7 @@ private struct DecodeFuncGen {
 
         for value in ce.associatedValues {
             let label = value.codableLabel
-            var expr: any TSExpr = TSMemberExpr(base: json, name: TSIdentExpr(label))
+            var expr: any TSExpr = TSMemberExpr(base: json, name: label)
 
             expr = try generator.converter(for: value.interfaceType)
                 .callDecodeField(json: expr)
@@ -213,7 +213,7 @@ private struct DecodeFuncGen {
             kind: .const, name: "j",
             initializer: TSMemberExpr(
                 base: TSIdentExpr("json"),
-                name: TSIdentExpr(ce.name)
+                name: ce.name
             )
         )
         if !ce.associatedValues.isEmpty {
@@ -302,7 +302,7 @@ private struct EncodeFuncGen {
         var fields: [TSObjectExpr.Field] = []
 
         for value in element.associatedValues {
-            var expr: any TSExpr = TSMemberExpr(base: TSIdentExpr("e"), name: TSIdentExpr(value.codableLabel))
+            var expr: any TSExpr = TSMemberExpr(base: TSIdentExpr("e"), name: value.codableLabel)
 
             expr = try generator.converter(for: value.interfaceType).callEncodeField(entity: expr)
 
@@ -321,7 +321,7 @@ private struct EncodeFuncGen {
         if !element.associatedValues.isEmpty {
             let e = TSVarDecl(
                 kind: .const, name: "e",
-                initializer: TSMemberExpr(base: TSIdentExpr("entity"), name: TSIdentExpr(element.name))
+                initializer: TSMemberExpr(base: TSIdentExpr("entity"), name: element.name)
             )
             code.append(e)
         }
@@ -340,7 +340,7 @@ private struct EncodeFuncGen {
         guard let decl = try converter.encodeSignature() else { return nil }
 
         let `switch` = TSSwitchStmt(
-            expr: TSMemberExpr(base: TSIdentExpr("entity"), name: TSIdentExpr("kind"))
+            expr: TSMemberExpr(base: TSIdentExpr("entity"), name: "kind")
         )
 
         for caseElement in type.caseElements {

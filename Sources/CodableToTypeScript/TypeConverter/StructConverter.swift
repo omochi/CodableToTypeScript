@@ -63,7 +63,7 @@ struct StructConverter: TypeConverter {
         for field in `struct`.decl.storedProperties {
             var expr: any TSExpr = TSMemberExpr(
                 base: TSIdentExpr("json"),
-                name: TSIdentExpr(field.name)
+                name: field.name
             )
 
             expr = try generator.converter(for: field.interfaceType)
@@ -113,7 +113,7 @@ struct StructConverter: TypeConverter {
         for field in `struct`.decl.storedProperties {
             var expr: any TSExpr = TSMemberExpr(
                 base: TSIdentExpr("entity"),
-                name: TSIdentExpr(field.name)
+                name: field.name
             )
 
             expr = try generator.converter(for: field.interfaceType)
