@@ -14,6 +14,15 @@ extension TypeDecl {
             try type.walk(body)
         }
     }
+
+    public var typeName: String? {
+        switch self {
+        case let decl as any NominalTypeDecl: return decl.name
+        case let decl as TypeAliasDecl: return decl.name
+        case let decl as Module: return decl.name
+        default: return nil
+        }
+    }
 }
 
 extension NominalTypeDecl {
@@ -39,24 +48,25 @@ extension SType {
     internal var typeDecl: (any TypeDecl)? {
         switch self {
         case let type as any NominalType: return type.nominalTypeDecl
-        case let param as GenericParamType: return param.decl
+        case let type as GenericParamType: return type.decl
+        case let type as TypeAliasType: return type.decl
         default: return nil
         }
     }
 
     internal var genericArgs: [any SType] {
-        if let self = self.asNominal {
-            return self.genericArgs
-        } else if let self = self.asError {
-            guard let repr = self.repr as? IdentTypeRepr,
+        switch self {
+        case let type as any NominalType: return type.genericArgs
+        case let type as TypeAliasType: return type.genericArgs
+        case let type as ErrorType:
+            guard let repr = type.repr as? IdentTypeRepr,
                   let element = repr.elements.last,
-                  let context = self.context else
+                  let context = type.context else
             {
                 return []
             }
             return element.genericArgs.map { $0.resolve(from: context) }
-        } else {
-            return []
+        default: return []
         }
     }
 

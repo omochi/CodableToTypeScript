@@ -44,6 +44,8 @@ public struct TypeConverterProvider {
             return StructConverter(generator: generator, struct: type)
         } else if let type = type.asGenericParam {
             return GenericParamConverter(generator: generator, param: type)
+        } else if let type = type.asTypeAlias {
+            return TypeAliasConverter(generator: generator, typeAlias: type)
         } else if let type = type.asError {
             return ErrorTypeConverter(generator: generator, swiftType: type)
         } else {
