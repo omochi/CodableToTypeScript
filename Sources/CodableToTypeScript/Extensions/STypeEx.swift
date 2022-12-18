@@ -5,13 +5,21 @@ extension TypeDecl {
         return declaredInterfaceType.namePath()
     }
 
-    public func walk(_ body: (any TypeDecl) throws -> Bool) rethrows {
+    public func walkTypeDecls(_ body: (any TypeDecl) throws -> Bool) rethrows {
         guard try body(self) else { return }
 
-        guard let nominal = asNominalType else { return }
+        let types: [any GenericTypeDecl]
+        switch self {
+        case let decl as any NominalTypeDecl:
+            types = decl.types
+        case let decl as Module:
+            types = decl.types
+        default:
+            return
+        }
 
-        for type in nominal.types {
-            try type.walk(body)
+        for type in types {
+            try type.walkTypeDecls(body)
         }
     }
 

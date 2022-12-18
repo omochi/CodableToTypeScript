@@ -135,7 +135,7 @@ extension TypeConverter {
         var decls: [any ASTNode] = []
 
         if let typeDecl = swiftType.typeDecl {
-            try typeDecl.walk { (type) in
+            try typeDecl.walkTypeDecls { (type) in
                 let converter = try generator.converter(for: type.declaredInterfaceType)
                 decls += try converter.ownDecls().decls
                 return true
