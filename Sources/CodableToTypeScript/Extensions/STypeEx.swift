@@ -14,8 +14,6 @@ extension TypeDecl {
             types = decl.types
         case let decl as Module:
             types = decl.types
-        case let decl as SourceFile:
-            types = decl.types
         default:
             return
         }
