@@ -51,7 +51,7 @@ class GenerateTestCaseBase: XCTestCase {
         case all
     }
     // debug
-    var prints: Prints { .none }
+    var prints: Prints { .one }
 
     func assertGenerate(
         context: Context? = nil,
@@ -94,7 +94,7 @@ class GenerateTestCaseBase: XCTestCase {
 
             if case .all = prints {
                 for swType in module.types {
-                    print("// \(swType.name)")
+                    print("// \(swType.typeName ?? "?")")
                     let code = try generate(type: swType)
                     print(code.print())
                 }
