@@ -11,6 +11,7 @@ struct HelperLibraryGenerator {
         case arrayEncode
         case dictionaryDecode
         case dictionaryEncode
+        case tagOf
     }
 
     var generator: CodeGenerator
@@ -36,6 +37,7 @@ struct HelperLibraryGenerator {
         case .arrayEncode: return "Array_encode"
         case .dictionaryDecode: return "Dictionary_decode"
         case .dictionaryEncode: return "Dictionary_encode"
+        case .tagOf: return "TagOf"
         }
     }
 
@@ -45,233 +47,252 @@ struct HelperLibraryGenerator {
 
     func decl(_ entry: EntryKind) -> any TSDecl {
         switch entry {
-        case .identity:
-            let decl = TSFunctionDecl(
-                modifiers: [.export],
-                name: name(entry),
-                genericParams: ["T"],
-                params: [.init(name: "json", type: TSIdentType("T"))],
-                result: TSIdentType("T"),
-                body: TSBlockStmt([
-                    TSReturnStmt(TSIdentExpr("json"))
-                ])
-            )
-            return decl
-        case .optionalFieldDecode:
-            let decl = TSFunctionDecl(
-                modifiers: [.export],
-                name: name(entry),
-                genericParams: ["T", "T_JSON"],
-                params: [
-                    .init(name: "json", type: TSUnionType([TSIdentType("T_JSON"), TSIdentType.undefined])),
-                    tDecodeParameter()
-                ],
-                result: TSUnionType([TSIdentType("T"), TSIdentType.undefined]),
-                body: TSBlockStmt([
-                    TSIfStmt(
-                        condition: TSInfixOperatorExpr(
-                            TSIdentExpr("json"), "===", TSIdentExpr.undefined
-                        ),
-                        then: TSReturnStmt(TSIdentExpr.undefined)
-                    ),
-                    TSReturnStmt(callTDecode())
-                ])
-            )
-            return decl
-        case .optionalFieldEncode:
-            let decl = TSFunctionDecl(
-                modifiers: [.export],
-                name: name(entry),
-                genericParams: ["T", "T_JSON"],
-                params: [
-                    .init(name: "entity", type: TSUnionType([TSIdentType("T"), TSIdentType.undefined])),
-                    tEncodeParameter()
-                ],
-                result: TSUnionType([TSIdentType("T_JSON"), TSIdentType.undefined]),
-                body: TSBlockStmt([
-                    TSIfStmt(
-                        condition: TSInfixOperatorExpr(
-                            TSIdentExpr("entity"), "===", TSIdentExpr.undefined
-                        ),
-                        then: TSReturnStmt(TSIdentExpr.undefined)
-                    ),
-                    TSReturnStmt(callTEncode())
-                ])
-            )
-            return decl
-        case .optionalDecode:
-            let decl = TSFunctionDecl(
-                modifiers: [.export],
-                name: name(entry),
-                genericParams: [.init("T"), .init("T_JSON")],
-                params: [
-                    .init(name: "json", type: TSUnionType([TSIdentType("T_JSON"), TSIdentType.null])),
-                    tDecodeParameter()
-                ],
-                result: TSUnionType([TSIdentType("T"), TSIdentType.null]),
-                body: TSBlockStmt([
-                    TSIfStmt(
-                        condition: TSInfixOperatorExpr(
-                            TSIdentExpr("json"), "===", TSNullLiteralExpr()
-                        ),
-                        then: TSReturnStmt(TSNullLiteralExpr())
-                    ),
-                    TSReturnStmt(callTDecode())
-                ])
-            )
-            return decl
-        case .optionalEncode:
-            let decl = TSFunctionDecl(
-                modifiers: [.export],
-                name: name(entry),
-                genericParams: [.init("T"), .init("T_JSON")],
-                params: [
-                    .init(name: "entity", type: TSUnionType([TSIdentType("T"), TSIdentType.null])),
-                    tEncodeParameter()
-                ],
-                result: TSUnionType([TSIdentType("T_JSON"), TSIdentType.null]),
-                body: TSBlockStmt([
-                    TSIfStmt(
-                        condition: TSInfixOperatorExpr(
-                            TSIdentExpr("entity"), "===", TSNullLiteralExpr()
-                        ),
-                        then: TSReturnStmt(TSNullLiteralExpr())
-                    ),
-                    TSReturnStmt(callTEncode())
-                ])
-            )
-            return decl
-        case .arrayDecode:
-            let decl = TSFunctionDecl(
-                modifiers: [.export],
-                name: name(entry),
-                genericParams: ["T", "T_JSON"],
-                params: [
-                    .init(name: "json", type: TSArrayType(TSIdentType("T_JSON"))),
-                    tDecodeParameter()
-                ],
-                result: TSArrayType(TSIdentType("T")),
-                body: TSBlockStmt([
-                    TSReturnStmt(
-                        TSCallExpr(
-                            callee: TSMemberExpr(
-                                base: TSIdentExpr("json"), name: "map"
-                            ),
-                            args: [tDecode()]
-                        )
-                    )
-                ])
-            )
-            return decl
-        case .arrayEncode:
-            let decl = TSFunctionDecl(
-                modifiers: [.export],
-                name: name(entry),
-                genericParams: ["T", "T_JSON"],
-                params: [
-                    .init(name: "entity", type: TSArrayType(TSIdentType("T"))),
-                    tEncodeParameter()
-                ],
-                result: TSArrayType(TSIdentType("T_JSON")),
-                body: TSBlockStmt([
-                    TSReturnStmt(
-                        TSCallExpr(
-                            callee: TSMemberExpr(
-                                base: TSIdentExpr("entity"), name: "map"
-                            ),
-                            args: [tEncode()]
-                        )
-                    )
-                ])
-            )
-            return decl
-        case .dictionaryDecode:
-            let decl = TSFunctionDecl(
-                modifiers: [.export],
-                name: name(entry),
-                genericParams: ["T", "T_JSON"],
-                params: [
-                    .init(name: "json", type: TSDictionaryType(TSIdentType("T_JSON"))),
-                    tDecodeParameter()
-                ],
-                result: TSDictionaryType(TSIdentType("T")),
-                body: TSBlockStmt([
-                    TSVarDecl(
-                        kind: .const, name: "entity", type: TSDictionaryType(TSIdentType("T")),
-                        initializer: TSObjectExpr([])
-                    ),
-                    TSForInStmt(
-                        kind: .const, name: "k", operator: .in, expr: TSIdentExpr("json"),
-                        body: TSBlockStmt([
-                            TSIfStmt(
-                                condition: TSCallExpr(
-                                    callee: TSMemberExpr(
-                                        base: TSIdentExpr("json"), name: "hasOwnProperty"
-                                    ),
-                                    args: [TSIdentExpr("k")]
-                                ),
-                                then: TSBlockStmt([
-                                    TSAssignExpr(
-                                        TSSubscriptExpr(base: TSIdentExpr("entity"), key: TSIdentExpr("k")),
-                                        TSCallExpr(
-                                            callee: tDecode(),
-                                            args: [
-                                                TSSubscriptExpr(base: TSIdentExpr("json"), key: TSIdentExpr("k"))
-                                            ]
-                                        )
-                                    )
-                                ])
-                            )
-                        ])
-                    ),
-                    TSReturnStmt(TSIdentExpr("entity"))
-                ])
-            )
-            return decl
-        case .dictionaryEncode:
-            let decl = TSFunctionDecl(
-                modifiers: [.export],
-                name: name(entry),
-                genericParams: ["T", "T_JSON"],
-                params: [
-                    .init(name: "entity", type: TSDictionaryType(TSIdentType("T"))),
-                    tEncodeParameter()
-                ],
-                result: TSDictionaryType(TSIdentType("T_JSON")),
-                body: TSBlockStmt([
-                    TSVarDecl(
-                        kind: .const, name: "json", type: TSDictionaryType(TSIdentType("T_JSON")),
-                        initializer: TSObjectExpr([])
-                    ),
-                    TSForInStmt(
-                        kind: .const, name: "k", operator: .in, expr: TSIdentExpr("entity"),
-                        body: TSBlockStmt([
-                            TSIfStmt(
-                                condition: TSCallExpr(
-                                    callee: TSMemberExpr(
-                                        base: TSIdentExpr("entity"), name: "hasOwnProperty"
-                                    ),
-                                    args: [TSIdentExpr("k")]
-                                ),
-                                then: TSBlockStmt([
-                                    TSAssignExpr(
-                                        TSSubscriptExpr(base: TSIdentExpr("json"), key: TSIdentExpr("k")),
-                                        TSCallExpr(
-                                            callee: tEncode(),
-                                            args: [
-                                                TSSubscriptExpr(base: TSIdentExpr("entity"), key: TSIdentExpr("k"))
-                                            ]
-                                        )
-                                    )
-                                ])
-                            )
-                        ])
-                    ),
-                    TSReturnStmt(TSIdentExpr("json"))
-                ])
-            )
-            return decl
+        case .identity: return identityDecl()
+        case .optionalFieldDecode: return optionalFieldDecodeDecl()
+        case .optionalFieldEncode: return optionalFieldEncodeDecl()
+        case .optionalDecode: return optionalDecodeDecl()
+        case .optionalEncode: return optionalEncodeDecl()
+        case .arrayDecode: return arrayDecodeDecl()
+        case .arrayEncode: return arrayEncodeDecl()
+        case .dictionaryDecode: return dictionaryDecodeDecl()
+        case .dictionaryEncode: return dictionaryEncodeDecl()
+        case .tagOf: return tagOfDecl()
         }
+    }
+
+    func identityDecl() -> TSFunctionDecl {
+        return TSFunctionDecl(
+            modifiers: [.export],
+            name: name(.identity),
+            genericParams: ["T"],
+            params: [.init(name: "json", type: TSIdentType("T"))],
+            result: TSIdentType("T"),
+            body: TSBlockStmt([
+                TSReturnStmt(TSIdentExpr("json"))
+            ])
+        )
+    }
+
+    func optionalFieldDecodeDecl() -> TSFunctionDecl {
+        return TSFunctionDecl(
+            modifiers: [.export],
+            name: name(.optionalFieldDecode),
+            genericParams: ["T", "T_JSON"],
+            params: [
+                .init(name: "json", type: TSUnionType([TSIdentType("T_JSON"), TSIdentType.undefined])),
+                tDecodeParameter()
+            ],
+            result: TSUnionType([TSIdentType("T"), TSIdentType.undefined]),
+            body: TSBlockStmt([
+                TSIfStmt(
+                    condition: TSInfixOperatorExpr(
+                        TSIdentExpr("json"), "===", TSIdentExpr.undefined
+                    ),
+                    then: TSReturnStmt(TSIdentExpr.undefined)
+                ),
+                TSReturnStmt(callTDecode())
+            ])
+        )
+    }
+
+    func optionalFieldEncodeDecl() -> TSFunctionDecl {
+        return TSFunctionDecl(
+            modifiers: [.export],
+            name: name(.optionalFieldEncode),
+            genericParams: ["T", "T_JSON"],
+            params: [
+                .init(name: "entity", type: TSUnionType([TSIdentType("T"), TSIdentType.undefined])),
+                tEncodeParameter()
+            ],
+            result: TSUnionType([TSIdentType("T_JSON"), TSIdentType.undefined]),
+            body: TSBlockStmt([
+                TSIfStmt(
+                    condition: TSInfixOperatorExpr(
+                        TSIdentExpr("entity"), "===", TSIdentExpr.undefined
+                    ),
+                    then: TSReturnStmt(TSIdentExpr.undefined)
+                ),
+                TSReturnStmt(callTEncode())
+            ])
+        )
+    }
+
+    func optionalDecodeDecl() -> TSFunctionDecl {
+        return TSFunctionDecl(
+            modifiers: [.export],
+            name: name(.optionalDecode),
+            genericParams: [.init("T"), .init("T_JSON")],
+            params: [
+                .init(name: "json", type: TSUnionType([TSIdentType("T_JSON"), TSIdentType.null])),
+                tDecodeParameter()
+            ],
+            result: TSUnionType([TSIdentType("T"), TSIdentType.null]),
+            body: TSBlockStmt([
+                TSIfStmt(
+                    condition: TSInfixOperatorExpr(
+                        TSIdentExpr("json"), "===", TSNullLiteralExpr()
+                    ),
+                    then: TSReturnStmt(TSNullLiteralExpr())
+                ),
+                TSReturnStmt(callTDecode())
+            ])
+        )
+    }
+
+    func optionalEncodeDecl() -> TSFunctionDecl {
+        return TSFunctionDecl(
+            modifiers: [.export],
+            name: name(.optionalEncode),
+            genericParams: [.init("T"), .init("T_JSON")],
+            params: [
+                .init(name: "entity", type: TSUnionType([TSIdentType("T"), TSIdentType.null])),
+                tEncodeParameter()
+            ],
+            result: TSUnionType([TSIdentType("T_JSON"), TSIdentType.null]),
+            body: TSBlockStmt([
+                TSIfStmt(
+                    condition: TSInfixOperatorExpr(
+                        TSIdentExpr("entity"), "===", TSNullLiteralExpr()
+                    ),
+                    then: TSReturnStmt(TSNullLiteralExpr())
+                ),
+                TSReturnStmt(callTEncode())
+            ])
+        )
+    }
+
+    func arrayDecodeDecl() -> TSFunctionDecl {
+        return TSFunctionDecl(
+            modifiers: [.export],
+            name: name(.arrayDecode),
+            genericParams: ["T", "T_JSON"],
+            params: [
+                .init(name: "json", type: TSArrayType(TSIdentType("T_JSON"))),
+                tDecodeParameter()
+            ],
+            result: TSArrayType(TSIdentType("T")),
+            body: TSBlockStmt([
+                TSReturnStmt(
+                    TSCallExpr(
+                        callee: TSMemberExpr(
+                            base: TSIdentExpr("json"), name: "map"
+                        ),
+                        args: [tDecode()]
+                    )
+                )
+            ])
+        )
+    }
+
+    func arrayEncodeDecl() -> TSFunctionDecl {
+        return TSFunctionDecl(
+            modifiers: [.export],
+            name: name(.arrayEncode),
+            genericParams: ["T", "T_JSON"],
+            params: [
+                .init(name: "entity", type: TSArrayType(TSIdentType("T"))),
+                tEncodeParameter()
+            ],
+            result: TSArrayType(TSIdentType("T_JSON")),
+            body: TSBlockStmt([
+                TSReturnStmt(
+                    TSCallExpr(
+                        callee: TSMemberExpr(
+                            base: TSIdentExpr("entity"), name: "map"
+                        ),
+                        args: [tEncode()]
+                    )
+                )
+            ])
+        )
+    }
+
+    func dictionaryDecodeDecl() -> TSFunctionDecl {
+        return TSFunctionDecl(
+            modifiers: [.export],
+            name: name(.dictionaryDecode),
+            genericParams: ["T", "T_JSON"],
+            params: [
+                .init(name: "json", type: TSDictionaryType(TSIdentType("T_JSON"))),
+                tDecodeParameter()
+            ],
+            result: TSDictionaryType(TSIdentType("T")),
+            body: TSBlockStmt([
+                TSVarDecl(
+                    kind: .const, name: "entity", type: TSDictionaryType(TSIdentType("T")),
+                    initializer: TSObjectExpr([])
+                ),
+                TSForInStmt(
+                    kind: .const, name: "k", operator: .in, expr: TSIdentExpr("json"),
+                    body: TSBlockStmt([
+                        TSIfStmt(
+                            condition: TSCallExpr(
+                                callee: TSMemberExpr(
+                                    base: TSIdentExpr("json"), name: "hasOwnProperty"
+                                ),
+                                args: [TSIdentExpr("k")]
+                            ),
+                            then: TSBlockStmt([
+                                TSAssignExpr(
+                                    TSSubscriptExpr(base: TSIdentExpr("entity"), key: TSIdentExpr("k")),
+                                    TSCallExpr(
+                                        callee: tDecode(),
+                                        args: [
+                                            TSSubscriptExpr(base: TSIdentExpr("json"), key: TSIdentExpr("k"))
+                                        ]
+                                    )
+                                )
+                            ])
+                        )
+                    ])
+                ),
+                TSReturnStmt(TSIdentExpr("entity"))
+            ])
+        )
+    }
+
+    func dictionaryEncodeDecl() -> TSFunctionDecl {
+        return TSFunctionDecl(
+            modifiers: [.export],
+            name: name(.dictionaryEncode),
+            genericParams: ["T", "T_JSON"],
+            params: [
+                .init(name: "entity", type: TSDictionaryType(TSIdentType("T"))),
+                tEncodeParameter()
+            ],
+            result: TSDictionaryType(TSIdentType("T_JSON")),
+            body: TSBlockStmt([
+                TSVarDecl(
+                    kind: .const, name: "json", type: TSDictionaryType(TSIdentType("T_JSON")),
+                    initializer: TSObjectExpr([])
+                ),
+                TSForInStmt(
+                    kind: .const, name: "k", operator: .in, expr: TSIdentExpr("entity"),
+                    body: TSBlockStmt([
+                        TSIfStmt(
+                            condition: TSCallExpr(
+                                callee: TSMemberExpr(
+                                    base: TSIdentExpr("entity"), name: "hasOwnProperty"
+                                ),
+                                args: [TSIdentExpr("k")]
+                            ),
+                            then: TSBlockStmt([
+                                TSAssignExpr(
+                                    TSSubscriptExpr(base: TSIdentExpr("json"), key: TSIdentExpr("k")),
+                                    TSCallExpr(
+                                        callee: tEncode(),
+                                        args: [
+                                            TSSubscriptExpr(base: TSIdentExpr("entity"), key: TSIdentExpr("k"))
+                                        ]
+                                    )
+                                )
+                            ])
+                        )
+                    ])
+                ),
+                TSReturnStmt(TSIdentExpr("json"))
+            ])
+        )
     }
 
     private func tDecode() -> TSIdentExpr {
