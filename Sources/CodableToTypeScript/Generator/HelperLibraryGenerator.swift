@@ -12,6 +12,7 @@ struct HelperLibraryGenerator {
         case dictionaryDecode
         case dictionaryEncode
         case tagOf
+        case tagRecord
     }
 
     var generator: CodeGenerator
@@ -38,6 +39,7 @@ struct HelperLibraryGenerator {
         case .dictionaryDecode: return "Dictionary_decode"
         case .dictionaryEncode: return "Dictionary_encode"
         case .tagOf: return "TagOf"
+        case .tagRecord: return "TagRecord"
         }
     }
 
@@ -57,6 +59,7 @@ struct HelperLibraryGenerator {
         case .dictionaryDecode: return dictionaryDecodeDecl()
         case .dictionaryEncode: return dictionaryEncodeDecl()
         case .tagOf: return tagOfDecl()
+        case .tagRecord: return tagRecordDecl()
         }
     }
 
@@ -310,6 +313,38 @@ struct HelperLibraryGenerator {
                 ]),
                 true: TSIdentType("TAG"),
                 false: TSIdentType.never
+            )
+        )
+    }
+
+    func tagRecordDecl() -> TSTypeDecl {
+        return TSTypeDecl(
+            modifiers: [.export],
+            name: name(.tagRecord),
+            genericParams: [
+                .init("Name", extends: TSIdentType.string),
+                .init(
+                    "Args", extends: TSArrayType(TSIdentType.any),
+                    default: TSNumberLiteralType("[]") // FIXME
+                )
+            ],
+            type: TSConditionalType(
+                TSIndexedAccessType(TSIdentType("Args"), index: TSStringLiteralType("length")),
+                extends: TSNumberLiteralType(0),
+                true: TSObjectType([
+                    .field(name: "$tag", isOptional: true, type: TSIdentType("Name"))
+                ]),
+                false: TSObjectType([
+                    .field(name: "$tag", isOptional: true, type: TSIntersectionType([
+                        TSIdentType("Name"),
+                        TSMappedType(
+                            "I", in: TSKeyofType(TSIdentType("Args")),
+                            value: TSIdentType(name(.tagOf), genericArgs: [
+                                TSIndexedAccessType(TSIdentType("Args"), index: TSIdentType("I"))
+                            ])
+                        )
+                    ]))
+                ])
             )
         )
     }

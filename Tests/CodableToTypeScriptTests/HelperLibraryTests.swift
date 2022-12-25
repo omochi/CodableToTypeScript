@@ -54,5 +54,22 @@ export function Dictionary_encode<T, T_JSON>(entity: {
     [key: string]: T_JSON;
 }
 """))
+
+        XCTAssertTrue(actual.contains("""
+export type TagOf<Type> = Type extends {
+    $tag?: infer TAG;
+} ? TAG : never;
+"""))
+
+        XCTAssertTrue(actual.contains("""
+export type TagRecord<Name extends string, Args extends any[] = []> = Args["length"] extends 0 ? {
+    $tag?: Name;
+} : {
+    $tag?: Name & {
+        [I in keyof Args]: TagOf<Args[I]>;
+    };
+};
+"""))
+
     }
 }
