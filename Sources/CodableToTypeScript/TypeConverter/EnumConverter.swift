@@ -89,7 +89,9 @@ struct EnumConverter: TypeConverter {
         switch target {
         case .entity:
             outerFields.append(
-                .init(name: "kind", type: TSStringLiteralType(caseElement.name))
+                .field(
+                    name: "kind", type: TSStringLiteralType(caseElement.name)
+                )
             )
         case .json:
             break
@@ -101,15 +103,17 @@ struct EnumConverter: TypeConverter {
             let (type, isOptional) = try generator.converter(for: value.interfaceType)
                 .fieldType(for: target)
 
-            innerFields.append(.init(
-                name: value.codableLabel,
-                isOptional: isOptional,
-                type: type
-            ))
+            innerFields.append(
+                .field(
+                    name: value.codableLabel,
+                    isOptional: isOptional,
+                    type: type
+                )
+            )
         }
 
         outerFields.append(
-            .init(
+            .field(
                 name: caseElement.name,
                 type: TSObjectType(innerFields)
             )

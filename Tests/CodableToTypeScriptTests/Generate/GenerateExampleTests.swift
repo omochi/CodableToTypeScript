@@ -23,7 +23,9 @@ export type S = {
     o2?: number | null;
     o3?: number | null;
     a1: (number | null)[];
-    d1: { [key: string]: number; };
+    d1: {
+        [key: string]: number;
+    };
 };
 """]
         )

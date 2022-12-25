@@ -69,7 +69,7 @@ public struct DefaultTypeConverter {
     public func phantomType(for target: GenerationTarget, name: String) throws -> any TSType {
         let body = try self.converter().type(for: target)
         let tag = TSObjectType([
-            .init(name: name, type: TSIdentType.never)
+            .field(name: name, type: TSIdentType.never)
         ])
         return TSIntersectionType([body, tag])
     }
