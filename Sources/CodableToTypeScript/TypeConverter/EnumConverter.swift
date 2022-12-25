@@ -44,7 +44,9 @@ struct EnumConverter: TypeConverter {
             guard try hasJSONType() else { return nil }
         }
 
-        let genericParams = try self.genericParams().map { try $0.name(for: target) }
+        let genericParams: [TSTypeParameterNode] = try self.genericParams().map {
+            .init(try $0.name(for: target))
+        }
 
         switch kind {
         case .never:

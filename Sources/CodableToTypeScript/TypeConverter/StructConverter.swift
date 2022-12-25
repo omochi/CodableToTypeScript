@@ -31,7 +31,9 @@ struct StructConverter: TypeConverter {
         return TSTypeDecl(
             modifiers: [.export],
             name: try name(for: target),
-            genericParams: try genericParams().map { try $0.name(for: target) },
+            genericParams: try genericParams().map {
+                .init(try $0.name(for: target))
+            },
             type: TSObjectType(fields)
         )
     }

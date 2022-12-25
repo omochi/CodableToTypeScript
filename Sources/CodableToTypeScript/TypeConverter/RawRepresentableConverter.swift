@@ -24,7 +24,9 @@ struct RawRepresentableConverter: TypeConverter {
             return TSTypeDecl(
                 modifiers: [.export],
                 name: name,
-                genericParams: try genericParams().map { try $0.name(for: target) },
+                genericParams: try genericParams().map {
+                    .init(try $0.name(for: target))
+                },
                 type: type
             )
         }

@@ -64,7 +64,7 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.identity),
-            genericParams: ["T"],
+            genericParams: [.init("T")],
             params: [.init(name: "json", type: TSIdentType("T"))],
             result: TSIdentType("T"),
             body: TSBlockStmt([
@@ -77,7 +77,7 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.optionalFieldDecode),
-            genericParams: ["T", "T_JSON"],
+            genericParams: [.init("T"), .init("T_JSON")],
             params: [
                 .init(name: "json", type: TSUnionType([TSIdentType("T_JSON"), TSIdentType.undefined])),
                 tDecodeParameter()
@@ -99,7 +99,7 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.optionalFieldEncode),
-            genericParams: ["T", "T_JSON"],
+            genericParams: [.init("T"), .init("T_JSON")],
             params: [
                 .init(name: "entity", type: TSUnionType([TSIdentType("T"), TSIdentType.undefined])),
                 tEncodeParameter()
@@ -165,7 +165,7 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.arrayDecode),
-            genericParams: ["T", "T_JSON"],
+            genericParams: [.init("T"), .init("T_JSON")],
             params: [
                 .init(name: "json", type: TSArrayType(TSIdentType("T_JSON"))),
                 tDecodeParameter()
@@ -188,7 +188,7 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.arrayEncode),
-            genericParams: ["T", "T_JSON"],
+            genericParams: [.init("T"), .init("T_JSON")],
             params: [
                 .init(name: "entity", type: TSArrayType(TSIdentType("T"))),
                 tEncodeParameter()
@@ -211,7 +211,7 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.dictionaryDecode),
-            genericParams: ["T", "T_JSON"],
+            genericParams: [.init("T"), .init("T_JSON")],
             params: [
                 .init(name: "json", type: TSObjectType.dictionary(TSIdentType("T_JSON"))),
                 tDecodeParameter()
@@ -255,7 +255,7 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.dictionaryEncode),
-            genericParams: ["T", "T_JSON"],
+            genericParams: [.init("T"), .init("T_JSON")],
             params: [
                 .init(name: "entity", type: TSObjectType.dictionary(TSIdentType("T"))),
                 tEncodeParameter()
@@ -292,6 +292,25 @@ struct HelperLibraryGenerator {
                 ),
                 TSReturnStmt(TSIdentExpr("json"))
             ])
+        )
+    }
+
+    func tagOfDecl() -> TSTypeDecl {
+        return TSTypeDecl(
+            modifiers: [.export],
+            name: name(.tagOf),
+            genericParams: [.init("Type")],
+            type: TSConditionalType(
+                TSIdentType("Type"),
+                extends: TSObjectType([
+                    .field(
+                        name: "$tag", isOptional: true,
+                        type: TSInferType(name: "TAG")
+                    )
+                ]),
+                true: TSIdentType("TAG"),
+                false: TSIdentType.never
+            )
         )
     }
 
