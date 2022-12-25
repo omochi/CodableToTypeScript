@@ -139,8 +139,12 @@ enum E {
 """
 {
     a: {
-        _0: { [key: string]: number; };
-        _1: { [key: string]: number | null; };
+        _0: {
+            [key: string]: number;
+        };
+        _1: {
+            [key: string]: number | null;
+        };
     };
 }
 """]

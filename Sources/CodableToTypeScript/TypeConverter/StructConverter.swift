@@ -19,11 +19,13 @@ struct StructConverter: TypeConverter {
             let (type, isOptional) = try generator.converter(for: property.interfaceType)
                 .fieldType(for: target)
 
-            fields.append(.init(
-                name: property.name,
-                isOptional: isOptional,
-                type: type
-            ))
+            fields.append(
+                .field(
+                    name: property.name,
+                    isOptional: isOptional,
+                    type: type
+                )
+            )
         }
 
         return TSTypeDecl(
