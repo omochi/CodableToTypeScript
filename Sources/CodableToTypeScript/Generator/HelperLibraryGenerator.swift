@@ -213,13 +213,13 @@ struct HelperLibraryGenerator {
             name: name(.dictionaryDecode),
             genericParams: ["T", "T_JSON"],
             params: [
-                .init(name: "json", type: TSDictionaryType(TSIdentType("T_JSON"))),
+                .init(name: "json", type: TSObjectType.dictionary(TSIdentType("T_JSON"))),
                 tDecodeParameter()
             ],
-            result: TSDictionaryType(TSIdentType("T")),
+            result: TSObjectType.dictionary(TSIdentType("T")),
             body: TSBlockStmt([
                 TSVarDecl(
-                    kind: .const, name: "entity", type: TSDictionaryType(TSIdentType("T")),
+                    kind: .const, name: "entity", type: TSObjectType.dictionary(TSIdentType("T")),
                     initializer: TSObjectExpr([])
                 ),
                 TSForInStmt(
@@ -257,13 +257,13 @@ struct HelperLibraryGenerator {
             name: name(.dictionaryEncode),
             genericParams: ["T", "T_JSON"],
             params: [
-                .init(name: "entity", type: TSDictionaryType(TSIdentType("T"))),
+                .init(name: "entity", type: TSObjectType.dictionary(TSIdentType("T"))),
                 tEncodeParameter()
             ],
-            result: TSDictionaryType(TSIdentType("T_JSON")),
+            result: TSObjectType.dictionary(TSIdentType("T_JSON")),
             body: TSBlockStmt([
                 TSVarDecl(
-                    kind: .const, name: "json", type: TSDictionaryType(TSIdentType("T_JSON")),
+                    kind: .const, name: "json", type: TSObjectType.dictionary(TSIdentType("T_JSON")),
                     initializer: TSObjectExpr([])
                 ),
                 TSForInStmt(

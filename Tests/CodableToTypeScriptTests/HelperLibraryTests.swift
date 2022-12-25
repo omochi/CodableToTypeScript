@@ -40,11 +40,19 @@ export function Array_encode<T, T_JSON>(entity: T[], T_encode: (entity: T) => T_
 """))
 
         XCTAssertTrue(actual.contains("""
-export function Dictionary_decode<T, T_JSON>(json: { [key: string]: T_JSON; }, T_decode: (json: T_JSON) => T): { [key: string]: T; }
+export function Dictionary_decode<T, T_JSON>(json: {
+    [key: string]: T_JSON;
+}, T_decode: (json: T_JSON) => T): {
+    [key: string]: T;
+}
 """))
 
         XCTAssertTrue(actual.contains("""
-export function Dictionary_encode<T, T_JSON>(entity: { [key: string]: T; }, T_encode: (entity: T) => T_JSON): { [key: string]: T_JSON; }
+export function Dictionary_encode<T, T_JSON>(entity: {
+    [key: string]: T;
+}, T_encode: (entity: T) => T_JSON): {
+    [key: string]: T_JSON;
+}
 """))
     }
 }

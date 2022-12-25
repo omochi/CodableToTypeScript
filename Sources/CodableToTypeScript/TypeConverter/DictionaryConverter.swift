@@ -11,9 +11,7 @@ struct DictionaryConverter: TypeConverter {
     }
 
     func type(for target: GenerationTarget) throws -> any TSType {
-        return TSDictionaryType(
-            try value().type(for: target)
-        )
+        return TSObjectType.dictionary(try value().type(for: target))
     }
 
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
