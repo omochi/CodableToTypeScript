@@ -118,12 +118,8 @@ public final class CodeGenerator {
 
     public func tagRecord(
         name: String,
-        genericArgs: [any SType]
+        genericArgs: [any TSType]
     ) throws -> TSIdentType {
-        let genericArgs: [any TSType] = try genericArgs.map { (arg) in
-            try converter(for: arg).type(for: .entity)
-        }
-
         var recordArgs: [any TSType] = [
             TSStringLiteralType(name)
         ]

@@ -35,7 +35,7 @@ struct StructConverter: TypeConverter {
         case .entity:
             let tag = try generator.tagRecord(
                 name: name,
-                genericArgs: try genericParams().map { $0.swiftType }
+                genericArgs: try genericParams().map { try $0.type(for: .entity) }
             )
             type = TSIntersectionType(type, tag)
         case .json: break
