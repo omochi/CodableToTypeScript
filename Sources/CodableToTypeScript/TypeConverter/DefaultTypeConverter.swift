@@ -71,7 +71,7 @@ public struct DefaultTypeConverter {
         let tag = TSObjectType([
             .field(name: name, type: TSIdentType.never)
         ])
-        return TSIntersectionType([body, tag])
+        return TSIntersectionType(body, tag)
     }
 
     public func hasDecode() throws -> Bool {

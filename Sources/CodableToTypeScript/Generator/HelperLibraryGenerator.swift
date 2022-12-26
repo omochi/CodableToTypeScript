@@ -82,10 +82,10 @@ struct HelperLibraryGenerator {
             name: name(.optionalFieldDecode),
             genericParams: [.init("T"), .init("T_JSON")],
             params: [
-                .init(name: "json", type: TSUnionType([TSIdentType("T_JSON"), TSIdentType.undefined])),
+                .init(name: "json", type: TSUnionType(TSIdentType("T_JSON"), TSIdentType.undefined)),
                 tDecodeParameter()
             ],
-            result: TSUnionType([TSIdentType("T"), TSIdentType.undefined]),
+            result: TSUnionType(TSIdentType("T"), TSIdentType.undefined),
             body: TSBlockStmt([
                 TSIfStmt(
                     condition: TSInfixOperatorExpr(
@@ -104,10 +104,10 @@ struct HelperLibraryGenerator {
             name: name(.optionalFieldEncode),
             genericParams: [.init("T"), .init("T_JSON")],
             params: [
-                .init(name: "entity", type: TSUnionType([TSIdentType("T"), TSIdentType.undefined])),
+                .init(name: "entity", type: TSUnionType(TSIdentType("T"), TSIdentType.undefined)),
                 tEncodeParameter()
             ],
-            result: TSUnionType([TSIdentType("T_JSON"), TSIdentType.undefined]),
+            result: TSUnionType(TSIdentType("T_JSON"), TSIdentType.undefined),
             body: TSBlockStmt([
                 TSIfStmt(
                     condition: TSInfixOperatorExpr(
@@ -126,10 +126,10 @@ struct HelperLibraryGenerator {
             name: name(.optionalDecode),
             genericParams: [.init("T"), .init("T_JSON")],
             params: [
-                .init(name: "json", type: TSUnionType([TSIdentType("T_JSON"), TSIdentType.null])),
+                .init(name: "json", type: TSUnionType(TSIdentType("T_JSON"), TSIdentType.null)),
                 tDecodeParameter()
             ],
-            result: TSUnionType([TSIdentType("T"), TSIdentType.null]),
+            result: TSUnionType(TSIdentType("T"), TSIdentType.null),
             body: TSBlockStmt([
                 TSIfStmt(
                     condition: TSInfixOperatorExpr(
@@ -148,10 +148,10 @@ struct HelperLibraryGenerator {
             name: name(.optionalEncode),
             genericParams: [.init("T"), .init("T_JSON")],
             params: [
-                .init(name: "entity", type: TSUnionType([TSIdentType("T"), TSIdentType.null])),
+                .init(name: "entity", type: TSUnionType(TSIdentType("T"), TSIdentType.null)),
                 tEncodeParameter()
             ],
-            result: TSUnionType([TSIdentType("T_JSON"), TSIdentType.null]),
+            result: TSUnionType(TSIdentType("T_JSON"), TSIdentType.null),
             body: TSBlockStmt([
                 TSIfStmt(
                     condition: TSInfixOperatorExpr(
@@ -335,7 +335,7 @@ struct HelperLibraryGenerator {
                     .field(name: "$tag", isOptional: true, type: TSIdentType("Name"))
                 ]),
                 false: TSObjectType([
-                    .field(name: "$tag", isOptional: true, type: TSIntersectionType([
+                    .field(name: "$tag", isOptional: true, type: TSIntersectionType(
                         TSIdentType("Name"),
                         TSMappedType(
                             "I", in: TSKeyofType(TSIdentType("Args")),
@@ -343,7 +343,7 @@ struct HelperLibraryGenerator {
                                 TSIndexedAccessType(TSIdentType("Args"), index: TSIdentType("I"))
                             ])
                         )
-                    ]))
+                    ))
                 ])
             )
         )
