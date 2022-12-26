@@ -73,7 +73,7 @@ export type S = {
     a: Custom;
     b: Custom[];
     c: Custom[][];
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     a: Custom_JSON;

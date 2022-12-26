@@ -28,13 +28,26 @@ struct StructConverter: TypeConverter {
             )
         }
 
+        let name = try self.name(for: target)
+
+        var type: any TSType = TSObjectType(fields)
+        switch target {
+        case .entity:
+            let tag = try generator.tagRecord(
+                name: name,
+                genericArgs: try genericParams().map { $0.swiftType }
+            )
+            type = TSIntersectionType(type, tag)
+        case .json: break
+        }
+
         return TSTypeDecl(
             modifiers: [.export],
-            name: try name(for: target),
+            name: name,
             genericParams: try genericParams().map {
                 .init(try $0.name(for: target))
             },
-            type: TSObjectType(fields)
+            type: type
         )
     }
 

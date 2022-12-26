@@ -441,7 +441,7 @@ export function User_ID_decode(json: User_ID_JSON): User_ID {
 export type User = {
     id: User_ID;
     date: Date;
-};
+} & TagRecord<"User">;
 """, """
 export type User_JSON = {
     id: User_ID_JSON;

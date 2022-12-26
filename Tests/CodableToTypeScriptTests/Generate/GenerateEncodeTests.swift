@@ -82,7 +82,7 @@ export type S = {
     b?: Date;
     c?: Date | null;
     d: Date[];
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     a: string;

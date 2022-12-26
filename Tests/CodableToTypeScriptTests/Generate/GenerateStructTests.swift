@@ -14,7 +14,7 @@ struct S {
 export type S = {
     a: number;
     b: string;
-};
+} & TagRecord<"S">;
 """
             ],
             unexpecteds: ["""
@@ -54,7 +54,7 @@ struct S {
 export type S = {
     a: number;
     b: E;
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     a: number;
@@ -88,7 +88,7 @@ export type S = {
     e1?: E;
     e2?: E | null;
     e3?: E | null;
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     e1?: E_JSON;
@@ -251,7 +251,7 @@ struct S {
             expecteds: ["""
 export type S = {
     a?: S;
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     a?: S_JSON;

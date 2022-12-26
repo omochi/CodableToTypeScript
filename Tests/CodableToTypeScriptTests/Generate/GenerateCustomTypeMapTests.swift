@@ -22,7 +22,7 @@ export type S = {
     a: string;
     b: string[];
     c: string[][];
-};
+} & TagRecord<"S">;
 """
                        ]
         )
@@ -45,7 +45,7 @@ struct S {
             expecteds: ["""
 export type S = {
     a: Date;
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     a: string;
@@ -85,7 +85,7 @@ export type S = {
     a: Date;
     b: Date[];
     c: Date[][];
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     a: string;
@@ -124,7 +124,7 @@ struct S {
             expecteds: ["""
 export type S = {
     a: Date;
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     a: string;
@@ -158,11 +158,11 @@ struct S {
 """,
             typeMap: typeMap,
             expecteds: ["""
-import { Date_decode, Date_encode }
+import { Date_decode, Date_encode, TagRecord }
 """, """
 export type S = {
     a: Date;
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     a: string;
@@ -209,7 +209,7 @@ export type S = {
     a: Vector2<number>;
     b: Vector2<Date>;
     c: Vector2<Vector2<number>>[];
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     a: Vector2_JSON<number>;
@@ -259,7 +259,7 @@ export type S = {
     a: string;
     b: string[];
     c: string[][];
-};
+} & TagRecord<"S">;
 """
                        ]
         )

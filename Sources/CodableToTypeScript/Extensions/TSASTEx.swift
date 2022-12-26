@@ -12,6 +12,12 @@ extension TSIntersectionType {
     }
 }
 
+extension TSTupleType {
+    convenience init(_ elements: (any TSType)...) {
+        self.init(elements)
+    }
+}
+
 extension TSObjectType.Field {
     static func field(
         name: String, isOptional: Bool = false, type: any TSType

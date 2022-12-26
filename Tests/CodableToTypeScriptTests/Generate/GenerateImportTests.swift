@@ -33,6 +33,7 @@ import {
     A,
     B,
     C,
+    TagRecord,
     X,
     Y
 }
@@ -51,7 +52,9 @@ struct S {
     var d: Double?
 }
 """,
-            unexpecteds: ["import"]
+            expecteds: ["""
+import { TagRecord } from "..";
+"""]
         )
     }
 

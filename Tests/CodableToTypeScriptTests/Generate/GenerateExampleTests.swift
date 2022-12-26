@@ -26,7 +26,7 @@ export type S = {
     d1: {
         [key: string]: number;
     };
-};
+} & TagRecord<"S">;
 """]
         )
     }
@@ -109,13 +109,14 @@ import {
     E1,
     E1_JSON,
     E1_decode,
-    E2
+    E2,
+    TagRecord
 } from "..";
 """, """
 export type S = {
     x: E1;
     y: E2;
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     x: E1_JSON;
@@ -224,7 +225,7 @@ struct S {
 export type S = {
     a: string;
     b: S_K;
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     a: string;
@@ -240,7 +241,7 @@ export function S_decode(json: S_JSON): S {
 """, """
 export type S_K = {
     a: E;
-};
+} & TagRecord<"S_K">;
 """, """
 export type S_K_JSON = {
     a: E_JSON;

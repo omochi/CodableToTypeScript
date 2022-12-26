@@ -120,15 +120,21 @@ public final class CodeGenerator {
         name: String,
         genericArgs: [any SType]
     ) throws -> TSIdentType {
-        let args: [any TSType] = try genericArgs.map { (arg) in
+        let genericArgs: [any TSType] = try genericArgs.map { (arg) in
             try converter(for: arg).type(for: .entity)
         }
+
+        var recordArgs: [any TSType] = [
+            TSStringLiteralType(name)
+        ]
+
+        if !genericArgs.isEmpty {
+            recordArgs.append(TSTupleType(genericArgs))
+        }
+
         return TSIdentType(
             "TagRecord",
-            genericArgs: [
-                TSStringLiteralType(name),
-                TSArrayType(args)
-            ]
+            genericArgs: recordArgs
         )
     }
 }

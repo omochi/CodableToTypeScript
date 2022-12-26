@@ -12,7 +12,7 @@ struct S<T> {
             expecteds: ["""
 export type S<T> = {
     a: T;
-};
+} & TagRecord<"S", [T]>;
 """, """
 export type S_JSON<T_JSON> = {
     a: T_JSON;
@@ -41,7 +41,7 @@ struct S {
             expecteds: ["""
 export type S = {
     a: K<number>;
-};
+} & TagRecord<"S">;
 """
             ],
             unexpecteds: ["""
@@ -71,7 +71,7 @@ struct S {
             expecteds: ["""
 export type S = {
     a: K<E>;
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     a: K_JSON<E_JSON>;
@@ -99,7 +99,7 @@ struct S<A, B> {
 export type S<A, B> = {
     a: A;
     b: B;
-};
+} & TagRecord<"S", [A, B]>;
 """, """
 export type S_JSON<A_JSON, B_JSON> = {
     a: A_JSON;
@@ -135,7 +135,7 @@ export type S<A, B, C> = {
     a: A;
     b: B;
     c: C;
-};
+} & TagRecord<"S", [A, B, C]>;
 """, """
 export type S_JSON<A_JSON, B_JSON, C_JSON> = {
     a: A_JSON;
@@ -188,7 +188,7 @@ export type S<T> = {
     a: K<T>;
     b: L<T>;
     c: X<T>;
-};
+} & TagRecord<"S", [T]>;
 """, """
 export type S_JSON<T_JSON> = {
     a: K_JSON<T_JSON>;
@@ -232,7 +232,7 @@ export type S<T, U> = {
     b: K<U>;
     c: L<T, T>;
     d: L<T, U>;
-};
+} & TagRecord<"S", [T, U]>;
 """, """
 export type S_JSON<T_JSON, U_JSON> = {
     a: K_JSON<T_JSON>;
@@ -287,7 +287,7 @@ export type S = {
     a: K<A>;
     b: K<B>;
     c: K<C>;
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     i: K<number>;
@@ -331,7 +331,7 @@ export type S = {
     b: K<number[]>;
     c: K<E | null>;
     d: K<E[]>;
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     a: K<number | null>;
@@ -372,7 +372,7 @@ struct S<T> {
 export type S<T> = {
     a: K<T | null>;
     b: K<T[]>;
-};
+} & TagRecord<"S", [T]>;
 """, """
 export type S_JSON<T_JSON> = {
     a: K_JSON<T_JSON | null>;

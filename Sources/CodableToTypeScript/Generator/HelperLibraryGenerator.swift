@@ -325,7 +325,7 @@ struct HelperLibraryGenerator {
                 .init("Name", extends: TSIdentType.string),
                 .init(
                     "Args", extends: TSArrayType(TSIdentType.any),
-                    default: TSNumberLiteralType("[]") // FIXME
+                    default: TSTupleType([])
                 )
             ],
             type: TSConditionalType(
