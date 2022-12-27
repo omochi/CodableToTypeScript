@@ -110,6 +110,79 @@ export function S_decode(json: S_JSON): S {
         ])
     }
 
+    func testOptionalComplex() throws {
+        try assertGenerate(
+            source: """
+enum E { case a }
+
+struct S: RawRepresentable {
+    var rawValue: E?
+}
+""",
+        expecteds: ["""
+export type S = {
+    rawValue?: E;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = E_JSON | null;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: Optional_decode(json, E_decode) ?? undefined
+    };
+}
+"""
+        ])
+    }
+
+    func testDoubleOptional() throws {
+        try assertGenerate(
+            source: """
+struct S: RawRepresentable {
+    var rawValue: Int??
+}
+""",
+        expecteds: ["""
+export type S = {
+    rawValue?: number | null;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = number | null;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: json ?? undefined
+    };
+}
+"""
+        ])
+    }
+
+    func testDoubleOptionalComplex() throws {
+        try assertGenerate(
+            source: """
+enum E { case a }
+
+struct S: RawRepresentable {
+    var rawValue: E??
+}
+""",
+        expecteds: ["""
+export type S = {
+    rawValue?: E | null;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = E_JSON | null;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: Optional_decode(json, E_decode) ?? undefined
+    };
+}
+"""
+        ])
+    }
+
     func testArray() throws {
         try assertGenerate(
             source: """
