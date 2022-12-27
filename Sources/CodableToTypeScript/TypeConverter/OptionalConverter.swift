@@ -24,6 +24,14 @@ struct OptionalConverter: TypeConverter {
         )
     }
 
+    func valueToField(value: any TSExpr, for target: GenerationTarget) throws -> any TSExpr {
+        return TSInfixOperatorExpr(value, "??", TSIdentExpr.undefined)
+    }
+
+    func fieldToValue(field: any TSExpr, for target: GenerationTarget) throws -> any TSExpr {
+        return TSInfixOperatorExpr(field, "??", TSNullLiteralExpr())
+    }
+
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         throw MessageError("Unsupported type: \(swiftType)")
     }

@@ -34,30 +34,6 @@ export function S_decode(json: S_JSON): S {
         )
     }
 
-    func testOptionalRawValue() throws {
-        // FXIME: invalid typescript code
-        try assertGenerate(
-            source: """
-struct S: RawRepresentable {
-    var rawValue: Int?
-}
-""",
-        expecteds: ["""
-export type S = {
-    rawValue?: number;
-} & TagRecord<"S">;
-""", """
-export type S_JSON = number | null;
-""", """
-export function S_decode(json: S_JSON): S {
-    return {
-        rawValue: json
-    };
-}
-"""
-        ])
-    }
-
     func testUseStoredProperty() throws {
         try assertGenerate(
             source: """
@@ -109,6 +85,29 @@ export function S_decode(json: S_JSON): S {
 }
 """]
         )
+    }
+
+    func testOptional() throws {
+        try assertGenerate(
+            source: """
+struct S: RawRepresentable {
+    var rawValue: Int?
+}
+""",
+        expecteds: ["""
+export type S = {
+    rawValue?: number;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = number | null;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: json ?? undefined
+    };
+}
+"""
+        ])
     }
 
     func testArray() throws {

@@ -66,7 +66,8 @@ struct RawRepresentableConverter: TypeConverter {
     func decodeDecl() throws -> TSFunctionDecl? {
         guard let decl = try decodeSignature() else { return nil }
 
-        let field = try rawValueType.callDecodeField(json: TSIdentExpr("json"))
+        let value = try rawValueType.callDecode(json: TSIdentExpr("json"))
+        let field = try rawValueType.valueToField(value: value, for: .entity)
 
         let object = TSObjectExpr([
             .named(name: "rawValue", value: field)
