@@ -20,26 +20,42 @@ struct RawRepresentableConverter: TypeConverter {
     var rawValueType: any TypeConverter
 
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
-        func make(name: String, type: any TSType) throws -> TSTypeDecl {
+        let name = try self.name(for: target)
+        let genericParams: [TSTypeParameterNode] = try self.genericParams().map {
+            .init(try $0.name(for: target))
+        }
+        switch target {
+        case .entity:
+            let fieldType = try rawValueType.fieldType(for: .entity)
+
+            let field: TSObjectType.Field = .field(
+                name: "rawValue", isOptional: fieldType.isOptional, type: fieldType.type
+            )
+
+            var type: any TSType = TSObjectType([field])
+
+            let tag = try generator.tagRecord(
+                name: name,
+                genericArgs: try self.genericParams().map { (param) in
+                    TSIdentType(try param.name(for: .entity))
+                }
+            )
+
+            type = TSIntersectionType(type, tag)
+
             return TSTypeDecl(
                 modifiers: [.export],
                 name: name,
-                genericParams: try genericParams().map {
-                    .init(try $0.name(for: target))
-                },
+                genericParams: genericParams,
                 type: type
             )
-        }
-
-        switch target {
-        case .entity:
-            let name = try self.name(for: target)
-            let type = try rawValueType.phantomType(for: target, name: name)
-            return try make(name: name, type: type)
         case .json:
-            let name = try self.name(for: target)
-            let type = try rawValueType.type(for: target)
-            return try make(name: name, type: type)
+            return TSTypeDecl(
+                modifiers: [.export],
+                name: name,
+                genericParams: genericParams,
+                type: try rawValueType.type(for: target)
+            )
         }
     }
 
@@ -50,10 +66,14 @@ struct RawRepresentableConverter: TypeConverter {
     func decodeDecl() throws -> TSFunctionDecl? {
         guard let decl = try decodeSignature() else { return nil }
 
-        var expr = try rawValueType.callDecode(json: TSIdentExpr("json"))
-        expr = TSAsExpr(expr, try self.type(for: .entity))
+        let field = try rawValueType.callDecodeField(json: TSIdentExpr("json"))
+
+        let object = TSObjectExpr([
+            .named(name: "rawValue", value: field)
+        ])
+
         decl.body.elements.append(
-            TSReturnStmt(expr)
+            TSReturnStmt(object)
         )
 
         return decl
