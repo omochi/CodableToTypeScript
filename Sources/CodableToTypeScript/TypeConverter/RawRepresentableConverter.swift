@@ -81,16 +81,19 @@ struct RawRepresentableConverter: TypeConverter {
     }
 
     func encodePresence() throws -> CodecPresence {
-        return try rawValueType.encodePresence()
+        return .required
     }
 
     func encodeDecl() throws -> TSFunctionDecl? {
         guard let decl = try encodeSignature() else { return nil }
 
-        var expr = try rawValueType.callEncode(entity: TSIdentExpr("entity"))
-        expr = TSAsExpr(expr, try self.type(for: .json))
+        let field = try rawValueType.callEncodeField(
+            entity: TSMemberExpr(base: TSIdentExpr("entity"), name: "rawValue")
+        )
+        let value = try rawValueType.fieldToValue(field: field, for: .json)
+
         decl.body.elements.append(
-            TSReturnStmt(expr)
+            TSReturnStmt(value)
         )
 
         return decl

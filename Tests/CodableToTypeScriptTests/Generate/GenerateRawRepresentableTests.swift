@@ -30,7 +30,12 @@ export function S_decode(json: S_JSON): S {
         rawValue: json
     };
 }
-"""]
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue;
+}
+"""
+                       ]
         )
     }
 
@@ -59,6 +64,12 @@ export function K_decode(json: K_JSON): K {
         a: S_decode(json.a)
     };
 }
+""", """
+export function K_encode(entity: K): K_JSON {
+    return {
+        a: S_encode(entity.a)
+    };
+}
 """
                        ]
         )
@@ -83,7 +94,12 @@ export function S_decode(json: S_JSON): S {
         rawValue: json
     };
 }
-"""]
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue;
+}
+"""
+                       ]
         )
     }
 
@@ -106,6 +122,10 @@ export function S_decode(json: S_JSON): S {
         rawValue: json ?? undefined
     };
 }
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue ?? null;
+}
 """
         ])
     }
@@ -113,23 +133,29 @@ export function S_decode(json: S_JSON): S {
     func testOptionalComplex() throws {
         try assertGenerate(
             source: """
-enum E { case a }
+struct K: RawRepresentable {
+    var rawValue: Int
+}
 
 struct S: RawRepresentable {
-    var rawValue: E?
+    var rawValue: K?
 }
 """,
         expecteds: ["""
 export type S = {
-    rawValue?: E;
+    rawValue?: K;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = E_JSON | null;
+export type S_JSON = K_JSON | null;
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        rawValue: Optional_decode(json, E_decode) ?? undefined
+        rawValue: Optional_decode(json, K_decode) ?? undefined
     };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return OptionalField_encode(entity.rawValue, K_encode) ?? null;
 }
 """
         ])
@@ -154,6 +180,10 @@ export function S_decode(json: S_JSON): S {
         rawValue: json ?? undefined
     };
 }
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue ?? null;
+}
 """
         ])
     }
@@ -161,23 +191,31 @@ export function S_decode(json: S_JSON): S {
     func testDoubleOptionalComplex() throws {
         try assertGenerate(
             source: """
-enum E { case a }
+struct K: RawRepresentable {
+    var rawValue: Int
+}
 
 struct S: RawRepresentable {
-    var rawValue: E??
+    var rawValue: K??
 }
 """,
         expecteds: ["""
 export type S = {
-    rawValue?: E | null;
+    rawValue?: K | null;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = E_JSON | null;
+export type S_JSON = K_JSON | null;
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        rawValue: Optional_decode(json, E_decode) ?? undefined
+        rawValue: Optional_decode(json, K_decode) ?? undefined
     };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return OptionalField_encode(entity.rawValue, (entity: K | null): K_JSON | null => {
+        return Optional_encode(entity, K_encode);
+    }) ?? null;
 }
 """
         ])
@@ -201,6 +239,10 @@ export function S_decode(json: S_JSON): S {
     return {
         rawValue: json
     };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue;
 }
 """]
         )
@@ -229,6 +271,10 @@ export function S_decode(json: S_JSON): S {
         rawValue: json
     };
 }
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue;
+}
 """]
         )
     }
@@ -256,12 +302,12 @@ export function S_decode(json: S_JSON): S {
         rawValue: E_decode(json)
     };
 }
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue as E_JSON;
+}
 """
-                       ],
-            unexpecteds: ["""
-export function S_encode
-"""
-                         ]
+                       ]
         )
     }
 
@@ -291,7 +337,7 @@ export function S_decode(json: S_JSON): S {
 }
 """, """
 export function S_encode(entity: S): S_JSON {
-    return K_encode(entity) as S_JSON;
+    return K_encode(entity.rawValue);
 }
 """
                        ]
@@ -320,7 +366,7 @@ export function S_decode(json: S_JSON): S {
 }
 """, """
 export function S_encode(entity: S): S_JSON {
-    return Date_encode(entity) as S_JSON;
+    return Date_encode(entity.rawValue);
 }
 """
                        ]
@@ -353,7 +399,7 @@ export function S_decode(json: S_JSON): S {
 }
 """, """
 export function S_encode(entity: S): S_JSON {
-    return K_encode(entity, Date_encode) as S_JSON;
+    return K_encode(entity.rawValue, Date_encode);
 }
 """
                        ]
@@ -385,11 +431,12 @@ export function S_decode(json: S_JSON): S {
         rawValue: K_decode(json, E_decode)
     };
 }
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue as K_JSON<E_JSON>;
+}
 """
-                       ],
-            unexpecteds: ["""
-export function S_encode
-"""]
+                       ]
         )
     }
 
@@ -416,11 +463,12 @@ export function S_decode(json: S_JSON): S {
         rawValue: json
     };
 }
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue;
+}
 """
-                       ],
-            unexpecteds: ["""
-export function S_encode
-"""]
+                       ]
         )
     }
 
@@ -449,7 +497,7 @@ export function S_decode<U, U_JSON>(json: S_JSON<U_JSON>, U_decode: (json: U_JSO
 }
 """, """
 export function S_encode<U, U_JSON>(entity: S<U>, U_encode: (entity: U) => U_JSON): S_JSON<U_JSON> {
-    return K_encode(entity, U_encode) as S_JSON<U_JSON>;
+    return K_encode(entity.rawValue, U_encode);
 }
 """
                        ]
@@ -477,7 +525,7 @@ export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSO
 }
 """, """
 export function S_encode<T, T_JSON>(entity: S<T>, T_encode: (entity: T) => T_JSON): S_JSON<T_JSON> {
-    return T_encode(entity) as S_JSON<T_JSON>;
+    return T_encode(entity.rawValue);
 }
 """
                    ]
@@ -505,9 +553,12 @@ export function K_decode(json: K_JSON): K {
         a: S_decode(json.a, identity)
     };
 }
-"""],
-            unexpecteds: ["""
-export function K_encode
+""", """
+export function K_encode(entity: K): K_JSON {
+    return {
+        a: S_encode(entity.a, identity)
+    };
+}
 """]
         )
 
@@ -539,6 +590,10 @@ export function User_ID_decode(json: User_ID_JSON): User_ID {
     };
 }
 """, """
+export function User_ID_encode(entity: User_ID): User_ID_JSON {
+    return entity.rawValue;
+}
+""", """
 export type User = {
     id: User_ID;
     date: Date;
@@ -558,15 +613,12 @@ export function User_decode(json: User_JSON): User {
 """, """
 export function User_encode(entity: User): User_JSON {
     return {
-        id: entity.id as User_ID_JSON,
+        id: User_ID_encode(entity.id),
         date: Date_encode(entity.date)
     };
 }
 """
-                       ],
-            unexpecteds: ["""
-export function User_ID_encode
-"""]
+                       ]
         )
     }
 
