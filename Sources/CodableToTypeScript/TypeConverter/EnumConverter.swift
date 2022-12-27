@@ -74,11 +74,30 @@ struct EnumConverter: TypeConverter {
             try transpile(caseElement: ce, target: target)
         }
 
+        let name = try name(for: target)
+        var type: any TSType = TSUnionType(items)
+        if items.count == 1 {
+            // unwrap union
+            type = items[0]
+        }
+
+        switch target {
+        case .entity:
+            let tag = try generator.tagRecord(
+                name: name,
+                genericArgs: try self.genericParams().map {
+                    try TSIdentType($0.name(for: .entity))
+                }
+            )
+            type = TSIntersectionType(type, tag)
+        case .json: break
+        }
+
         return TSTypeDecl(
             modifiers: [.export],
-            name: try name(for: target),
+            name: name,
             genericParams: genericParams,
-            type: TSUnionType(items)
+            type: type
         )
     }
 

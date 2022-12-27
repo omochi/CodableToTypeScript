@@ -406,7 +406,7 @@ export type E<T> = {
     a: {
         _0: T;
     };
-};
+} & TagRecord<"E", [T]>;
 ""","""
 export type E_JSON<T_JSON> = {
     a: {

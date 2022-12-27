@@ -11,7 +11,7 @@ enum E {
 }
 """,
             expecteds: ["""
-export type E = {
+export type E = ({
     kind: "a";
     a: {};
 } | {
@@ -19,7 +19,7 @@ export type E = {
     b: {
         _0: number;
     };
-};
+}) & TagRecord<"E">;
 ""","""
 export type E_JSON = {
     a: {};
@@ -61,7 +61,7 @@ enum E {
 }
 """,
             expecteds: ["""
-export type E = {
+export type E = ({
     kind: "a";
     a: {
         x: number;
@@ -72,7 +72,7 @@ export type E = {
         y: string;
         _1: number;
     };
-}
+}) & TagRecord<"E">;
 """, """
 export type E_JSON = {
     a: {
@@ -84,6 +84,22 @@ export type E_JSON = {
         _1: number;
     };
 }
+"""]
+        )
+    }
+
+    func testSingleCase() throws {
+        try assertGenerate(
+            source: """
+enum E {
+    case a
+}
+""",
+            expecteds: ["""
+export type E = {
+    kind: "a";
+    a: {};
+} & TagRecord<"E">;
 """]
         )
     }

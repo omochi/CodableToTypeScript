@@ -78,7 +78,8 @@ import {
     E_decode,
     S,
     S_JSON,
-    S_decode
+    S_decode,
+    TagRecord
 }
 """]
         )
