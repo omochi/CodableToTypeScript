@@ -66,14 +66,6 @@ public struct DefaultTypeConverter {
         return (type: type, isOptional: false)
     }
 
-    public func phantomType(for target: GenerationTarget, name: String) throws -> any TSType {
-        let body = try self.converter().type(for: target)
-        let tag = TSObjectType([
-            .field(name: name, type: TSIdentType.never)
-        ])
-        return TSIntersectionType(body, tag)
-    }
-
     public func hasDecode() throws -> Bool {
         switch try self.converter().decodePresence() {
         case .identity: return false

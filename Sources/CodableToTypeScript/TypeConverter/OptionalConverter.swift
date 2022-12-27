@@ -24,14 +24,6 @@ struct OptionalConverter: TypeConverter {
         )
     }
 
-    func phantomType(for target: GenerationTarget, name: String) throws -> any TSType {
-        let wrapped = try self.wrapped(limit: nil)
-        return TSUnionType(
-            try wrapped.phantomType(for: target, name: name),
-            TSIdentType.null
-        )
-    }
-
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         throw MessageError("Unsupported type: \(swiftType)")
     }

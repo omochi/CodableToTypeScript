@@ -8,7 +8,6 @@ public protocol TypeConverter {
     func hasJSONType() throws -> Bool
     func type(for target: GenerationTarget) throws -> any TSType
     func fieldType(for target: GenerationTarget) throws -> (type: any TSType, isOptional: Bool)
-    func phantomType(for target: GenerationTarget, name: String) throws -> any TSType
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl?
     func hasDecode() throws -> Bool
     func decodePresence() throws -> CodecPresence
@@ -50,10 +49,6 @@ extension TypeConverter {
 
     public func fieldType(for target: GenerationTarget) throws -> (type: any TSType, isOptional: Bool) {
         return try `default`.fieldType(for: target)
-    }
-
-    public func phantomType(for target: GenerationTarget, name: String) throws -> any TSType {
-        return try `default`.phantomType(for: target, name: name)
     }
 
     public func hasDecode() throws -> Bool {
