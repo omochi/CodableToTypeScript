@@ -66,6 +66,14 @@ public struct DefaultTypeConverter {
         return (type: type, isOptional: false)
     }
 
+    public func valueToField(value: any TSExpr, for target: GenerationTarget) throws -> any TSExpr {
+        return value
+    }
+
+    public func fieldToValue(field: any TSExpr, for target: GenerationTarget) throws -> any TSExpr {
+        return field
+    }
+
     public func hasDecode() throws -> Bool {
         switch try self.converter().decodePresence() {
         case .identity: return false
