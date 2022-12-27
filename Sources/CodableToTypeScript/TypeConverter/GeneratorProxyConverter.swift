@@ -19,8 +19,12 @@ struct GeneratorProxyConverter: TypeConverter {
         return try impl.fieldType(for: target)
     }
 
-    func phantomType(for target: GenerationTarget, name: String) throws -> TSType {
-        return try impl.phantomType(for: target, name: name)
+    func valueToField(value: any TSExpr, for target: GenerationTarget) throws -> any TSExpr {
+        return try impl.valueToField(value: value, for: target)
+    }
+
+    func fieldToValue(field: any TSExpr, for target: GenerationTarget) throws -> any TSExpr {
+        return try impl.fieldToValue(field: field, for: target)
     }
 
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {

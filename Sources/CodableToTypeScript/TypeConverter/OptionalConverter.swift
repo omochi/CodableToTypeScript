@@ -11,10 +11,10 @@ struct OptionalConverter: TypeConverter {
     }
 
     func type(for target: GenerationTarget) throws -> any TSType {
-        return TSUnionType([
+        return TSUnionType(
             try wrapped(limit: nil).type(for: target),
             TSIdentType.null
-        ])
+        )
     }
 
     func fieldType(for target: GenerationTarget) throws -> (type: any TSType, isOptional: Bool) {
@@ -24,12 +24,12 @@ struct OptionalConverter: TypeConverter {
         )
     }
 
-    func phantomType(for target: GenerationTarget, name: String) throws -> any TSType {
-        let wrapped = try self.wrapped(limit: nil)
-        return TSUnionType([
-            try wrapped.phantomType(for: target, name: name),
-            TSIdentType.null
-        ])
+    func valueToField(value: any TSExpr, for target: GenerationTarget) throws -> any TSExpr {
+        return TSInfixOperatorExpr(value, "??", TSIdentExpr.undefined)
+    }
+
+    func fieldToValue(field: any TSExpr, for target: GenerationTarget) throws -> any TSExpr {
+        return TSInfixOperatorExpr(field, "??", TSNullLiteralExpr())
     }
 
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {

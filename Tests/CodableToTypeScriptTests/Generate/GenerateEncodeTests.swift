@@ -21,7 +21,7 @@ enum E {
 """,
             typeMap: dateTypeMap(),
             expecteds: ["""
-export type E = {
+export type E = ({
     kind: "a";
     a: {};
 } | {
@@ -29,7 +29,7 @@ export type E = {
     b: {
         _0: Date;
     };
-};
+}) & TagRecord<"E">;
 """, """
 export type E_JSON = {
     a: {};
@@ -82,7 +82,7 @@ export type S = {
     b?: Date;
     c?: Date | null;
     d: Date[];
-};
+} & TagRecord<"S">;
 """, """
 export type S_JSON = {
     a: string;

@@ -25,7 +25,7 @@ struct S {
             expecteds: ["""
 export type S = {
     a: string;
-};
+} & TagRecord<"S">;
 """]
         )
     }
@@ -40,11 +40,11 @@ struct A {
 }
 """,
             expecteds: ["""
-export type A = {};
+export type A = {} & TagRecord<"A">;
 """, """
 export type A_B = {
     a: number;
-};
+} & TagRecord<"A_B">;
 """]
         )
     }
@@ -105,11 +105,11 @@ struct C {
 """,
             typeSelector: .name("C"),
             expecteds: ["""
-import { A_B } from "..";
+import { A_B, TagRecord } from "..";
 """, """
 export type C = {
     b: A_B;
-};
+} & TagRecord<"C">;
 """]
         )
     }

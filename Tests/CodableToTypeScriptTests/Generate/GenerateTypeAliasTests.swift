@@ -123,7 +123,7 @@ struct User {
             expecteds: ["""
 export type User = {
     id: User_ID;
-};
+} & TagRecord<"User">;
 """, """
 export type User_JSON = {
     id: User_ID_JSON;

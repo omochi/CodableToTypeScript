@@ -11,7 +11,7 @@ enum E {
 }
 """,
             expecteds: ["""
-export type E = {
+export type E = ({
     kind: "a";
     a: {};
 } | {
@@ -19,7 +19,7 @@ export type E = {
     b: {
         _0: number;
     };
-};
+}) & TagRecord<"E">;
 ""","""
 export type E_JSON = {
     a: {};
@@ -61,7 +61,7 @@ enum E {
 }
 """,
             expecteds: ["""
-export type E = {
+export type E = ({
     kind: "a";
     a: {
         x: number;
@@ -72,7 +72,7 @@ export type E = {
         y: string;
         _1: number;
     };
-}
+}) & TagRecord<"E">;
 """, """
 export type E_JSON = {
     a: {
@@ -88,6 +88,22 @@ export type E_JSON = {
         )
     }
 
+    func testSingleCase() throws {
+        try assertGenerate(
+            source: """
+enum E {
+    case a
+}
+""",
+            expecteds: ["""
+export type E = {
+    kind: "a";
+    a: {};
+} & TagRecord<"E">;
+"""]
+        )
+    }
+
     func testOptional() throws {
         try assertGenerate(
             source: """
@@ -96,13 +112,40 @@ enum E {
 }
 """,
             expecteds: ["""
-{
+export type E = {
+    kind: "a";
     a: {
         _0: number;
         _1?: number;
         _2?: number | null;
         _3?: number | null;
     };
+} & TagRecord<"E">;
+""", """
+export type E_JSON = {
+    a: {
+        _0: number;
+        _1?: number;
+        _2?: number | null;
+        _3?: number | null;
+    };
+};
+""", """
+export function E_decode(json: E_JSON): E {
+    if ("a" in json) {
+        const j = json.a;
+        return {
+            kind: "a",
+            a: {
+                _0: j._0,
+                _1: j._1,
+                _2: j._2,
+                _3: j._3
+            }
+        };
+    } else {
+        throw new Error("unknown kind");
+    }
 }
 """]
         )

@@ -66,12 +66,12 @@ public struct DefaultTypeConverter {
         return (type: type, isOptional: false)
     }
 
-    public func phantomType(for target: GenerationTarget, name: String) throws -> any TSType {
-        let body = try self.converter().type(for: target)
-        let tag = TSObjectType([
-            .field(name: name, type: TSIdentType.never)
-        ])
-        return TSIntersectionType([body, tag])
+    public func valueToField(value: any TSExpr, for target: GenerationTarget) throws -> any TSExpr {
+        return value
+    }
+
+    public func fieldToValue(field: any TSExpr, for target: GenerationTarget) throws -> any TSExpr {
+        return field
     }
 
     public func hasDecode() throws -> Bool {

@@ -19,16 +19,23 @@ struct S: RawRepresentable {
 }
 """,
             expecteds: ["""
-export type S = string & {
-    S: never;
-}
+export type S = {
+    rawValue: string;
+} & TagRecord<"S">;
 """, """
 export type S_JSON = string;
 """, """
 export function S_decode(json: S_JSON): S {
-    return json as S;
+    return {
+        rawValue: json
+    };
 }
-"""]
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue;
+}
+"""
+                       ]
         )
     }
 
@@ -57,6 +64,12 @@ export function K_decode(json: K_JSON): K {
         a: S_decode(json.a)
     };
 }
+""", """
+export function K_encode(entity: K): K_JSON {
+    return {
+        a: S_encode(entity.a)
+    };
+}
 """
                        ]
         )
@@ -70,16 +83,23 @@ struct S: RawRepresentable {
 }
 """,
             expecteds: ["""
-export type S = string & {
-    S: never;
-}
+export type S = {
+    rawValue: string;
+} & TagRecord<"S">;
 """, """
 export type S_JSON = string;
 """, """
 export function S_decode(json: S_JSON): S {
-    return json as S;
+    return {
+        rawValue: json
+    };
 }
-"""]
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue;
+}
+"""
+                       ]
         )
     }
 
@@ -87,21 +107,118 @@ export function S_decode(json: S_JSON): S {
         try assertGenerate(
             source: """
 struct S: RawRepresentable {
-    var rawValue: String?
+    var rawValue: Int?
 }
 """,
-            expecteds: ["""
-export type S = string & {
-    S: never;
-} | null;
+        expecteds: ["""
+export type S = {
+    rawValue?: number;
+} & TagRecord<"S">;
 """, """
-export type S_JSON = string | null;
+export type S_JSON = number | null;
 """, """
 export function S_decode(json: S_JSON): S {
-    return json as S;
+    return {
+        rawValue: json ?? undefined
+    };
 }
-"""]
-        )
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue ?? null;
+}
+"""
+        ])
+    }
+
+    func testOptionalComplex() throws {
+        try assertGenerate(
+            source: """
+struct K: RawRepresentable {
+    var rawValue: Int
+}
+
+struct S: RawRepresentable {
+    var rawValue: K?
+}
+""",
+        expecteds: ["""
+export type S = {
+    rawValue?: K;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = K_JSON | null;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: Optional_decode(json, K_decode) ?? undefined
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return OptionalField_encode(entity.rawValue, K_encode) ?? null;
+}
+"""
+        ])
+    }
+
+    func testDoubleOptional() throws {
+        try assertGenerate(
+            source: """
+struct S: RawRepresentable {
+    var rawValue: Int??
+}
+""",
+        expecteds: ["""
+export type S = {
+    rawValue?: number | null;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = number | null;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: json ?? undefined
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue ?? null;
+}
+"""
+        ])
+    }
+
+    func testDoubleOptionalComplex() throws {
+        try assertGenerate(
+            source: """
+struct K: RawRepresentable {
+    var rawValue: Int
+}
+
+struct S: RawRepresentable {
+    var rawValue: K??
+}
+""",
+        expecteds: ["""
+export type S = {
+    rawValue?: K | null;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = K_JSON | null;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: Optional_decode(json, K_decode) ?? undefined
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return OptionalField_encode(entity.rawValue, (entity: K | null): K_JSON | null => {
+        return Optional_encode(entity, K_encode);
+    }) ?? null;
+}
+"""
+        ])
     }
 
     func testArray() throws {
@@ -112,14 +229,20 @@ struct S: RawRepresentable {
 }
 """,
             expecteds: ["""
-export type S = string[] & {
-    S: never;
-}
+export type S = {
+    rawValue: string[];
+} & TagRecord<"S">;
 """, """
 export type S_JSON = string[];
 """, """
 export function S_decode(json: S_JSON): S {
-    return json as S;
+    return {
+        rawValue: json
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue;
 }
 """]
         )
@@ -137,14 +260,20 @@ struct S: RawRepresentable {
 }
 """,
             expecteds: ["""
-export type S = K & {
-    S: never;
-};
+export type S = {
+    rawValue: K;
+} & TagRecord<"S">;
 """, """
 export type S_JSON = K;
 """, """
 export function S_decode(json: S_JSON): S {
-    return json as S;
+    return {
+        rawValue: json
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue;
 }
 """]
         )
@@ -162,21 +291,23 @@ struct S: RawRepresentable {
 }
 """,
             expecteds: ["""
-export type S = E & {
-    S: never;
-};
+export type S = {
+    rawValue: E;
+} & TagRecord<"S">;
 """, """
 export type S_JSON = E_JSON;
 """, """
 export function S_decode(json: S_JSON): S {
-    return E_decode(json) as S;
+    return {
+        rawValue: E_decode(json)
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue as E_JSON;
 }
 """
-                       ],
-            unexpecteds: ["""
-export function S_encode
-"""
-                         ]
+                       ]
         )
     }
 
@@ -193,25 +324,27 @@ struct S: RawRepresentable {
 """,
             typeMap: dateTypeMap(),
             expecteds: ["""
-export type S = K & {
-    S: never;
-};
+export type S = {
+    rawValue: K;
+} & TagRecord<"S">;
 """, """
 export type S_JSON = K_JSON;
 """, """
 export function S_decode(json: S_JSON): S {
-    return K_decode(json) as S;
+    return {
+        rawValue: K_decode(json)
+    };
 }
 """, """
 export function S_encode(entity: S): S_JSON {
-    return K_encode(entity) as S_JSON;
+    return K_encode(entity.rawValue);
 }
 """
                        ]
         )
     }
 
-    func testMap() throws {
+    func testCustomMap() throws {
         try assertGenerate(
             source: """
 struct S: RawRepresentable {
@@ -220,18 +353,20 @@ struct S: RawRepresentable {
 """,
             typeMap: dateTypeMap(),
             expecteds: ["""
-export type S = Date & {
-    S: never;
-};
+export type S = {
+    rawValue: Date;
+} & TagRecord<"S">;
 """, """
 export type S_JSON = string;
 """, """
 export function S_decode(json: S_JSON): S {
-    return Date_decode(json) as S;
+    return {
+        rawValue: Date_decode(json)
+    };
 }
 """, """
 export function S_encode(entity: S): S_JSON {
-    return Date_encode(entity) as S_JSON;
+    return Date_encode(entity.rawValue);
 }
 """
                        ]
@@ -251,18 +386,20 @@ struct S: RawRepresentable {
 """,
             typeMap: dateTypeMap(),
             expecteds: ["""
-export type S = K<Date> & {
-    S: never;
-};
+export type S = {
+    rawValue: K<Date>;
+} & TagRecord<"S">;
 """, """
 export type S_JSON = K_JSON<string>;
 """, """
 export function S_decode(json: S_JSON): S {
-    return K_decode(json, Date_decode) as S;
+    return {
+        rawValue: K_decode(json, Date_decode)
+    };
 }
 """, """
 export function S_encode(entity: S): S_JSON {
-    return K_encode(entity, Date_encode) as S_JSON;
+    return K_encode(entity.rawValue, Date_encode);
 }
 """
                        ]
@@ -283,20 +420,23 @@ struct S: RawRepresentable {
 }
 """,
             expecteds: ["""
-export type S = K<E> & {
-    S: never;
-};
+export type S = {
+    rawValue: K<E>;
+} & TagRecord<"S">;
 """, """
 export type S_JSON = K_JSON<E_JSON>;
 """, """
 export function S_decode(json: S_JSON): S {
-    return K_decode(json, E_decode) as S;
+    return {
+        rawValue: K_decode(json, E_decode)
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue as K_JSON<E_JSON>;
 }
 """
-                       ],
-            unexpecteds: ["""
-export function S_encode
-"""]
+                       ]
         )
     }
 
@@ -312,20 +452,23 @@ struct S: RawRepresentable {
 }
 """,
             expecteds: ["""
-export type S = K<number> & {
-    S: never;
-};
+export type S = {
+    rawValue: K<number>;
+} & TagRecord<"S">;
 """, """
 export type S_JSON = K<number>;
 """, """
 export function S_decode(json: S_JSON): S {
-    return json as S;
+    return {
+        rawValue: json
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue;
 }
 """
-                       ],
-            unexpecteds: ["""
-export function S_encode
-"""]
+                       ]
         )
     }
 
@@ -341,18 +484,20 @@ struct S<U>: RawRepresentable {
 }
 """,
             expecteds: ["""
-export type S<U> = K<U> & {
-    S: never;
-};
+export type S<U> = {
+    rawValue: K<U>;
+} & TagRecord<"S", [U]>;
 """, """
 export type S_JSON<U_JSON> = K_JSON<U_JSON>;
 """, """
 export function S_decode<U, U_JSON>(json: S_JSON<U_JSON>, U_decode: (json: U_JSON) => U): S<U> {
-    return K_decode(json, U_decode) as S<U>;
+    return {
+        rawValue: K_decode(json, U_decode)
+    };
 }
 """, """
 export function S_encode<U, U_JSON>(entity: S<U>, U_encode: (entity: U) => U_JSON): S_JSON<U_JSON> {
-    return K_encode(entity, U_encode) as S_JSON<U_JSON>;
+    return K_encode(entity.rawValue, U_encode);
 }
 """
                        ]
@@ -367,18 +512,20 @@ struct S<T>: RawRepresentable {
 }
 """,
             expecteds: ["""
-export type S<T> = T & {
-    S: never;
-};
+export type S<T> = {
+    rawValue: T;
+} & TagRecord<"S", [T]>;
 """, """
 export type S_JSON<T_JSON> = T_JSON;
 """, """
 export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S<T> {
-    return T_decode(json) as S<T>;
+    return {
+        rawValue: T_decode(json)
+    };
 }
 """, """
 export function S_encode<T, T_JSON>(entity: S<T>, T_encode: (entity: T) => T_JSON): S_JSON<T_JSON> {
-    return T_encode(entity) as S_JSON<T_JSON>;
+    return T_encode(entity.rawValue);
 }
 """
                    ]
@@ -406,9 +553,12 @@ export function K_decode(json: K_JSON): K {
         a: S_decode(json.a, identity)
     };
 }
-"""],
-            unexpecteds: ["""
-export function K_encode
+""", """
+export function K_encode(entity: K): K_JSON {
+    return {
+        a: S_encode(entity.a, identity)
+    };
+}
 """]
         )
 
@@ -428,20 +578,26 @@ struct User {
 """,
             typeMap: dateTypeMap(),
             expecteds: ["""
-export type User_ID = string & {
-    User_ID: never;
-};
+export type User_ID = {
+    rawValue: string;
+} & TagRecord<"User_ID">;
 """, """
 export type User_ID_JSON = string;
 """, """
 export function User_ID_decode(json: User_ID_JSON): User_ID {
-    return json as User_ID;
+    return {
+        rawValue: json
+    };
+}
+""", """
+export function User_ID_encode(entity: User_ID): User_ID_JSON {
+    return entity.rawValue;
 }
 """, """
 export type User = {
     id: User_ID;
     date: Date;
-};
+} & TagRecord<"User">;
 """, """
 export type User_JSON = {
     id: User_ID_JSON;
@@ -457,15 +613,12 @@ export function User_decode(json: User_JSON): User {
 """, """
 export function User_encode(entity: User): User_JSON {
     return {
-        id: entity.id as User_ID_JSON,
+        id: User_ID_encode(entity.id),
         date: Date_encode(entity.date)
     };
 }
 """
-                       ],
-            unexpecteds: ["""
-export function User_ID_encode
-"""]
+                       ]
         )
     }
 
@@ -477,9 +630,9 @@ struct ID<G>: RawRepresentable {
 }
 """,
             expecteds: ["""
-export type ID<G> = string & {
-    ID: never;
-};
+export type ID<G> = {
+    rawValue: string;
+} & TagRecord<"ID", [G]>;
 """]
         )
     }

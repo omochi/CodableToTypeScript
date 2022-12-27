@@ -115,4 +115,22 @@ public final class CodeGenerator {
 
         return TSCallExpr(callee: callee, args: args)
     }
+
+    public func tagRecord(
+        name: String,
+        genericArgs: [any TSType]
+    ) throws -> TSIdentType {
+        var recordArgs: [any TSType] = [
+            TSStringLiteralType(name)
+        ]
+
+        if !genericArgs.isEmpty {
+            recordArgs.append(TSTupleType(genericArgs))
+        }
+
+        return TSIdentType(
+            "TagRecord",
+            genericArgs: recordArgs
+        )
+    }
 }
