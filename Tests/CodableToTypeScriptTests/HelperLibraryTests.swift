@@ -46,32 +46,24 @@ export function Array_encode<T, T_JSON>(entity: T[], T_encode: (entity: T) => T_
 """, """
 export function Dictionary_decode<T, T_JSON>(json: {
     [key: string]: T_JSON;
-}, T_decode: (json: T_JSON) => T): {
-    [key: string]: T;
-} {
-    const entity: {
-        [key: string]: T;
-    } = {};
+}, T_decode: (json: T_JSON) => T): Map<string, T> {
+    const entity = new Map<string, T>();
     for (const k in json) {
         if (json.hasOwnProperty(k)) {
-            entity[k] = T_decode(json[k]);
+            entity.set(k, T_decode(json[k]));
         }
     }
     return entity;
 }
 """, """
-export function Dictionary_encode<T, T_JSON>(entity: {
-    [key: string]: T;
-}, T_encode: (entity: T) => T_JSON): {
+export function Dictionary_encode<T, T_JSON>(entity: Map<string, T>, T_encode: (entity: T) => T_JSON): {
     [key: string]: T_JSON;
 } {
     const json: {
         [key: string]: T_JSON;
     } = {};
-    for (const k in entity) {
-        if (entity.hasOwnProperty(k)) {
-            json[k] = T_encode(entity[k]);
-        }
+    for (const k in entity.keys()) {
+        json[k] = T_encode(entity.get(k) !!);
     }
     return json;
 }

@@ -219,11 +219,14 @@ struct HelperLibraryGenerator {
                 .init(name: "json", type: TSObjectType.dictionary(TSIdentType("T_JSON"))),
                 tDecodeParameter()
             ],
-            result: TSObjectType.dictionary(TSIdentType("T")),
+            result: TSIdentType.map(TSIdentType.string, TSIdentType("T")),
             body: TSBlockStmt([
                 TSVarDecl(
-                    kind: .const, name: "entity", type: TSObjectType.dictionary(TSIdentType("T")),
-                    initializer: TSObjectExpr([])
+                    kind: .const, name: "entity",
+                    initializer: TSNewExpr(
+                        callee: TSIdentType.map(TSIdentType.string, TSIdentType("T")),
+                        args: []
+                    )
                 ),
                 TSForInStmt(
                     kind: .const, name: "k", operator: .in, expr: TSIdentExpr("json"),
@@ -236,14 +239,17 @@ struct HelperLibraryGenerator {
                                 args: [TSIdentExpr("k")]
                             ),
                             then: TSBlockStmt([
-                                TSAssignExpr(
-                                    TSSubscriptExpr(base: TSIdentExpr("entity"), key: TSIdentExpr("k")),
-                                    TSCallExpr(
-                                        callee: tDecode(),
-                                        args: [
-                                            TSSubscriptExpr(base: TSIdentExpr("json"), key: TSIdentExpr("k"))
-                                        ]
-                                    )
+                                TSCallExpr(
+                                    callee: TSMemberExpr(base: TSIdentExpr("entity"), name: "set"),
+                                    args: [
+                                        TSIdentExpr("k"),
+                                        TSCallExpr(
+                                            callee: tDecode(),
+                                            args: [
+                                                TSSubscriptExpr(base: TSIdentExpr("json"), key: TSIdentExpr("k"))
+                                            ]
+                                        )
+                                    ]
                                 )
                             ])
                         )
@@ -260,7 +266,7 @@ struct HelperLibraryGenerator {
             name: name(.dictionaryEncode),
             genericParams: [.init("T"), .init("T_JSON")],
             params: [
-                .init(name: "entity", type: TSObjectType.dictionary(TSIdentType("T"))),
+                .init(name: "entity", type: TSIdentType.map(TSIdentType.string, TSIdentType("T"))),
                 tEncodeParameter()
             ],
             result: TSObjectType.dictionary(TSIdentType("T_JSON")),
@@ -270,26 +276,22 @@ struct HelperLibraryGenerator {
                     initializer: TSObjectExpr([])
                 ),
                 TSForInStmt(
-                    kind: .const, name: "k", operator: .in, expr: TSIdentExpr("entity"),
+                    kind: .const, name: "k", operator: .in,
+                    expr: TSCallExpr(callee: TSMemberExpr(base: TSIdentExpr("entity"), name: "keys"), args: []),
                     body: TSBlockStmt([
-                        TSIfStmt(
-                            condition: TSCallExpr(
-                                callee: TSMemberExpr(
-                                    base: TSIdentExpr("entity"), name: "hasOwnProperty"
-                                ),
-                                args: [TSIdentExpr("k")]
-                            ),
-                            then: TSBlockStmt([
-                                TSAssignExpr(
-                                    TSSubscriptExpr(base: TSIdentExpr("json"), key: TSIdentExpr("k")),
-                                    TSCallExpr(
-                                        callee: tEncode(),
-                                        args: [
-                                            TSSubscriptExpr(base: TSIdentExpr("entity"), key: TSIdentExpr("k"))
-                                        ]
+                        TSAssignExpr(
+                            TSSubscriptExpr(base: TSIdentExpr("json"), key: TSIdentExpr("k")),
+                            TSCallExpr(
+                                callee: tEncode(),
+                                args: [
+                                    TSPostfixOperatorExpr(
+                                        TSCallExpr(
+                                            callee: TSMemberExpr(base: TSIdentExpr("entity"), name: "get"),
+                                            args: [TSIdentExpr("k")]
+                                        ), "!!"
                                     )
-                                )
-                            ])
+                                ]
+                            )
                         )
                     ])
                 ),
