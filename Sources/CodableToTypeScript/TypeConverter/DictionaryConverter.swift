@@ -11,7 +11,13 @@ struct DictionaryConverter: TypeConverter {
     }
 
     func type(for target: GenerationTarget) throws -> any TSType {
-        return TSObjectType.dictionary(try value().type(for: target))
+        let value = try self.value().type(for: target)
+        switch target {
+        case .entity:
+            return TSIdentType.map(TSIdentType.string, value)
+        case .json:
+            return TSObjectType.dictionary(value)
+        }
     }
 
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
@@ -19,7 +25,7 @@ struct DictionaryConverter: TypeConverter {
     }
 
     func decodePresence() throws -> CodecPresence {
-        return try value().decodePresence()
+        return .required
     }
 
     func decodeName() throws -> String? {
@@ -38,7 +44,7 @@ struct DictionaryConverter: TypeConverter {
     }
 
     func encodePresence() throws -> CodecPresence {
-        return try value().encodePresence()
+        return .required
     }
 
     func encodeName() throws -> String {

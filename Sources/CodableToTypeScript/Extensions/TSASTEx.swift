@@ -41,3 +41,9 @@ extension TSObjectType {
         ])
     }
 }
+
+extension TSIdentType {
+    static func map(_ key: any TSType, _ value: any TSType) -> TSIdentType {
+        return TSIdentType("Map", genericArgs: [key, value])
+    }
+}
