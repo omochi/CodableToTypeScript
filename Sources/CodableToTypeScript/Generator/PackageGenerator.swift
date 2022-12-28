@@ -57,17 +57,19 @@ public final class PackageGenerator {
             symbols.add(source: entry.source, file: entry.file.relativePath)
         }
 
-        for index in entries.indices {
-            var source = entries[index].source
+        for entry in entries {
+            let source = entry.source
             let imports = try source.buildAutoImportDecls(symbolTable: symbols)
             source.replaceImportDecls(imports)
-            entries[index].source = source
         }
 
         return entries
     }
 
-    public func write(entry: PackageEntry) throws {
+    public func write(
+        entry: PackageEntry,
+        didWrite: ((URL, Data) -> Void)? = nil
+    ) throws {
         let path = outputDirectory.appendingPathComponent(entry.file.relativePath)
         try fileManager.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
 
@@ -80,5 +82,6 @@ public final class PackageGenerator {
         }
 
         try data.write(to: path, options: .atomic)
+        didWrite?(path, data)
     }
 }
