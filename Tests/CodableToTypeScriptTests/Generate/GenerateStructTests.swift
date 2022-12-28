@@ -224,8 +224,25 @@ struct S {
     var e3: [String: Int]
 }
 """,
-            typeSelector: .name("S"),
             expecteds: ["""
+export type S = {
+    e1: Map<string, E>;
+    e2: Map<string, (E | null)[]>;
+    e3: Map<string, number>;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = {
+    e1: {
+        [key: string]: E_JSON;
+    };
+    e2: {
+        [key: string]: (E_JSON | null)[];
+    };
+    e3: {
+        [key: string]: number;
+    };
+};
+""", """
 export function S_decode(json: S_JSON): S {
     return {
         e1: Dictionary_decode(json.e1, E_decode),
@@ -234,10 +251,62 @@ export function S_decode(json: S_JSON): S {
                 return Optional_decode(json, E_decode);
             });
         }),
-        e3: json.e3
+        e3: Dictionary_decode(json.e3, identity)
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return {
+        e1: Dictionary_encode(entity.e1, identity),
+        e2: Dictionary_encode(entity.e2, identity),
+        e3: Dictionary_encode(entity.e3, identity)
     };
 }
 """]
+        )
+    }
+
+    func testDoubleDictionary() throws {
+        try assertGenerate(
+            source: """
+struct S {
+    var a: [String: [String: Int]]
+}
+""",
+            expecteds: ["""
+export type S = {
+    a: Map<string, Map<string, number>>;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = {
+    a: {
+        [key: string]: {
+            [key: string]: number;
+        };
+    };
+};
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        a: Dictionary_decode(json.a, (json: {
+            [key: string]: number;
+        }): Map<string, number> => {
+            return Dictionary_decode(json, identity);
+        })
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return {
+        a: Dictionary_encode(entity.a, (entity: Map<string, number>): {
+            [key: string]: number;
+        } => {
+            return Dictionary_encode(entity, identity);
+        })
+    };
+}
+"""
+            ]
         )
     }
 
