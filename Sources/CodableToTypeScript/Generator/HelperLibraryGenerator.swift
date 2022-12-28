@@ -307,14 +307,34 @@ struct HelperLibraryGenerator {
             genericParams: [.init("Type")],
             type: TSConditionalType(
                 TSIdentType("Type"),
-                extends: TSObjectType([
-                    .field(
-                        name: "$tag", isOptional: true,
-                        type: TSInferType(name: "TAG")
-                    )
-                ]),
+                extends: TSIdentType(name(.tagRecord), genericArgs: [TSInferType(name: "TAG")]),
                 true: TSIdentType("TAG"),
-                false: TSIdentType.never
+                false: TSConditionalType(
+                    TSIdentType.null, extends: TSIdentType("Type"),
+                    true: TSIntersectionType(
+                        TSStringLiteralType("Optional"),
+                        TSIdentType(name(.tagOf), genericArgs: [
+                            TSIdentType("Exclude", genericArgs: [TSIdentType("Type"), TSIdentType.null])
+                        ])
+                    ),
+                    false: TSConditionalType(
+                        TSIdentType("Type"),
+                        extends: TSArrayType(TSInferType(name: "E")),
+                        true: TSIntersectionType(
+                            TSStringLiteralType("Array"),
+                            TSIdentType(name(.tagOf), genericArgs: [TSIdentType("E")])
+                        ),
+                        false: TSConditionalType(
+                            TSIdentType("Type"),
+                            extends: TSIdentType.map(TSIdentType.string, TSInferType(name: "V")),
+                            true: TSIntersectionType(
+                                TSStringLiteralType("Dictionary"),
+                                TSIdentType(name(.tagOf), genericArgs: [TSIdentType("V")])
+                            ),
+                            false: TSIdentType.never
+                        )
+                    )
+                )
             )
         )
     }
