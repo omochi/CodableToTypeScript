@@ -11,11 +11,11 @@ public final class CodeGenerator {
     }
 
     internal var requestToken: RequestToken!
-    public let context: Context
+    public let context: SwiftTypeReader.Context
     private let typeConverterProvider: TypeConverterProvider
 
     public init(
-        context: Context,
+        context: SwiftTypeReader.Context,
         typeConverterProvider: TypeConverterProvider = TypeConverterProvider()
     ) {
         self.context = context
