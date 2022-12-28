@@ -68,9 +68,7 @@ export function Dictionary_encode<T, T_JSON>(entity: Map<string, T>, T_encode: (
     return json;
 }
 """, """
-export type TagOf<Type> = Type extends {
-    $tag?: infer TAG;
-} ? TAG : never;
+export type TagOf<Type> = Type extends TagRecord<infer TAG> ? TAG : null extends Type ? "Optional" & TagOf<Exclude<Type, null>> : Type extends (infer E)[] ? "Array" & TagOf<E> : Type extends Map<string, infer V> ? "Dictionary" & TagOf<V> : never;
 """, """
 export type TagRecord<Name extends string, Args extends any[] = []> = Args["length"] extends 0 ? {
     $tag?: Name;
