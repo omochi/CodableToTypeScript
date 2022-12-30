@@ -25,6 +25,7 @@ struct PackageBuildTester {
         fileManager: FileManager = .default,
         context: Context,
         typeConverterProvider: TypeConverterProvider,
+        externalReference: ExternalReference,
         file: StaticString,
         line: UInt,
         function: StaticString
@@ -44,6 +45,7 @@ struct PackageBuildTester {
             fileManager: fileManager,
             typeConverterProvider: typeConverterProvider,
             importFileExtension: .none,
+            externalReference: externalReference,
             outputDirectory: directory.appendingPathComponent("src")
         )
     }

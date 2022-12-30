@@ -42,6 +42,11 @@ struct S {
 }
 """,
             typeMap: typeMap,
+            externalReference: ExternalReference(
+                code: """
+                export function Date_decode(json: string): Date { throw 0; }
+                """
+            ),
             expecteds: ["""
 export type S = {
     a: Date;
@@ -80,6 +85,11 @@ struct S {
 }
 """,
             typeMap: typeMap,
+            externalReference: ExternalReference(
+                code: """
+                export function Date_decode(json: string): Date { throw 0; }
+                """
+            ),
             expecteds: ["""
 export type S = {
     a: Date;
@@ -121,6 +131,11 @@ struct S {
 }
 """,
             typeMap: typeMap,
+            externalReference: ExternalReference(
+                code: """
+                export function Date_encode(date: Date): string { throw 0; }
+                """
+            ),
             expecteds: ["""
 export type S = {
     a: Date;
@@ -157,6 +172,12 @@ struct S {
 }
 """,
             typeMap: typeMap,
+            externalReference: ExternalReference(
+                code: """
+                export function Date_decode(json: string): Date { throw 0; }
+                export function Date_encode(date: Date): string { throw 0; }
+                """
+            ),
             expecteds: ["""
 import { Date_decode, Date_encode, TagRecord }
 """, """
@@ -204,6 +225,16 @@ struct S {
 }
 """,
             typeMap: typeMap,
+            externalReference: ExternalReference(
+                code: """
+                export function Date_decode(json: string): Date { throw 0; }
+                export function Date_encode(date: Date): string { throw 0; }
+                export type Vector2<T> = {};
+                export type Vector2_JSON<T> = string;
+                export function Vector2_decode<T, TJ>(json: Vector2_JSON<TJ>, t: (j: TJ) => T): Vector2<T> { throw 0; }
+                export function Vector2_encode<T, TJ>(date: Vector2<T>, t: (e: T) => TJ): Vector2_JSON<TJ> { throw 0; }
+                """
+            ),
             expecteds: ["""
 export type S = {
     a: Vector2<number>;

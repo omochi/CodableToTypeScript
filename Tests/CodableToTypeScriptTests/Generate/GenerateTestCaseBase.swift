@@ -18,6 +18,7 @@ class GenerateTestCaseBase: XCTestCase {
         typeSelector: TypeSelector = .last(file: #file, line: #line),
         typeMap: TypeMap? = nil,
         typeConverterProvider: TypeConverterProvider? = nil,
+        externalReference: ExternalReference? = nil,
         expecteds: [String] = [],
         unexpecteds: [String] = [],
         file: StaticString = #file,
@@ -37,9 +38,13 @@ class GenerateTestCaseBase: XCTestCase {
                 typeMap: typeMap
             )
 
+            var externalReference: ExternalReference = externalReference ?? ExternalReference()
+            externalReference.add(entries: typeConverterProvider.typeMap.entries)
+
             let packageTester = PackageBuildTester(
                 context: context,
                 typeConverterProvider: typeConverterProvider,
+                externalReference: externalReference,
                 file: file,
                 line: line,
                 function: function
@@ -85,7 +90,7 @@ class GenerateTestCaseBase: XCTestCase {
 
             XCTAssertNoThrow(
                 try packageTester.build(module: module),
-                "generate and build typescript",
+                "generate and build typescript: dir=\(packageTester.directory.path)",
                 file: file, line: line
             )
         }

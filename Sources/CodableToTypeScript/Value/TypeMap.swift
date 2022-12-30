@@ -27,6 +27,20 @@ public struct TypeMap {
         public var jsonType: String
         public var decode: String?
         public var encode: String?
+
+        public var symbols: Set<String> {
+            var result: Set<String> = [
+                entityType,
+                jsonType
+            ]
+            if let t = decode {
+                result.insert(t)
+            }
+            if let t = encode {
+                result.insert(t)
+            }
+            return result
+        }
     }
 
     public typealias MapFunction = (any SType) -> Entry?
@@ -54,6 +68,8 @@ public struct TypeMap {
 
     public var table: [String: Entry]
     public var mapFunction: MapFunction?
+
+    public var entries: [Entry] { Array(table.values) }
 
     public func map(type: any SType) -> Entry? {
         if let entry = mapFunction?(type) {

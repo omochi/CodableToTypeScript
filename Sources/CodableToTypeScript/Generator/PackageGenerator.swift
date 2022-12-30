@@ -9,6 +9,7 @@ public final class PackageGenerator {
         typeConverterProvider: TypeConverterProvider = TypeConverterProvider(),
         standardLibrarySymbols: Set<String> = SymbolTable.standardLibrarySymbols,
         importFileExtension: ImportFileExtension,
+        externalReference: ExternalReference,
         outputDirectory: URL
     ) {
         self.context = context
@@ -19,6 +20,7 @@ public final class PackageGenerator {
         )
         self.standardLibrarySymbols = standardLibrarySymbols
         self.importFileExtension = importFileExtension
+        self.externalReference = externalReference
         self.outputDirectory = outputDirectory
     }
 
@@ -27,6 +29,7 @@ public final class PackageGenerator {
     public let codeGenerator: CodeGenerator
     public let standardLibrarySymbols: Set<String>
     public let importFileExtension: ImportFileExtension
+    public let externalReference: ExternalReference
     public let outputDirectory: URL
     public var didWrite: ((URL, Data) -> Void)?
 
@@ -57,6 +60,12 @@ public final class PackageGenerator {
 
         var symbols = SymbolTable(standardLibrarySymbols: standardLibrarySymbols)
 
+        for symbol in externalReference.symbols {
+            if symbols.table[symbol] == nil {
+                symbols.add(symbol: symbol, file: .file("externals.ts"))
+            }
+        }
+
         for entry in entries {
             symbols.add(source: entry.source, file: entry.file)
         }
@@ -69,6 +78,16 @@ public final class PackageGenerator {
                 fileExtension: importFileExtension
             )
             source.replaceImportDecls(imports)
+        }
+
+        if !externalReference.symbols.isEmpty {
+            let entry = PackageEntry(
+                file: "externals.ts",
+                source: TSSourceFile([
+                    TSCustomDecl(text: externalReference.code)
+                ])
+            )
+            entries.append(entry)
         }
 
         return entries
