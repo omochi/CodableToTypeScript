@@ -364,6 +364,11 @@ private struct EncodeFuncGen {
     func generate() throws -> TSFunctionDecl? {
         guard let decl = try converter.encodeSignature() else { return nil }
 
+        if type.caseElements.count == 1 {
+            decl.body.elements += try caseBody(element: type.caseElements[0])
+            return decl
+        }
+
         let `switch` = TSSwitchStmt(
             expr: TSMemberExpr(base: TSIdentExpr("entity"), name: "kind")
         )

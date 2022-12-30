@@ -11,6 +11,15 @@ final class GenerateEncodeTests: GenerateTestCaseBase {
         return typeMap
     }
 
+    func dateTypeExternal() -> ExternalReference {
+        return ExternalReference(
+            code: """
+            export function Date_decode(json: string): Date { throw 0; }
+            export function Date_encode(date: Date): string { throw 0; }
+            """
+        )
+    }
+
     func testEnum() throws {
         try assertGenerate(
             source: """
@@ -20,6 +29,7 @@ enum E {
 }
 """,
             typeMap: dateTypeMap(),
+            externalReference: dateTypeExternal(),
             expecteds: ["""
 export type E = ({
     kind: "a";
@@ -76,6 +86,7 @@ struct S {
 }
 """,
             typeMap: dateTypeMap(),
+            externalReference: dateTypeExternal(),
             expecteds: ["""
 export type S = {
     a: Date;
@@ -118,6 +129,7 @@ struct S {
 }
 """,
             typeMap: dateTypeMap(),
+            externalReference: dateTypeExternal(),
             expecteds: ["""
 export function S_encode(entity: S): S_JSON {
     return {

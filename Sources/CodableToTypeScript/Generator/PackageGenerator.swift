@@ -80,7 +80,7 @@ public final class PackageGenerator {
             source.replaceImportDecls(imports)
         }
 
-        if !externalReference.symbols.isEmpty {
+        if !externalReference.code.isEmpty {
             let entry = PackageEntry(
                 file: "externals.ts",
                 source: TSSourceFile([
