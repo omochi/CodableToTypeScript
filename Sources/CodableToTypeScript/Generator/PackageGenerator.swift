@@ -8,6 +8,7 @@ public final class PackageGenerator {
         fileManager: FileManager = .default,
         typeConverterProvider: TypeConverterProvider = TypeConverterProvider(),
         standardLibrarySymbols: Set<String> = SymbolTable.standardLibrarySymbols,
+        importFileExtension: ImportFileExtension,
         outputDirectory: URL
     ) {
         self.context = context
@@ -17,6 +18,7 @@ public final class PackageGenerator {
             typeConverterProvider: typeConverterProvider
         )
         self.standardLibrarySymbols = standardLibrarySymbols
+        self.importFileExtension = importFileExtension
         self.outputDirectory = outputDirectory
     }
 
@@ -24,12 +26,14 @@ public final class PackageGenerator {
     public let fileManager: FileManager
     public let codeGenerator: CodeGenerator
     public let standardLibrarySymbols: Set<String>
+    public let importFileExtension: ImportFileExtension
     public let outputDirectory: URL
+    public var didWrite: ((URL, Data) -> Void)?
 
     public func generate(modules: [Module]) throws -> [PackageEntry] {
         var entries: [PackageEntry] = [
             PackageEntry(
-                file: URL(fileURLWithPath: "common.js"),
+                file: "common.ts",
                 source: codeGenerator.generateHelperLibrary()
             )
         ]
@@ -44,7 +48,7 @@ public final class PackageGenerator {
                 let source = try typeConverter.source()
 
                 let entry = PackageEntry(
-                    file: URL(fileURLWithPath: "\(name).js"),
+                    file: "\(name).ts",
                     source: source
                 )
                 entries.append(entry)
@@ -54,12 +58,16 @@ public final class PackageGenerator {
         var symbols = SymbolTable(standardLibrarySymbols: standardLibrarySymbols)
 
         for entry in entries {
-            symbols.add(source: entry.source, file: entry.file.relativePath)
+            symbols.add(source: entry.source, file: entry.file)
         }
 
         for entry in entries {
             let source = entry.source
-            let imports = try source.buildAutoImportDecls(symbolTable: symbols)
+            let imports = try source.buildAutoImportDecls(
+                from: entry.file,
+                symbolTable: symbols,
+                fileExtension: importFileExtension
+            )
             source.replaceImportDecls(imports)
         }
 
@@ -67,10 +75,9 @@ public final class PackageGenerator {
     }
 
     public func write(
-        entry: PackageEntry,
-        didWrite: ((URL, Data) -> Void)? = nil
+        entry: PackageEntry
     ) throws {
-        let path = outputDirectory.appendingPathComponent(entry.file.relativePath)
+        let path = outputDirectory.appendingPathComponent(entry.file)
         try fileManager.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
 
         let data = entry.source.print().data(using: .utf8)!
@@ -83,5 +90,13 @@ public final class PackageGenerator {
 
         try data.write(to: path, options: .atomic)
         didWrite?(path, data)
+    }
+
+    public func write(
+        entries: [PackageEntry]
+    ) throws {
+        for entry in entries {
+            try write(entry: entry)
+        }
     }
 }

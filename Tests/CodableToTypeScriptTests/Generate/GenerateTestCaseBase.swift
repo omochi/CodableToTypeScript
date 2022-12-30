@@ -10,7 +10,7 @@ class GenerateTestCaseBase: XCTestCase {
         case all
     }
     // debug
-    var prints: Prints { .all }
+    var prints: Prints { .none }
 
     func assertGenerate(
         context: Context? = nil,
@@ -21,7 +21,8 @@ class GenerateTestCaseBase: XCTestCase {
         expecteds: [String] = [],
         unexpecteds: [String] = [],
         file: StaticString = #file,
-        line: UInt = #line
+        line: UInt = #line,
+        function: StaticString = #function
     ) throws {
         let context = context ?? Context()
 
@@ -36,15 +37,22 @@ class GenerateTestCaseBase: XCTestCase {
                 typeMap: typeMap
             )
 
-            let gen = CodeGenerator(
+            let packageTester = PackageBuildTester(
                 context: context,
-                typeConverterProvider: typeConverterProvider
+                typeConverterProvider: typeConverterProvider,
+                file: file,
+                line: line,
+                function: function
             )
+
+            let gen = packageTester.packageGenerator.codeGenerator
 
             func generate(type: any TypeDecl) throws -> TSSourceFile {
                 let code = try gen.converter(for: type.declaredInterfaceType).source()
                 let imports = try code.buildAutoImportDecls(
+                    from: "test.ts",
                     symbolTable: SymbolTable(),
+                    fileExtension: packageTester.packageGenerator.importFileExtension,
                     defaultFile: ".."
                 )
                 code.replaceImportDecls(imports)
@@ -72,6 +80,12 @@ class GenerateTestCaseBase: XCTestCase {
                 text: actual,
                 expecteds: expecteds,
                 unexpecteds: unexpecteds,
+                file: file, line: line
+            )
+
+            XCTAssertNoThrow(
+                try packageTester.build(module: module),
+                "generate and build typescript",
                 file: file, line: line
             )
         }
