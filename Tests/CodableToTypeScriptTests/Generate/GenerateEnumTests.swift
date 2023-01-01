@@ -37,10 +37,11 @@ export function E_decode(json: E_JSON): E {
         };
     } else if ("b" in json) {
         const j = json.b;
+        const _0 = j._0;
         return {
             kind: "b",
             b: {
-                _0: j._0
+                _0: _0
             }
         };
     } else {
@@ -134,13 +135,17 @@ export type E_JSON = {
 export function E_decode(json: E_JSON): E {
     if ("a" in json) {
         const j = json.a;
+        const _0 = j._0;
+        const _1 = j._1;
+        const _2 = j._2;
+        const _3 = j._3;
         return {
             kind: "a",
             a: {
-                _0: j._0,
-                _1: j._1,
-                _2: j._2,
-                _3: j._3
+                _0: _0,
+                _1: _1,
+                _2: _2,
+                _3: _3
             }
         };
     } else {
@@ -262,26 +267,29 @@ enum E {
 export function E_decode(json: E_JSON): E {
     if ("k" in json) {
         const j = json.k;
+        const _0 = K_decode(j._0);
         return {
             kind: "k",
             k: {
-                _0: K_decode(j._0)
+                _0: _0
             }
         };
     } else if ("s" in json) {
         const j = json.s;
+        const _0 = S_decode(j._0);
         return {
             kind: "s",
             s: {
-                _0: S_decode(j._0)
+                _0: _0
             }
         };
     } else if ("c" in json) {
         const j = json.c;
+        const _0 = j._0;
         return {
             kind: "c",
             c: {
-                _0: j._0
+                _0: _0
             }
         };
     } else {

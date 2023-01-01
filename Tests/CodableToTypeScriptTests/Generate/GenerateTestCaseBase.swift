@@ -10,7 +10,25 @@ class GenerateTestCaseBase: XCTestCase {
         case all
     }
     // debug
-    var prints: Prints { .all }
+    var prints: Prints { .none }
+
+    func dateTypeMap() -> TypeMap {
+        var typeMap = TypeMap()
+        typeMap.table["Date"] = .coding(
+            entityType: "Date", jsonType: "string",
+            decode: "Date_decode", encode: "Date_encode"
+        )
+        return typeMap
+    }
+
+    func dateTypeExternal() -> ExternalReference {
+        return ExternalReference(
+            code: """
+            export function Date_decode(json: string): Date { throw 0; }
+            export function Date_encode(date: Date): string { throw 0; }
+            """
+        )
+    }
 
     func assertGenerate(
         context: Context? = nil,
@@ -18,10 +36,12 @@ class GenerateTestCaseBase: XCTestCase {
         typeSelector: TypeSelector = .last(file: #file, line: #line),
         typeMap: TypeMap? = nil,
         typeConverterProvider: TypeConverterProvider? = nil,
+        externalReference: ExternalReference? = nil,
         expecteds: [String] = [],
         unexpecteds: [String] = [],
         file: StaticString = #file,
-        line: UInt = #line
+        line: UInt = #line,
+        function: StaticString = #function
     ) throws {
         let context = context ?? Context()
 
@@ -36,15 +56,26 @@ class GenerateTestCaseBase: XCTestCase {
                 typeMap: typeMap
             )
 
-            let gen = CodeGenerator(
+            var externalReference: ExternalReference = externalReference ?? ExternalReference()
+            externalReference.add(entries: typeConverterProvider.typeMap.entries)
+
+            let packageTester = PackageBuildTester(
                 context: context,
-                typeConverterProvider: typeConverterProvider
+                typeConverterProvider: typeConverterProvider,
+                externalReference: externalReference,
+                file: file,
+                line: line,
+                function: function
             )
+
+            let gen = packageTester.packageGenerator.codeGenerator
 
             func generate(type: any TypeDecl) throws -> TSSourceFile {
                 let code = try gen.converter(for: type.declaredInterfaceType).source()
                 let imports = try code.buildAutoImportDecls(
+                    from: "test.ts",
                     symbolTable: SymbolTable(),
+                    fileExtension: packageTester.packageGenerator.importFileExtension,
                     defaultFile: ".."
                 )
                 code.replaceImportDecls(imports)
@@ -72,6 +103,12 @@ class GenerateTestCaseBase: XCTestCase {
                 text: actual,
                 expecteds: expecteds,
                 unexpecteds: unexpecteds,
+                file: file, line: line
+            )
+
+            XCTAssertNoThrow(
+                try packageTester.build(module: module),
+                "generate and build typescript: dir=\(packageTester.directory.path)",
                 file: file, line: line
             )
         }

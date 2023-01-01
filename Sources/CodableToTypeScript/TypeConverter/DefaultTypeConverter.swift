@@ -112,7 +112,7 @@ public struct DefaultTypeConverter {
                 type: try converter.type(for: .json)
             )
             let result = try converter.type(for: .entity)
-            let expr = try converter.callDecode(json: TSIdentExpr("json"))
+            let expr = try converter.callDecode(json: TSIdentExpr.json)
             return TSClosureExpr(
                 params: [param],
                 result: result,
@@ -138,7 +138,7 @@ public struct DefaultTypeConverter {
         let converter = try self.converter()
         guard try converter.hasDecode() else {
             var expr = json
-            if try converter.hasJSONType() {
+            if try converter.hasJSONType() || !genericArgs.isEmpty {
                 expr = TSAsExpr(expr, try converter.type(for: .entity))
             }
             return expr
@@ -179,14 +179,10 @@ public struct DefaultTypeConverter {
 
         var decodeGenericParams: [TSTypeParameterNode] = []
         for param in genericParams {
-            decodeGenericParams.append(
-                .init(try param.name(for: .entity))
-            )
-        }
-        for param in genericParams {
-            decodeGenericParams.append(
+            decodeGenericParams += [
+                .init(try param.name(for: .entity)),
                 .init(try param.name(for: .json))
-            )
+            ]
         }
 
         var params: [TSFunctionType.Param] = [
@@ -262,7 +258,7 @@ public struct DefaultTypeConverter {
                 type: try converter.type(for: .entity)
             )
             let result = try converter.type(for: .json)
-            let expr = try converter.callEncode(entity: TSIdentExpr("entity"))
+            let expr = try converter.callEncode(entity: TSIdentExpr.entity)
             return TSClosureExpr(
                 params: [param],
                 result: result,
@@ -288,7 +284,7 @@ public struct DefaultTypeConverter {
         let converter = try self.converter()
         guard try converter.hasEncode() else {
             var expr = entity
-            if try converter.hasJSONType() {
+            if try converter.hasJSONType() || !genericArgs.isEmpty {
                 expr = TSAsExpr(expr, try converter.type(for: .json))
             }
             return expr
@@ -329,14 +325,10 @@ public struct DefaultTypeConverter {
 
         var encodeGenericParams: [TSTypeParameterNode] = []
         for param in genericParams {
-            encodeGenericParams.append(
-                .init(try param.name(for: .entity))
-            )
-        }
-        for param in genericParams {
-            encodeGenericParams.append(
+            encodeGenericParams += [
+                .init(try param.name(for: .entity)),
                 .init(try param.name(for: .json))
-            )
+            ]
         }
 
         var params: [TSFunctionType.Param] = [

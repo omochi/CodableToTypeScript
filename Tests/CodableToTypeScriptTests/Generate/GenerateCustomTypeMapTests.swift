@@ -42,6 +42,11 @@ struct S {
 }
 """,
             typeMap: typeMap,
+            externalReference: ExternalReference(
+                code: """
+                export function Date_decode(json: string): Date { throw 0; }
+                """
+            ),
             expecteds: ["""
 export type S = {
     a: Date;
@@ -52,8 +57,9 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
+    const a = Date_decode(json.a);
     return {
-        a: Date_decode(json.a)
+        a: a
     };
 }
 """
@@ -80,6 +86,11 @@ struct S {
 }
 """,
             typeMap: typeMap,
+            externalReference: ExternalReference(
+                code: """
+                export function Date_decode(json: string): Date { throw 0; }
+                """
+            ),
             expecteds: ["""
 export type S = {
     a: Date;
@@ -94,12 +105,15 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
+    const a = Date_decode(json.a);
+    const b = Array_decode<Date, string>(json.b, Date_decode);
+    const c = Array_decode<Date[], string[]>(json.c, (json: string[]): Date[] => {
+        return Array_decode<Date, string>(json, Date_decode);
+    });
     return {
-        a: Date_decode(json.a),
-        b: Array_decode(json.b, Date_decode),
-        c: Array_decode(json.c, (json: string[]): Date[] => {
-            return Array_decode(json, Date_decode);
-        })
+        a: a,
+        b: b,
+        c: c
     };
 }
 """
@@ -121,6 +135,11 @@ struct S {
 }
 """,
             typeMap: typeMap,
+            externalReference: ExternalReference(
+                code: """
+                export function Date_encode(date: Date): string { throw 0; }
+                """
+            ),
             expecteds: ["""
 export type S = {
     a: Date;
@@ -131,8 +150,9 @@ export type S_JSON = {
 };
 """, """
 export function S_encode(entity: S): S_JSON {
+    const a = Date_encode(entity.a);
     return {
-        a: Date_encode(entity.a)
+        a: a
     };
 }
 """
@@ -157,6 +177,12 @@ struct S {
 }
 """,
             typeMap: typeMap,
+            externalReference: ExternalReference(
+                code: """
+                export function Date_decode(json: string): Date { throw 0; }
+                export function Date_encode(date: Date): string { throw 0; }
+                """
+            ),
             expecteds: ["""
 import { Date_decode, Date_encode, TagRecord }
 """, """
@@ -169,14 +195,16 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
+    const a = Date_decode(json.a);
     return {
-        a: Date_decode(json.a)
+        a: a
     };
 }
 """, """
 export function S_encode(entity: S): S_JSON {
+    const a = Date_encode(entity.a);
     return {
-        a: Date_encode(entity.a)
+        a: a
     };
 }
 """
@@ -204,6 +232,16 @@ struct S {
 }
 """,
             typeMap: typeMap,
+            externalReference: ExternalReference(
+                code: """
+                export function Date_decode(json: string): Date { throw 0; }
+                export function Date_encode(date: Date): string { throw 0; }
+                export type Vector2<T> = {};
+                export type Vector2_JSON<T> = string;
+                export function Vector2_decode<T, TJ>(json: Vector2_JSON<TJ>, t: (j: TJ) => T): Vector2<T> { throw 0; }
+                export function Vector2_encode<T, TJ>(date: Vector2<T>, t: (e: T) => TJ): Vector2_JSON<TJ> { throw 0; }
+                """
+            ),
             expecteds: ["""
 export type S = {
     a: Vector2<number>;
@@ -218,14 +256,17 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
+    const a = Vector2_decode<number, number>(json.a, identity);
+    const b = Vector2_decode<Date, string>(json.b, Date_decode);
+    const c = Array_decode<Vector2<Vector2<number>>, Vector2_JSON<Vector2_JSON<number>>>(json.c, (json: Vector2_JSON<Vector2_JSON<number>>): Vector2<Vector2<number>> => {
+        return Vector2_decode<Vector2<number>, Vector2_JSON<number>>(json, (json: Vector2_JSON<number>): Vector2<number> => {
+            return Vector2_decode<number, number>(json, identity);
+        });
+    });
     return {
-        a: Vector2_decode(json.a, identity),
-        b: Vector2_decode(json.b, Date_decode),
-        c: Array_decode(json.c, (json: Vector2_JSON<Vector2_JSON<number>>): Vector2<Vector2<number>> => {
-            return Vector2_decode(json, (json: Vector2_JSON<number>): Vector2<number> => {
-                return Vector2_decode(json, identity);
-            });
-        })
+        a: a,
+        b: b,
+        c: c
     };
 }
 """

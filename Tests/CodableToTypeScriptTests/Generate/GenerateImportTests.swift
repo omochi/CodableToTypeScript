@@ -28,6 +28,14 @@ struct S<T, U> {
 }
 """,
             typeMap: typeMap,
+            externalReference: ExternalReference(
+                code: """
+                export type A = {};
+                export type B = {};
+                export type C = {};
+                export type Y<T> = {};
+                """
+            ),
             expecteds: ["""
 import {
     A,

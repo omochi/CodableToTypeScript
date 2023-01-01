@@ -71,7 +71,7 @@ struct HelperLibraryGenerator {
             params: [.init(name: "json", type: TSIdentType("T"))],
             result: TSIdentType("T"),
             body: TSBlockStmt([
-                TSReturnStmt(TSIdentExpr("json"))
+                TSReturnStmt(TSIdentExpr.json)
             ])
         )
     }
@@ -89,7 +89,7 @@ struct HelperLibraryGenerator {
             body: TSBlockStmt([
                 TSIfStmt(
                     condition: TSInfixOperatorExpr(
-                        TSIdentExpr("json"), "===", TSIdentExpr.undefined
+                        TSIdentExpr.json, "===", TSIdentExpr.undefined
                     ),
                     then: TSReturnStmt(TSIdentExpr.undefined)
                 ),
@@ -111,7 +111,7 @@ struct HelperLibraryGenerator {
             body: TSBlockStmt([
                 TSIfStmt(
                     condition: TSInfixOperatorExpr(
-                        TSIdentExpr("entity"), "===", TSIdentExpr.undefined
+                        TSIdentExpr.entity, "===", TSIdentExpr.undefined
                     ),
                     then: TSReturnStmt(TSIdentExpr.undefined)
                 ),
@@ -133,7 +133,7 @@ struct HelperLibraryGenerator {
             body: TSBlockStmt([
                 TSIfStmt(
                     condition: TSInfixOperatorExpr(
-                        TSIdentExpr("json"), "===", TSNullLiteralExpr()
+                        TSIdentExpr.json, "===", TSNullLiteralExpr()
                     ),
                     then: TSReturnStmt(TSNullLiteralExpr())
                 ),
@@ -155,7 +155,7 @@ struct HelperLibraryGenerator {
             body: TSBlockStmt([
                 TSIfStmt(
                     condition: TSInfixOperatorExpr(
-                        TSIdentExpr("entity"), "===", TSNullLiteralExpr()
+                        TSIdentExpr.entity, "===", TSNullLiteralExpr()
                     ),
                     then: TSReturnStmt(TSNullLiteralExpr())
                 ),
@@ -178,7 +178,7 @@ struct HelperLibraryGenerator {
                 TSReturnStmt(
                     TSCallExpr(
                         callee: TSMemberExpr(
-                            base: TSIdentExpr("json"), name: "map"
+                            base: TSIdentExpr.json, name: "map"
                         ),
                         args: [tDecode()]
                     )
@@ -201,7 +201,7 @@ struct HelperLibraryGenerator {
                 TSReturnStmt(
                     TSCallExpr(
                         callee: TSMemberExpr(
-                            base: TSIdentExpr("entity"), name: "map"
+                            base: TSIdentExpr.entity, name: "map"
                         ),
                         args: [tEncode()]
                     )
@@ -229,24 +229,24 @@ struct HelperLibraryGenerator {
                     )
                 ),
                 TSForInStmt(
-                    kind: .const, name: "k", operator: .in, expr: TSIdentExpr("json"),
+                    kind: .const, name: "k", operator: .in, expr: TSIdentExpr.json,
                     body: TSBlockStmt([
                         TSIfStmt(
                             condition: TSCallExpr(
                                 callee: TSMemberExpr(
-                                    base: TSIdentExpr("json"), name: "hasOwnProperty"
+                                    base: TSIdentExpr.json, name: "hasOwnProperty"
                                 ),
                                 args: [TSIdentExpr("k")]
                             ),
                             then: TSBlockStmt([
                                 TSCallExpr(
-                                    callee: TSMemberExpr(base: TSIdentExpr("entity"), name: "set"),
+                                    callee: TSMemberExpr(base: TSIdentExpr.entity, name: "set"),
                                     args: [
                                         TSIdentExpr("k"),
                                         TSCallExpr(
                                             callee: tDecode(),
                                             args: [
-                                                TSSubscriptExpr(base: TSIdentExpr("json"), key: TSIdentExpr("k"))
+                                                TSSubscriptExpr(base: TSIdentExpr.json, key: TSIdentExpr("k"))
                                             ]
                                         )
                                     ]
@@ -255,7 +255,7 @@ struct HelperLibraryGenerator {
                         )
                     ])
                 ),
-                TSReturnStmt(TSIdentExpr("entity"))
+                TSReturnStmt(TSIdentExpr.entity)
             ])
         )
     }
@@ -277,16 +277,16 @@ struct HelperLibraryGenerator {
                 ),
                 TSForInStmt(
                     kind: .const, name: "k", operator: .in,
-                    expr: TSCallExpr(callee: TSMemberExpr(base: TSIdentExpr("entity"), name: "keys"), args: []),
+                    expr: TSCallExpr(callee: TSMemberExpr(base: TSIdentExpr.entity, name: "keys"), args: []),
                     body: TSBlockStmt([
                         TSAssignExpr(
-                            TSSubscriptExpr(base: TSIdentExpr("json"), key: TSIdentExpr("k")),
+                            TSSubscriptExpr(base: TSIdentExpr.json, key: TSIdentExpr("k")),
                             TSCallExpr(
                                 callee: tEncode(),
                                 args: [
                                     TSPostfixOperatorExpr(
                                         TSCallExpr(
-                                            callee: TSMemberExpr(base: TSIdentExpr("entity"), name: "get"),
+                                            callee: TSMemberExpr(base: TSIdentExpr.entity, name: "get"),
                                             args: [TSIdentExpr("k")]
                                         ), "!!"
                                     )
@@ -295,7 +295,7 @@ struct HelperLibraryGenerator {
                         )
                     ])
                 ),
-                TSReturnStmt(TSIdentExpr("json"))
+                TSReturnStmt(TSIdentExpr.json)
             ])
         )
     }
@@ -390,7 +390,7 @@ struct HelperLibraryGenerator {
     private func callTDecode() -> any TSExpr {
         return TSCallExpr(
             callee: tDecode(),
-            args: [TSIdentExpr("json")]
+            args: [TSIdentExpr.json]
         )
     }
 
@@ -413,7 +413,7 @@ struct HelperLibraryGenerator {
     private func callTEncode() -> any TSExpr {
         return TSCallExpr(
             callee: tEncode(),
-            args: [TSIdentExpr("entity")]
+            args: [TSIdentExpr.entity]
         )
     }
 }

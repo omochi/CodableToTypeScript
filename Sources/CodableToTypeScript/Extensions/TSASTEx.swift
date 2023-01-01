@@ -47,3 +47,8 @@ extension TSIdentType {
         return TSIdentType("Map", genericArgs: [key, value])
     }
 }
+
+extension TSIdentExpr {
+    static let json = TSIdentExpr("json")
+    static let entity = TSIdentExpr("entity")
+}

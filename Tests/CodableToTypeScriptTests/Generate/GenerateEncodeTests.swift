@@ -2,15 +2,6 @@ import XCTest
 import CodableToTypeScript
 
 final class GenerateEncodeTests: GenerateTestCaseBase {
-    func dateTypeMap() -> TypeMap {
-        var typeMap = TypeMap()
-        typeMap.table["Date"] = .coding(
-            entityType: "Date", jsonType: "string",
-            decode: "Date_decode", encode: "Date_encode"
-        )
-        return typeMap
-    }
-
     func testEnum() throws {
         try assertGenerate(
             source: """
@@ -20,6 +11,7 @@ enum E {
 }
 """,
             typeMap: dateTypeMap(),
+            externalReference: dateTypeExternal(),
             expecteds: ["""
 export type E = ({
     kind: "a";
@@ -50,9 +42,10 @@ export function E_encode(entity: E): E_JSON {
     case "b":
         {
             const e = entity.b;
+            const _0 = Date_encode(e._0);
             return {
                 b: {
-                    _0: Date_encode(e._0)
+                    _0: _0
                 }
             };
         }
@@ -76,6 +69,7 @@ struct S {
 }
 """,
             typeMap: dateTypeMap(),
+            externalReference: dateTypeExternal(),
             expecteds: ["""
 export type S = {
     a: Date;
@@ -92,13 +86,17 @@ export type S_JSON = {
 };
 """, """
 export function S_encode(entity: S): S_JSON {
+    const a = Date_encode(entity.a);
+    const b = OptionalField_encode<Date, string>(entity.b, Date_encode);
+    const c = OptionalField_encode<Date | null, string | null>(entity.c, (entity: Date | null): string | null => {
+        return Optional_encode<Date, string>(entity, Date_encode);
+    });
+    const d = Array_encode<Date, string>(entity.d, Date_encode);
     return {
-        a: Date_encode(entity.a),
-        b: OptionalField_encode(entity.b, Date_encode),
-        c: OptionalField_encode(entity.c, (entity: Date | null): string | null => {
-            return Optional_encode(entity, Date_encode);
-        }),
-        d: Array_encode(entity.d, Date_encode)
+        a: a,
+        b: b,
+        c: c,
+        d: d
     };
 }
 """]
@@ -118,11 +116,14 @@ struct S {
 }
 """,
             typeMap: dateTypeMap(),
+            externalReference: dateTypeExternal(),
             expecteds: ["""
 export function S_encode(entity: S): S_JSON {
+    const a = entity.a as E_JSON;
+    const b = Date_encode(entity.b);
     return {
-        a: entity.a as E_JSON,
-        b: Date_encode(entity.b)
+        a: a,
+        b: b
     };
 }
 """

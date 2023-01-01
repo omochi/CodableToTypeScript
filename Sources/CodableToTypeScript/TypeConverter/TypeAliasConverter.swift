@@ -33,7 +33,7 @@ struct TypeAliasConverter: TypeConverter {
     func decodeDecl() throws -> TSFunctionDecl? {
         guard let decl = try decodeSignature() else { return nil }
 
-        let expr = try underlying().callDecode(json: TSIdentExpr("json"))
+        let expr = try underlying().callDecode(json: TSIdentExpr.json)
         decl.body.elements.append(
             TSReturnStmt(expr)
         )
@@ -48,7 +48,7 @@ struct TypeAliasConverter: TypeConverter {
     func encodeDecl() throws -> TSFunctionDecl? {
         guard let decl = try encodeSignature() else { return nil }
 
-        let expr = try underlying().callEncode(entity: TSIdentExpr("entity"))
+        let expr = try underlying().callEncode(entity: TSIdentExpr.entity)
         decl.body.elements.append(
             TSReturnStmt(expr)
         )

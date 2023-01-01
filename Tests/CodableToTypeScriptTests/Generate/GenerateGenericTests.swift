@@ -19,8 +19,9 @@ export type S_JSON<T_JSON> = {
 };
 """, """
 export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S<T> {
+    const a = T_decode(json.a);
     return {
-        a: T_decode(json.a)
+        a: a
     };
 }
 """]
@@ -78,8 +79,9 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
+    const a = K_decode<E, E_JSON>(json.a, E_decode);
     return {
-        a: K_decode(json.a, E_decode)
+        a: a
     };
 }
 """
@@ -108,13 +110,15 @@ export type S_JSON<A_JSON, B_JSON> = {
 """, """
 export function S_decode<
     A,
-    B,
     A_JSON,
+    B,
     B_JSON
 >(json: S_JSON<A_JSON, B_JSON>, A_decode: (json: A_JSON) => A, B_decode: (json: B_JSON) => B): S<A, B> {
+    const a = A_decode(json.a);
+    const b = B_decode(json.b);
     return {
-        a: A_decode(json.a),
-        b: B_decode(json.b)
+        a: a,
+        b: b
     };
 }
 """]
@@ -145,10 +149,10 @@ export type S_JSON<A_JSON, B_JSON, C_JSON> = {
 """, """
 export function S_decode<
     A,
-    B,
-    C,
     A_JSON,
+    B,
     B_JSON,
+    C,
     C_JSON
 >(
     json: S_JSON<A_JSON, B_JSON, C_JSON>,
@@ -156,10 +160,13 @@ export function S_decode<
     B_decode: (json: B_JSON) => B,
     C_decode: (json: C_JSON) => C
 ): S<A, B, C> {
+    const a = A_decode(json.a);
+    const b = B_decode(json.b);
+    const c = C_decode(json.c);
     return {
-        a: A_decode(json.a),
-        b: B_decode(json.b),
-        c: C_decode(json.c)
+        a: a,
+        b: b,
+        c: c
     };
 }
 """]
@@ -197,10 +204,13 @@ export type S_JSON<T_JSON> = {
 };
 """, """
 export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S<T> {
+    const a = K_decode<T, T_JSON>(json.a, T_decode);
+    const b = L_decode<T, T_JSON>(json.b, T_decode);
+    const c = json.c as X<T>;
     return {
-        a: K_decode(json.a, T_decode),
-        b: L_decode(json.b, T_decode),
-        c: json.c
+        a: a,
+        b: b,
+        c: c
     };
 }
 """]
@@ -243,15 +253,29 @@ export type S_JSON<T_JSON, U_JSON> = {
 """, """
 export function S_decode<
     T,
-    U,
     T_JSON,
+    U,
     U_JSON
 >(json: S_JSON<T_JSON, U_JSON>, T_decode: (json: T_JSON) => T, U_decode: (json: U_JSON) => U): S<T, U> {
+    const a = K_decode<T, T_JSON>(json.a, T_decode);
+    const b = K_decode<U, U_JSON>(json.b, U_decode);
+    const c = L_decode<
+        T,
+        T_JSON,
+        T,
+        T_JSON
+    >(json.c, T_decode, T_decode);
+    const d = L_decode<
+        T,
+        T_JSON,
+        U,
+        U_JSON
+    >(json.d, T_decode, U_decode);
     return {
-        a: K_decode(json.a, T_decode),
-        b: K_decode(json.b, U_decode),
-        c: L_decode(json.c, T_decode, T_decode),
-        d: L_decode(json.d, T_decode, U_decode)
+        a: a,
+        b: b,
+        c: c,
+        d: d
     };
 }
 """
@@ -297,11 +321,15 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
+    const i = json.i as K<number>;
+    const a = json.a as K<A>;
+    const b = K_decode<B, B_JSON>(json.b, B_decode);
+    const c = json.c as K<C>;
     return {
-        i: json.i,
-        a: json.a,
-        b: K_decode(json.b, B_decode),
-        c: json.c
+        i: i,
+        a: a,
+        b: b,
+        c: c
     };
 }
 """
@@ -341,15 +369,19 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
+    const a = json.a as K<number | null>;
+    const b = json.b as K<number[]>;
+    const c = K_decode<E | null, E_JSON | null>(json.c, (json: E_JSON | null): E | null => {
+        return Optional_decode<E, E_JSON>(json, E_decode);
+    });
+    const d = K_decode<E[], E_JSON[]>(json.d, (json: E_JSON[]): E[] => {
+        return Array_decode<E, E_JSON>(json, E_decode);
+    });
     return {
-        a: json.a,
-        b: json.b,
-        c: K_decode(json.c, (json: E_JSON | null): E | null => {
-            return Optional_decode(json, E_decode);
-        }),
-        d: K_decode(json.d, (json: E_JSON[]): E[] => {
-            return Array_decode(json, E_decode);
-        })
+        a: a,
+        b: b,
+        c: c,
+        d: d
     };
 }
 """
@@ -380,13 +412,15 @@ export type S_JSON<T_JSON> = {
 };
 """, """
 export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S<T> {
+    const a = K_decode<T | null, T_JSON | null>(json.a, (json: T_JSON | null): T | null => {
+        return Optional_decode<T, T_JSON>(json, T_decode);
+    });
+    const b = K_decode<T[], T_JSON[]>(json.b, (json: T_JSON[]): T[] => {
+        return Array_decode<T, T_JSON>(json, T_decode);
+    });
     return {
-        a: K_decode(json.a, (json: T_JSON | null): T | null => {
-            return Optional_decode(json, T_decode);
-        }),
-        b: K_decode(json.b, (json: T_JSON[]): T[] => {
-            return Array_decode(json, T_decode);
-        })
+        a: a,
+        b: b
     };
 }
 """
@@ -417,10 +451,11 @@ export type E_JSON<T_JSON> = {
 export function E_decode<T, T_JSON>(json: E_JSON<T_JSON>, T_decode: (json: T_JSON) => T): E<T> {
     if ("a" in json) {
         const j = json.a;
+        const _0 = T_decode(j._0);
         return {
             kind: "a",
             a: {
-                _0: T_decode(j._0)
+                _0: _0
             }
         };
     } else {

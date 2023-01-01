@@ -28,12 +28,21 @@
       }
     },
     {
+      "identity" : "swiftyrelativepath",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/neoneye/SwiftyRelativePath",
+      "state" : {
+        "revision" : "36c56e0b3269d58ee46ced1eef797ca2bd65a818",
+        "version" : "1.0.0"
+      }
+    },
+    {
       "identity" : "typescriptast",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/omochi/TypeScriptAST",
       "state" : {
-        "revision" : "18aaed4482d6d4dde128deae6d5750c51b2ec944",
-        "version" : "1.7.5"
+        "revision" : "952da439d8a056e0bb96e512585a505afca00469",
+        "version" : "1.8.3"
       }
     }
   ],
