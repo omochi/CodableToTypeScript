@@ -99,12 +99,12 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
-    const e1 = OptionalField_decode(json.e1, E_decode);
-    const e2 = OptionalField_decode(json.e2, (json: E_JSON | null): E | null => {
-        return Optional_decode(json, E_decode);
+    const e1 = OptionalField_decode<E, E_JSON>(json.e1, E_decode);
+    const e2 = OptionalField_decode<E | null, E_JSON | null>(json.e2, (json: E_JSON | null): E | null => {
+        return Optional_decode<E, E_JSON>(json, E_decode);
     });
-    const e3 = OptionalField_decode(json.e3, (json: E_JSON | null): E | null => {
-        return Optional_decode(json, E_decode);
+    const e3 = OptionalField_decode<E | null, E_JSON | null>(json.e3, (json: E_JSON | null): E | null => {
+        return Optional_decode<E, E_JSON>(json, E_decode);
     });
     return {
         e1: e1,
@@ -149,13 +149,13 @@ struct S {
             typeSelector: .name("S"),
             expecteds: ["""
 export function S_decode(json: S_JSON): S {
-    const e1 = Array_decode(json.e1, E_decode);
-    const e2 = Array_decode(json.e2, (json: E_JSON[]): E[] => {
-        return Array_decode(json, E_decode);
+    const e1 = Array_decode<E, E_JSON>(json.e1, E_decode);
+    const e2 = Array_decode<E[], E_JSON[]>(json.e2, (json: E_JSON[]): E[] => {
+        return Array_decode<E, E_JSON>(json, E_decode);
     });
-    const e3 = Array_decode(json.e3, (json: E_JSON[][]): E[][] => {
-        return Array_decode(json, (json: E_JSON[]): E[] => {
-            return Array_decode(json, E_decode);
+    const e3 = Array_decode<E[][], E_JSON[][]>(json.e3, (json: E_JSON[][]): E[][] => {
+        return Array_decode<E[], E_JSON[]>(json, (json: E_JSON[]): E[] => {
+            return Array_decode<E, E_JSON>(json, E_decode);
         });
     });
     return {
@@ -200,18 +200,18 @@ struct S {
             typeSelector: .name("S"),
             expecteds: ["""
 export function S_decode(json: S_JSON): S {
-    const e1 = OptionalField_decode(json.e1, (json: E_JSON[]): E[] => {
-        return Array_decode(json, E_decode);
+    const e1 = OptionalField_decode<E[], E_JSON[]>(json.e1, (json: E_JSON[]): E[] => {
+        return Array_decode<E, E_JSON>(json, E_decode);
     });
-    const e2 = Array_decode(json.e2, (json: E_JSON | null): E | null => {
-        return Optional_decode(json, E_decode);
+    const e2 = Array_decode<E | null, E_JSON | null>(json.e2, (json: E_JSON | null): E | null => {
+        return Optional_decode<E, E_JSON>(json, E_decode);
     });
-    const e3 = OptionalField_decode(json.e3, (json: E_JSON[]): E[] => {
-        return Array_decode(json, E_decode);
+    const e3 = OptionalField_decode<E[], E_JSON[]>(json.e3, (json: E_JSON[]): E[] => {
+        return Array_decode<E, E_JSON>(json, E_decode);
     });
-    const e4 = OptionalField_decode(json.e4, (json: (E_JSON | null)[]): (E | null)[] => {
-        return Array_decode(json, (json: E_JSON | null): E | null => {
-            return Optional_decode(json, E_decode);
+    const e4 = OptionalField_decode<(E | null)[], (E_JSON | null)[]>(json.e4, (json: (E_JSON | null)[]): (E | null)[] => {
+        return Array_decode<E | null, E_JSON | null>(json, (json: E_JSON | null): E | null => {
+            return Optional_decode<E, E_JSON>(json, E_decode);
         });
     });
     return {
@@ -256,13 +256,13 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
-    const e1 = Dictionary_decode(json.e1, E_decode);
-    const e2 = Dictionary_decode(json.e2, (json: (E_JSON | null)[]): (E | null)[] => {
-        return Array_decode(json, (json: E_JSON | null): E | null => {
-            return Optional_decode(json, E_decode);
+    const e1 = Dictionary_decode<E, E_JSON>(json.e1, E_decode);
+    const e2 = Dictionary_decode<(E | null)[], (E_JSON | null)[]>(json.e2, (json: (E_JSON | null)[]): (E | null)[] => {
+        return Array_decode<E | null, E_JSON | null>(json, (json: E_JSON | null): E | null => {
+            return Optional_decode<E, E_JSON>(json, E_decode);
         });
     });
-    const e3 = Dictionary_decode(json.e3, identity);
+    const e3 = Dictionary_decode<number, number>(json.e3, identity);
     return {
         e1: e1,
         e2: e2,
@@ -271,9 +271,9 @@ export function S_decode(json: S_JSON): S {
 }
 """, """
 export function S_encode(entity: S): S_JSON {
-    const e1 = Dictionary_encode(entity.e1, identity);
-    const e2 = Dictionary_encode(entity.e2, identity);
-    const e3 = Dictionary_encode(entity.e3, identity);
+    const e1 = Dictionary_encode<E, E_JSON>(entity.e1, identity);
+    const e2 = Dictionary_encode<(E | null)[], (E_JSON | null)[]>(entity.e2, identity);
+    const e3 = Dictionary_encode<number, number>(entity.e3, identity);
     return {
         e1: e1,
         e2: e2,
@@ -305,10 +305,12 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
-    const a = Dictionary_decode(json.a, (json: {
+    const a = Dictionary_decode<Map<string, number>, {
+        [key: string]: number;
+    }>(json.a, (json: {
         [key: string]: number;
     }): Map<string, number> => {
-        return Dictionary_decode(json, identity);
+        return Dictionary_decode<number, number>(json, identity);
     });
     return {
         a: a
@@ -316,10 +318,12 @@ export function S_decode(json: S_JSON): S {
 }
 """, """
 export function S_encode(entity: S): S_JSON {
-    const a = Dictionary_encode(entity.a, (entity: Map<string, number>): {
+    const a = Dictionary_encode<Map<string, number>, {
+        [key: string]: number;
+    }>(entity.a, (entity: Map<string, number>): {
         [key: string]: number;
     } => {
-        return Dictionary_encode(entity, identity);
+        return Dictionary_encode<number, number>(entity, identity);
     });
     return {
         a: a
@@ -347,7 +351,7 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
-    const a = OptionalField_decode(json.a, S_decode);
+    const a = OptionalField_decode<S, S_JSON>(json.a, S_decode);
     return {
         a: a
     };

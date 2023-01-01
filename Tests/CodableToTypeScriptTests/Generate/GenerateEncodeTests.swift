@@ -105,11 +105,11 @@ export type S_JSON = {
 """, """
 export function S_encode(entity: S): S_JSON {
     const a = Date_encode(entity.a);
-    const b = OptionalField_encode(entity.b, Date_encode);
-    const c = OptionalField_encode(entity.c, (entity: Date | null): string | null => {
-        return Optional_encode(entity, Date_encode);
+    const b = OptionalField_encode<Date, string>(entity.b, Date_encode);
+    const c = OptionalField_encode<Date | null, string | null>(entity.c, (entity: Date | null): string | null => {
+        return Optional_encode<Date, string>(entity, Date_encode);
     });
-    const d = Array_encode(entity.d, Date_encode);
+    const d = Array_encode<Date, string>(entity.d, Date_encode);
     return {
         a: a,
         b: b,

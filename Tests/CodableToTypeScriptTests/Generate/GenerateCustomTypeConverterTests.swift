@@ -92,9 +92,9 @@ export type S_JSON = {
 """, """
 export function S_decode(json: S_JSON): S {
     const a = Custom_decode(json.a);
-    const b = Array_decode(json.b, Custom_decode);
-    const c = Array_decode(json.c, (json: Custom_JSON[]): Custom[] => {
-        return Array_decode(json, Custom_decode);
+    const b = Array_decode<Custom, Custom_JSON>(json.b, Custom_decode);
+    const c = Array_decode<Custom[], Custom_JSON[]>(json.c, (json: Custom_JSON[]): Custom[] => {
+        return Array_decode<Custom, Custom_JSON>(json, Custom_decode);
     });
     return {
         a: a,
@@ -105,9 +105,9 @@ export function S_decode(json: S_JSON): S {
 """, """
 export function S_encode(entity: S): S_JSON {
     const a = Custom_encode(entity.a);
-    const b = Array_encode(entity.b, Custom_encode);
-    const c = Array_encode(entity.c, (entity: Custom[]): Custom_JSON[] => {
-        return Array_encode(entity, Custom_encode);
+    const b = Array_encode<Custom, Custom_JSON>(entity.b, Custom_encode);
+    const c = Array_encode<Custom[], Custom_JSON[]>(entity.c, (entity: Custom[]): Custom_JSON[] => {
+        return Array_encode<Custom, Custom_JSON>(entity, Custom_encode);
     });
     return {
         a: a,

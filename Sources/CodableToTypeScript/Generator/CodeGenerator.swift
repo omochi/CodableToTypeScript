@@ -91,14 +91,28 @@ public final class CodeGenerator {
         genericArgs: [any SType],
         json: any TSExpr
     ) throws -> any TSExpr {
-        var args: [any TSExpr] = [json]
-
-        for arg in genericArgs {
-            let decode = try converter(for: arg).boundDecode()
-            args.append(decode)
+        let genericArgs = try genericArgs.map {
+            try converter(for: $0)
         }
 
-        return TSCallExpr(callee: callee, args: args)
+        var args: [any TSExpr] = [json]
+
+        args += try genericArgs.map { (arg) in
+            return try arg.boundDecode()
+        }
+
+        let callGenericArgs: [any TSType] = try genericArgs.flatMap { (arg) in
+            return [
+                try arg.type(for: .entity),
+                try arg.type(for: .json)
+            ]
+        }
+
+        return TSCallExpr(
+            callee: callee,
+            genericArgs: callGenericArgs,
+            args: args
+        )
     }
 
     public func callEncode(
@@ -106,14 +120,28 @@ public final class CodeGenerator {
         genericArgs: [any SType],
         entity: any TSExpr
     ) throws -> any TSExpr {
-        var args: [any TSExpr] = [entity]
-
-        for arg in genericArgs {
-            let encode = try converter(for: arg).boundEncode()
-            args.append(encode)
+        let genericArgs = try genericArgs.map {
+            try converter(for: $0)
         }
 
-        return TSCallExpr(callee: callee, args: args)
+        var args: [any TSExpr] = [entity]
+
+        args += try genericArgs.map { (arg) in
+            return try arg.boundEncode()
+        }
+
+        let callGenericArgs: [any TSType] = try genericArgs.flatMap { (arg) in
+            return [
+                try arg.type(for: .entity),
+                try arg.type(for: .json)
+            ]
+        }
+
+        return TSCallExpr(
+            callee: callee,
+            genericArgs: callGenericArgs,
+            args: args
+        )
     }
 
     public func tagRecord(

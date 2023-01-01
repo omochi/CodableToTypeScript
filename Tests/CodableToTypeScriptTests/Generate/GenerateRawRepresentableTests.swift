@@ -121,7 +121,7 @@ export type S_JSON = number | null;
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        rawValue: json ?? undefined
+        rawValue: json as number | null ?? undefined
     };
 }
 """, """
@@ -152,12 +152,12 @@ export type S_JSON = K_JSON | null;
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        rawValue: Optional_decode(json, K_decode) ?? undefined
+        rawValue: Optional_decode<K, K_JSON>(json, K_decode) ?? undefined
     };
 }
 """, """
 export function S_encode(entity: S): S_JSON {
-    return OptionalField_encode(entity.rawValue, K_encode) ?? null;
+    return OptionalField_encode<K, K_JSON>(entity.rawValue, K_encode) ?? null;
 }
 """
         ])
@@ -179,7 +179,7 @@ export type S_JSON = number | null;
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        rawValue: json ?? undefined
+        rawValue: json as number | null ?? undefined
     };
 }
 """, """
@@ -210,13 +210,13 @@ export type S_JSON = K_JSON | null;
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        rawValue: Optional_decode(json, K_decode) ?? undefined
+        rawValue: Optional_decode<K, K_JSON>(json, K_decode) ?? undefined
     };
 }
 """, """
 export function S_encode(entity: S): S_JSON {
-    return OptionalField_encode(entity.rawValue, (entity: K | null): K_JSON | null => {
-        return Optional_encode(entity, K_encode);
+    return OptionalField_encode<K | null, K_JSON | null>(entity.rawValue, (entity: K | null): K_JSON | null => {
+        return Optional_encode<K, K_JSON>(entity, K_encode);
     }) ?? null;
 }
 """
@@ -239,12 +239,12 @@ export type S_JSON = string[];
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        rawValue: json
+        rawValue: json as string[]
     };
 }
 """, """
 export function S_encode(entity: S): S_JSON {
-    return entity.rawValue;
+    return entity.rawValue as string[];
 }
 """]
         )
@@ -396,12 +396,12 @@ export type S_JSON = K_JSON<string>;
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        rawValue: K_decode(json, Date_decode)
+        rawValue: K_decode<Date, string>(json, Date_decode)
     };
 }
 """, """
 export function S_encode(entity: S): S_JSON {
-    return K_encode(entity.rawValue, Date_encode);
+    return K_encode<Date, string>(entity.rawValue, Date_encode);
 }
 """
                        ]
@@ -430,7 +430,7 @@ export type S_JSON = K_JSON<E_JSON>;
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        rawValue: K_decode(json, E_decode)
+        rawValue: K_decode<E, E_JSON>(json, E_decode)
     };
 }
 """, """
@@ -462,12 +462,12 @@ export type S_JSON = K<number>;
 """, """
 export function S_decode(json: S_JSON): S {
     return {
-        rawValue: json
+        rawValue: json as K<number>
     };
 }
 """, """
 export function S_encode(entity: S): S_JSON {
-    return entity.rawValue;
+    return entity.rawValue as K<number>;
 }
 """
                        ]
@@ -494,12 +494,12 @@ export type S_JSON<U_JSON> = K_JSON<U_JSON>;
 """, """
 export function S_decode<U, U_JSON>(json: S_JSON<U_JSON>, U_decode: (json: U_JSON) => U): S<U> {
     return {
-        rawValue: K_decode(json, U_decode)
+        rawValue: K_decode<U, U_JSON>(json, U_decode)
     };
 }
 """, """
 export function S_encode<U, U_JSON>(entity: S<U>, U_encode: (entity: U) => U_JSON): S_JSON<U_JSON> {
-    return K_encode(entity.rawValue, U_encode);
+    return K_encode<U, U_JSON>(entity.rawValue, U_encode);
 }
 """
                        ]
@@ -551,14 +551,14 @@ export type K_JSON = {
 }
 """, """
 export function K_decode(json: K_JSON): K {
-    const a = S_decode(json.a, identity);
+    const a = S_decode<number, number>(json.a, identity);
     return {
         a: a
     };
 }
 """, """
 export function K_encode(entity: K): K_JSON {
-    const a = S_encode(entity.a, identity);
+    const a = S_encode<number, number>(entity.a, identity);
     return {
         a: a
     };

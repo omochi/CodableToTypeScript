@@ -64,19 +64,22 @@ export type E_JSON = {
 export function E_decode(json: E_JSON): E {
     if ("a" in json) {
         const j = json.a;
+        const x = j.x;
+        const y = j.y;
         return {
             kind: "a",
             a: {
-                x: j.x,
-                y: j.y
+                x: x,
+                y: y
             }
         };
     } else if ("b" in json) {
         const j = json.b;
+        const _0 = j._0 as string[];
         return {
             kind: "b",
             b: {
-                _0: j._0
+                _0: _0
             }
         };
     } else {
@@ -179,18 +182,20 @@ export type R_JSON<T_JSON> = {
 export function R_decode<T, T_JSON>(json: R_JSON<T_JSON>, T_decode: (json: T_JSON) => T): R<T> {
     if ("s" in json) {
         const j = json.s;
+        const _0 = T_decode(j._0);
         return {
             kind: "s",
             s: {
-                _0: T_decode(j._0)
+                _0: _0
             }
         };
     } else if ("f" in json) {
         const j = json.f;
+        const _0 = E_decode(j._0);
         return {
             kind: "f",
             f: {
-                _0: E_decode(j._0)
+                _0: _0
             }
         };
     } else {

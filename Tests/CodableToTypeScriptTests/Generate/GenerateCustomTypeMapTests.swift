@@ -106,9 +106,9 @@ export type S_JSON = {
 """, """
 export function S_decode(json: S_JSON): S {
     const a = Date_decode(json.a);
-    const b = Array_decode(json.b, Date_decode);
-    const c = Array_decode(json.c, (json: string[]): Date[] => {
-        return Array_decode(json, Date_decode);
+    const b = Array_decode<Date, string>(json.b, Date_decode);
+    const c = Array_decode<Date[], string[]>(json.c, (json: string[]): Date[] => {
+        return Array_decode<Date, string>(json, Date_decode);
     });
     return {
         a: a,
@@ -256,11 +256,11 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
-    const a = Vector2_decode(json.a, identity);
-    const b = Vector2_decode(json.b, Date_decode);
-    const c = Array_decode(json.c, (json: Vector2_JSON<Vector2_JSON<number>>): Vector2<Vector2<number>> => {
-        return Vector2_decode(json, (json: Vector2_JSON<number>): Vector2<number> => {
-            return Vector2_decode(json, identity);
+    const a = Vector2_decode<number, number>(json.a, identity);
+    const b = Vector2_decode<Date, string>(json.b, Date_decode);
+    const c = Array_decode<Vector2<Vector2<number>>, Vector2_JSON<Vector2_JSON<number>>>(json.c, (json: Vector2_JSON<Vector2_JSON<number>>): Vector2<Vector2<number>> => {
+        return Vector2_decode<Vector2<number>, Vector2_JSON<number>>(json, (json: Vector2_JSON<number>): Vector2<number> => {
+            return Vector2_decode<number, number>(json, identity);
         });
     });
     return {

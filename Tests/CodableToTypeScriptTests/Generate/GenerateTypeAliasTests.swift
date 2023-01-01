@@ -50,11 +50,11 @@ export type A<T> = S<T>;
 export type A_JSON<T_JSON> = S_JSON<T_JSON>;
 """, """
 export function A_decode<T, T_JSON>(json: A_JSON<T_JSON>, T_decode: (json: T_JSON) => T): A<T> {
-    return S_decode(json, T_decode);
+    return S_decode<T, T_JSON>(json, T_decode);
 }
 """, """
 export function A_encode<T, T_JSON>(entity: A<T>, T_encode: (entity: T) => T_JSON): A_JSON<T_JSON> {
-    return S_encode(entity, T_encode);
+    return S_encode<T, T_JSON>(entity, T_encode);
 }
 """
         ])
@@ -96,11 +96,11 @@ export type S_A<T> = E<T>;
 export type S_A_JSON<T_JSON> = E_JSON<T_JSON>;
 """, """
 export function S_A_decode<T, T_JSON>(json: S_A_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S_A<T> {
-    return E_decode(json, T_decode);
+    return E_decode<T, T_JSON>(json, T_decode);
 }
 """, """
 export function S_A_encode<T, T_JSON>(entity: S_A<T>, T_encode: (entity: T) => T_JSON): S_A_JSON<T_JSON> {
-    return E_encode(entity, T_encode);
+    return E_encode<T, T_JSON>(entity, T_encode);
 }
 """
             ]
@@ -134,7 +134,7 @@ export type User_ID = GenericID<User>;
 export type User_ID_JSON = GenericID_JSON<User_JSON>;
 """, """
 export function User_ID_decode(json: User_ID_JSON): User_ID {
-    return GenericID_decode(json, User_decode);
+    return GenericID_decode<User, User_JSON>(json, User_decode);
 }
 """
             ]
