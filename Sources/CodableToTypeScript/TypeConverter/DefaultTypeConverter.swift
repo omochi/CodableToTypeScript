@@ -179,14 +179,10 @@ public struct DefaultTypeConverter {
 
         var decodeGenericParams: [TSTypeParameterNode] = []
         for param in genericParams {
-            decodeGenericParams.append(
-                .init(try param.name(for: .entity))
-            )
-        }
-        for param in genericParams {
-            decodeGenericParams.append(
+            decodeGenericParams += [
+                .init(try param.name(for: .entity)),
                 .init(try param.name(for: .json))
-            )
+            ]
         }
 
         var params: [TSFunctionType.Param] = [
@@ -329,14 +325,10 @@ public struct DefaultTypeConverter {
 
         var encodeGenericParams: [TSTypeParameterNode] = []
         for param in genericParams {
-            encodeGenericParams.append(
-                .init(try param.name(for: .entity))
-            )
-        }
-        for param in genericParams {
-            encodeGenericParams.append(
+            encodeGenericParams += [
+                .init(try param.name(for: .entity)),
                 .init(try param.name(for: .json))
-            )
+            ]
         }
 
         var params: [TSFunctionType.Param] = [

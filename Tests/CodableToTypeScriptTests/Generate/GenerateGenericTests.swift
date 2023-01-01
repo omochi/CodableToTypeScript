@@ -253,8 +253,8 @@ export type S_JSON<T_JSON, U_JSON> = {
 """, """
 export function S_decode<
     T,
-    U,
     T_JSON,
+    U,
     U_JSON
 >(json: S_JSON<T_JSON, U_JSON>, T_decode: (json: T_JSON) => T, U_decode: (json: U_JSON) => U): S<T, U> {
     const a = K_decode<T, T_JSON>(json.a, T_decode);
