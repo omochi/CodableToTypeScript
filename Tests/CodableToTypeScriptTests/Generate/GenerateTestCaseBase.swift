@@ -23,6 +23,9 @@ class GenerateTestCaseBase: XCTestCase {
 
     func dateTypeExternal() -> ExternalReference {
         return ExternalReference(
+            symbols: [
+                "Date_decode", "Date_encode"
+            ],
             code: """
             export function Date_decode(json: string): Date { throw 0; }
             export function Date_encode(date: Date): string { throw 0; }
@@ -56,9 +59,6 @@ class GenerateTestCaseBase: XCTestCase {
                 typeMap: typeMap
             )
 
-            var externalReference: ExternalReference = externalReference ?? ExternalReference()
-            externalReference.add(entries: typeConverterProvider.typeMap.entries)
-
             let packageTester = PackageBuildTester(
                 context: context,
                 typeConverterProvider: typeConverterProvider,
@@ -73,7 +73,7 @@ class GenerateTestCaseBase: XCTestCase {
             func generate(type: any TypeDecl) throws -> TSSourceFile {
                 let code = try gen.converter(for: type.declaredInterfaceType).source()
                 let imports = try code.buildAutoImportDecls(
-                    from: "test.ts",
+                    from: URL(fileURLWithPath: "test.ts"),
                     symbolTable: SymbolTable(),
                     fileExtension: packageTester.packageGenerator.importFileExtension,
                     defaultFile: ".."

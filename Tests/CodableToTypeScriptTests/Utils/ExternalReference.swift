@@ -9,10 +9,4 @@ public struct ExternalReference {
 
     public var symbols: Set<String>
     public var code: String
-
-    public mutating func add(entries: [TypeMap.Entry]) {
-        for entry in entries {
-            symbols.formUnion(entry.symbols)
-        }
-    }
 }
