@@ -12,6 +12,24 @@ class GenerateTestCaseBase: XCTestCase {
     // debug
     var prints: Prints { .none }
 
+    func dateTypeMap() -> TypeMap {
+        var typeMap = TypeMap()
+        typeMap.table["Date"] = .coding(
+            entityType: "Date", jsonType: "string",
+            decode: "Date_decode", encode: "Date_encode"
+        )
+        return typeMap
+    }
+
+    func dateTypeExternal() -> ExternalReference {
+        return ExternalReference(
+            code: """
+            export function Date_decode(json: string): Date { throw 0; }
+            export function Date_encode(date: Date): string { throw 0; }
+            """
+        )
+    }
+
     func assertGenerate(
         context: Context? = nil,
         source: String,

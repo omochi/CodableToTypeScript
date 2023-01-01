@@ -2,15 +2,6 @@ import XCTest
 import CodableToTypeScript
 
 final class GenerateRawRepresentableTests: GenerateTestCaseBase {
-    func dateTypeMap() -> TypeMap {
-        var typeMap = TypeMap()
-        typeMap.table["Date"] = .coding(
-            entityType: "Date", jsonType: "string",
-            decode: "Date_decode", encode: "Date_encode"
-        )
-        return typeMap
-    }
-
     func testStoredProperty() throws {
         try assertGenerate(
             source: """
@@ -325,6 +316,7 @@ struct S: RawRepresentable {
 }
 """,
             typeMap: dateTypeMap(),
+            externalReference: dateTypeExternal(),
             expecteds: ["""
 export type S = {
     rawValue: K;
@@ -354,6 +346,7 @@ struct S: RawRepresentable {
 }
 """,
             typeMap: dateTypeMap(),
+            externalReference: dateTypeExternal(),
             expecteds: ["""
 export type S = {
     rawValue: Date;
@@ -387,6 +380,7 @@ struct S: RawRepresentable {
 }
 """,
             typeMap: dateTypeMap(),
+            externalReference: dateTypeExternal(),
             expecteds: ["""
 export type S = {
     rawValue: K<Date>;
@@ -581,6 +575,7 @@ struct User {
 }
 """,
             typeMap: dateTypeMap(),
+            externalReference: dateTypeExternal(),
             expecteds: ["""
 export type User_ID = {
     rawValue: string;

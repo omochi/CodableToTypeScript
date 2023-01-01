@@ -2,24 +2,6 @@ import XCTest
 import CodableToTypeScript
 
 final class GenerateEncodeTests: GenerateTestCaseBase {
-    func dateTypeMap() -> TypeMap {
-        var typeMap = TypeMap()
-        typeMap.table["Date"] = .coding(
-            entityType: "Date", jsonType: "string",
-            decode: "Date_decode", encode: "Date_encode"
-        )
-        return typeMap
-    }
-
-    func dateTypeExternal() -> ExternalReference {
-        return ExternalReference(
-            code: """
-            export function Date_decode(json: string): Date { throw 0; }
-            export function Date_encode(date: Date): string { throw 0; }
-            """
-        )
-    }
-
     func testEnum() throws {
         try assertGenerate(
             source: """
