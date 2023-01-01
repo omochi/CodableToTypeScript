@@ -48,6 +48,8 @@ struct PackageBuildTester {
             externalReference: externalReference,
             outputDirectory: directory.appendingPathComponent("src")
         )
+
+        self.isSkipped = Env.get("SKIP_TSC") != nil
     }
 
     static func testName(file: StaticString) -> String {
@@ -68,8 +70,11 @@ struct PackageBuildTester {
     var fileManager: FileManager
     var directory: URL
     var packageGenerator: PackageGenerator
+    var isSkipped: Bool
 
     func build(module: Module) throws {
+        if isSkipped { return }
+        
         let entries = try packageGenerator.generate(modules: [module])
         try packageGenerator.write(entries: entries)
         try writeTSConfig()
