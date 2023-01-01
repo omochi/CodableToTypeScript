@@ -209,56 +209,67 @@ private struct DecodeFuncGen {
         )
     }
 
-    private func decodeCaseObject(
-        caseElement ce: EnumCaseElementDecl,
+    private func decodeAssociatedValues(
+        caseElement: EnumCaseElementDecl,
         json: any TSExpr
-    ) throws -> any TSExpr {
-        var fields: [TSObjectExpr.Field] = []
-
-        for value in ce.associatedValues {
+    ) throws -> [TSVarDecl] {
+        return try caseElement.associatedValues.map { (value) in
             let label = value.codableLabel
+
             var expr: any TSExpr = TSMemberExpr(base: json, name: label)
 
             expr = try generator.converter(for: value.interfaceType)
                 .callDecodeField(json: expr)
 
-            let field = TSObjectExpr.Field.named(
-                name: label, value: expr
+            return TSVarDecl(
+                kind: .const, name: label,
+                initializer: expr
             )
-            fields.append(field)
         }
-
-        return TSObjectExpr(fields)
     }
 
-    private func thenCode(caseElement ce: EnumCaseElementDecl) throws -> TSBlockStmt {
+    private func buildCaseObject(caseElement: EnumCaseElementDecl) -> TSObjectExpr {
+        return TSObjectExpr(caseElement.associatedValues.map { (value) in
+            let label = value.codableLabel
+            return TSObjectExpr.Field.named(
+                name: label,
+                value: TSIdentExpr(label)
+            )
+        })
+    }
+
+    private func thenCode(caseElement: EnumCaseElementDecl) throws -> TSBlockStmt {
         var block: [any ASTNode] = []
 
-        let varDecl = TSVarDecl(
-            kind: .const, name: "j",
-            initializer: TSMemberExpr(
-                base: TSIdentExpr.json,
-                name: ce.name
-            )
-        )
-        if !ce.associatedValues.isEmpty {
-            block.append(varDecl)
-        }
-
-        let fields: [TSObjectExpr.Field] = [
-            .named(
-                name: "kind",
-                value: TSStringLiteralExpr(ce.name)
-            ),
-            .named(
-                name: ce.name,
-                value: try decodeCaseObject(
-                    caseElement: ce,
-                    json: TSIdentExpr("j")
+        if !caseElement.associatedValues.isEmpty {
+            let j = TSVarDecl(
+                kind: .const, name: "j",
+                initializer: TSMemberExpr(
+                    base: TSIdentExpr.json,
+                    name: caseElement.name
                 )
             )
-        ]
-        block.append(TSReturnStmt(TSObjectExpr(fields)))
+            block.append(j)
+        }
+
+        block += try decodeAssociatedValues(
+            caseElement: caseElement,
+            json: TSIdentExpr("j")
+        )
+
+        let enumValue = TSObjectExpr([
+            .named(
+                name: "kind",
+                value: TSStringLiteralExpr(caseElement.name)
+            ),
+            .named(
+                name: caseElement.name,
+                value: buildCaseObject(caseElement: caseElement)
+            )
+        ])
+
+        block.append(TSReturnStmt(enumValue))
+
         return TSBlockStmt(block)
     }
 
@@ -323,21 +334,29 @@ private struct EncodeFuncGen {
     var converter: EnumConverter
     var type: EnumDecl
 
-    func encodeCaseValue(element: EnumCaseElementDecl) throws -> TSObjectExpr {
-        var fields: [TSObjectExpr.Field] = []
+    func encodeAssociatedValues(element: EnumCaseElementDecl) throws -> [TSVarDecl] {
+        return try element.associatedValues.map { (value) in
+            var expr: any TSExpr = TSMemberExpr(
+                base: TSIdentExpr("e"), name: value.codableLabel
+            )
 
-        for value in element.associatedValues {
-            var expr: any TSExpr = TSMemberExpr(base: TSIdentExpr("e"), name: value.codableLabel)
+            expr = try generator.converter(for: value.interfaceType)
+                .callEncodeField(entity: expr)
 
-            expr = try generator.converter(for: value.interfaceType).callEncodeField(entity: expr)
-
-            fields.append(.named(
-                name: value.codableLabel,
-                value: expr
-            ))
+            return TSVarDecl(
+                kind: .const, name: value.codableLabel,
+                initializer: expr
+            )
         }
+    }
 
-        return TSObjectExpr(fields)
+    func buildCaseObject(element: EnumCaseElementDecl) throws -> TSObjectExpr {
+        return TSObjectExpr(element.associatedValues.map { (value) in
+            return TSObjectExpr.Field.named(
+                name: value.codableLabel,
+                value: TSIdentExpr(value.codableLabel)
+            )
+        })
     }
 
     func caseBody(element: EnumCaseElementDecl) throws -> [any ASTNode] {
@@ -351,7 +370,9 @@ private struct EncodeFuncGen {
             code.append(e)
         }
 
-        let innerObject = try encodeCaseValue(element: element)
+        code += try encodeAssociatedValues(element: element)
+
+        let innerObject = try buildCaseObject(element: element)
 
         let outerObject = TSObjectExpr([
             .named(name: element.name, value: innerObject)

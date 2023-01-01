@@ -60,9 +60,10 @@ export function E_encode(entity: E): E_JSON {
     case "b":
         {
             const e = entity.b;
+            const _0 = Date_encode(e._0);
             return {
                 b: {
-                    _0: Date_encode(e._0)
+                    _0: _0
                 }
             };
         }

@@ -206,7 +206,7 @@ export type S_JSON<T_JSON> = {
 export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S<T> {
     const a = K_decode(json.a, T_decode);
     const b = L_decode(json.b, T_decode);
-    const c = json.c;
+    const c = json.c as X<T>;
     return {
         a: a,
         b: b,

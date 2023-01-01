@@ -37,10 +37,11 @@ export function E_decode(json: E_JSON): E {
         };
     } else if ("b" in json) {
         const j = json.b;
+        const _0 = j._0;
         return {
             kind: "b",
             b: {
-                _0: j._0
+                _0: _0
             }
         };
     } else {

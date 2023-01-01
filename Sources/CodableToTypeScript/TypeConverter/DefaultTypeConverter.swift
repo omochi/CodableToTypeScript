@@ -138,7 +138,7 @@ public struct DefaultTypeConverter {
         let converter = try self.converter()
         guard try converter.hasDecode() else {
             var expr = json
-            if try converter.hasJSONType() {
+            if try converter.hasJSONType() || !genericArgs.isEmpty {
                 expr = TSAsExpr(expr, try converter.type(for: .entity))
             }
             return expr
@@ -288,7 +288,7 @@ public struct DefaultTypeConverter {
         let converter = try self.converter()
         guard try converter.hasEncode() else {
             var expr = entity
-            if try converter.hasJSONType() {
+            if try converter.hasJSONType() || !genericArgs.isEmpty {
                 expr = TSAsExpr(expr, try converter.type(for: .json))
             }
             return expr
