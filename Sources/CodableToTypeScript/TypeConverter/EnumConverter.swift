@@ -205,7 +205,7 @@ private struct DecodeFuncGen {
         return TSInfixOperatorExpr(
             TSStringLiteralExpr(ce.name),
             "in",
-            TSIdentExpr("json")
+            TSIdentExpr.json
         )
     }
 
@@ -237,7 +237,7 @@ private struct DecodeFuncGen {
         let varDecl = TSVarDecl(
             kind: .const, name: "j",
             initializer: TSMemberExpr(
-                base: TSIdentExpr("json"),
+                base: TSIdentExpr.json,
                 name: ce.name
             )
         )
@@ -346,7 +346,7 @@ private struct EncodeFuncGen {
         if !element.associatedValues.isEmpty {
             let e = TSVarDecl(
                 kind: .const, name: "e",
-                initializer: TSMemberExpr(base: TSIdentExpr("entity"), name: element.name)
+                initializer: TSMemberExpr(base: TSIdentExpr.entity, name: element.name)
             )
             code.append(e)
         }
@@ -370,7 +370,7 @@ private struct EncodeFuncGen {
         }
 
         let `switch` = TSSwitchStmt(
-            expr: TSMemberExpr(base: TSIdentExpr("entity"), name: "kind")
+            expr: TSMemberExpr(base: TSIdentExpr.entity, name: "kind")
         )
 
         for caseElement in type.caseElements {
@@ -385,7 +385,7 @@ private struct EncodeFuncGen {
             TSDefaultStmt(elements: [
                 TSVarDecl(
                     kind: .const, name: "check", type: TSIdentType.never,
-                    initializer: TSIdentExpr("entity")
+                    initializer: TSIdentExpr.entity
                 ),
                 TSThrowStmt(TSNewExpr(callee: TSIdentType.error, args: [
                     TSInfixOperatorExpr(

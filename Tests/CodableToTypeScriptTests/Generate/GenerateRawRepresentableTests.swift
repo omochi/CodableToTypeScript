@@ -60,14 +60,16 @@ export type K_JSON = {
 };
 """, """
 export function K_decode(json: K_JSON): K {
+    const a = S_decode(json.a);
     return {
-        a: S_decode(json.a)
+        a: a
     };
 }
 """, """
 export function K_encode(entity: K): K_JSON {
+    const a = S_encode(entity.a);
     return {
-        a: S_encode(entity.a)
+        a: a
     };
 }
 """
@@ -549,14 +551,16 @@ export type K_JSON = {
 }
 """, """
 export function K_decode(json: K_JSON): K {
+    const a = S_decode(json.a, identity);
     return {
-        a: S_decode(json.a, identity)
+        a: a
     };
 }
 """, """
 export function K_encode(entity: K): K_JSON {
+    const a = S_encode(entity.a, identity);
     return {
-        a: S_encode(entity.a, identity)
+        a: a
     };
 }
 """]
@@ -605,16 +609,20 @@ export type User_JSON = {
 };
 """, """
 export function User_decode(json: User_JSON): User {
+    const id = User_ID_decode(json.id);
+    const date = Date_decode(json.date);
     return {
-        id: User_ID_decode(json.id),
-        date: Date_decode(json.date)
+        id: id,
+        date: date
     };
 }
 """, """
 export function User_encode(entity: User): User_JSON {
+    const id = User_ID_encode(entity.id);
+    const date = Date_encode(entity.date);
     return {
-        id: User_ID_encode(entity.id),
-        date: Date_encode(entity.date)
+        id: id,
+        date: date
     };
 }
 """

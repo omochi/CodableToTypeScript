@@ -6,6 +6,8 @@ struct StructConverter: TypeConverter {
     var `struct`: StructType
     var swiftType: any SType { `struct` }
 
+    private var decl: StructDecl { `struct`.decl }
+
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         switch target {
         case .entity: break
@@ -15,7 +17,7 @@ struct StructConverter: TypeConverter {
 
         var fields: [TSObjectType.Field] = []
 
-        for property in `struct`.decl.storedProperties {
+        for property in decl.storedProperties {
             let (type, isOptional) = try generator.converter(for: property.interfaceType)
                 .fieldType(for: target)
 
@@ -54,7 +56,7 @@ struct StructConverter: TypeConverter {
     func decodePresence() throws -> CodecPresence {
         let map = `struct`.contextSubstitutionMap()
 
-        let fields = try `struct`.decl.storedProperties.map {
+        let fields = try decl.storedProperties.map {
             try generator.converter(for: $0.interfaceType.subst(map: map))
         }
 
@@ -73,18 +75,29 @@ struct StructConverter: TypeConverter {
     }
 
     func decodeDecl() throws -> TSFunctionDecl? {
-        guard let decl = try decodeSignature() else { return nil }
+        guard let function = try decodeSignature() else { return nil }
 
         var fields: [TSObjectExpr.Field] = []
 
-        for field in `struct`.decl.storedProperties {
+        for field in decl.storedProperties {
             var expr: any TSExpr = TSMemberExpr(
-                base: TSIdentExpr("json"),
+                base: TSIdentExpr.json,
                 name: field.name
             )
 
             expr = try generator.converter(for: field.interfaceType)
                 .callDecodeField(json: expr)
+
+            let def = TSVarDecl(
+                kind: .const, name: field.name,
+                initializer: expr
+            )
+
+            function.body.elements.append(def)
+        }
+
+        for field in decl.storedProperties {
+            let expr = TSIdentExpr(field.name)
 
             fields.append(
                 .named(
@@ -94,17 +107,17 @@ struct StructConverter: TypeConverter {
             )
         }
 
-        decl.body.elements.append(
+        function.body.elements.append(
             TSReturnStmt(TSObjectExpr(fields))
         )
 
-        return decl
+        return function
     }
 
     func encodePresence() throws -> CodecPresence {
         let map = `struct`.contextSubstitutionMap()
 
-        let fields = try `struct`.decl.storedProperties.map {
+        let fields = try decl.storedProperties.map {
             try generator.converter(for: $0.interfaceType.subst(map: map))
         }
 
@@ -123,18 +136,29 @@ struct StructConverter: TypeConverter {
     }
 
     func encodeDecl() throws -> TSFunctionDecl? {
-        guard let decl = try encodeSignature() else { return nil }
+        guard let function = try encodeSignature() else { return nil }
 
         var fields: [TSObjectExpr.Field] = []
 
-        for field in `struct`.decl.storedProperties {
+        for field in decl.storedProperties {
             var expr: any TSExpr = TSMemberExpr(
-                base: TSIdentExpr("entity"),
+                base: TSIdentExpr.entity,
                 name: field.name
             )
 
             expr = try generator.converter(for: field.interfaceType)
                 .callEncodeField(entity: expr)
+
+            let def = TSVarDecl(
+                kind: .const, name: field.name,
+                initializer: expr
+            )
+
+            function.body.elements.append(def)
+        }
+
+        for field in decl.storedProperties {
+            let expr = TSIdentExpr(field.name)
 
             fields.append(
                 .named(
@@ -144,11 +168,11 @@ struct StructConverter: TypeConverter {
             )
         }
 
-        decl.body.elements.append(
+        function.body.elements.append(
             TSReturnStmt(TSObjectExpr(fields))
         )
 
-        return decl
+        return function
     }
 
 }

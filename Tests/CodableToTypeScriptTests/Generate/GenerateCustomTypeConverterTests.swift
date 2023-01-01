@@ -67,8 +67,17 @@ struct S {
     var c: [[Custom]]
 }
 """,
-        typeConverterProvider: typeConverterProvider,
-        expecteds: ["""
+            typeConverterProvider: typeConverterProvider,
+            externalReference: ExternalReference(
+                symbols: ["Custom", "Custom_JSON", "Custom_decode", "Custom_encode"],
+                code: """
+                export type Custom = {};
+                export type Custom_JSON = string;
+                export function Custom_decode(json: Custom_JSON): Custom { throw 0; }
+                export function Custom_encode(entity: Custom): Custom_JSON { throw 0; }
+                """
+            ),
+            expecteds: ["""
 export type S = {
     a: Custom;
     b: Custom[];
@@ -82,22 +91,28 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
+    const a = Custom_decode(json.a);
+    const b = Array_decode(json.b, Custom_decode);
+    const c = Array_decode(json.c, (json: Custom_JSON[]): Custom[] => {
+        return Array_decode(json, Custom_decode);
+    });
     return {
-        a: Custom_decode(json.a),
-        b: Array_decode(json.b, Custom_decode),
-        c: Array_decode(json.c, (json: Custom_JSON[]): Custom[] => {
-            return Array_decode(json, Custom_decode);
-        })
+        a: a,
+        b: b,
+        c: c
     };
 }
 """, """
 export function S_encode(entity: S): S_JSON {
+    const a = Custom_encode(entity.a);
+    const b = Array_encode(entity.b, Custom_encode);
+    const c = Array_encode(entity.c, (entity: Custom[]): Custom_JSON[] => {
+        return Array_encode(entity, Custom_encode);
+    });
     return {
-        a: Custom_encode(entity.a),
-        b: Array_encode(entity.b, Custom_encode),
-        c: Array_encode(entity.c, (entity: Custom[]): Custom_JSON[] => {
-            return Array_encode(entity, Custom_encode);
-        })
+        a: a,
+        b: b,
+        c: c
     };
 }
 """

@@ -103,13 +103,17 @@ export type S_JSON = {
 };
 """, """
 export function S_encode(entity: S): S_JSON {
+    const a = Date_encode(entity.a);
+    const b = OptionalField_encode(entity.b, Date_encode);
+    const c = OptionalField_encode(entity.c, (entity: Date | null): string | null => {
+        return Optional_encode(entity, Date_encode);
+    });
+    const d = Array_encode(entity.d, Date_encode);
     return {
-        a: Date_encode(entity.a),
-        b: OptionalField_encode(entity.b, Date_encode),
-        c: OptionalField_encode(entity.c, (entity: Date | null): string | null => {
-            return Optional_encode(entity, Date_encode);
-        }),
-        d: Array_encode(entity.d, Date_encode)
+        a: a,
+        b: b,
+        c: c,
+        d: d
     };
 }
 """]
@@ -132,9 +136,11 @@ struct S {
             externalReference: dateTypeExternal(),
             expecteds: ["""
 export function S_encode(entity: S): S_JSON {
+    const a = entity.a as E_JSON;
+    const b = Date_encode(entity.b);
     return {
-        a: entity.a as E_JSON,
-        b: Date_encode(entity.b)
+        a: a,
+        b: b
     };
 }
 """

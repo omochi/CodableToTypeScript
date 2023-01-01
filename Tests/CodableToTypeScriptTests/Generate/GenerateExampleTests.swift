@@ -122,9 +122,11 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
+    const x = E1_decode(json.x);
+    const y = json.y;
     return {
-        x: E1_decode(json.x),
-        y: json.y
+        x: x,
+        y: y
     };
 }
 """]
@@ -236,9 +238,11 @@ export type S_JSON = {
 };
 """, """
 export function S_decode(json: S_JSON): S {
+    const a = json.a;
+    const b = S_K_decode(json.b);
     return {
-        a: json.a,
-        b: S_K_decode(json.b)
+        a: a,
+        b: b
     };
 }
 """, """
@@ -251,8 +255,9 @@ export type S_K_JSON = {
 };
 """, """
 export function S_K_decode(json: S_K_JSON): S_K {
+    const a = E_decode(json.a);
     return {
-        a: E_decode(json.a)
+        a: a
     };
 }
 """

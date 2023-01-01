@@ -112,7 +112,7 @@ public struct DefaultTypeConverter {
                 type: try converter.type(for: .json)
             )
             let result = try converter.type(for: .entity)
-            let expr = try converter.callDecode(json: TSIdentExpr("json"))
+            let expr = try converter.callDecode(json: TSIdentExpr.json)
             return TSClosureExpr(
                 params: [param],
                 result: result,
@@ -262,7 +262,7 @@ public struct DefaultTypeConverter {
                 type: try converter.type(for: .entity)
             )
             let result = try converter.type(for: .json)
-            let expr = try converter.callEncode(entity: TSIdentExpr("entity"))
+            let expr = try converter.callEncode(entity: TSIdentExpr.entity)
             return TSClosureExpr(
                 params: [param],
                 result: result,
