@@ -29,6 +29,7 @@ struct S<T, U> {
 """,
             typeMap: typeMap,
             externalReference: ExternalReference(
+                symbols: ["A", "B", "C", "Y"],
                 code: """
                 export type A = {};
                 export type B = {};

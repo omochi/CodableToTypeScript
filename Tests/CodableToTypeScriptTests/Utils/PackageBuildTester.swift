@@ -1,6 +1,7 @@
 import Foundation
 import CodableToTypeScript
 import SwiftTypeReader
+import TypeScriptAST
 
 struct PackageBuildTester {
     static let launchName: String = makeLaunchName()
@@ -25,7 +26,7 @@ struct PackageBuildTester {
         fileManager: FileManager = .default,
         context: Context,
         typeConverterProvider: TypeConverterProvider,
-        externalReference: ExternalReference,
+        externalReference: ExternalReference?,
         file: StaticString,
         line: UInt,
         function: StaticString
@@ -40,13 +41,25 @@ struct PackageBuildTester {
             .appendingPathComponent(Self.testName(file: file))
             .appendingPathComponent(Self.funcName(function: function) + "L\(line)")
 
+        self.externalReference = externalReference
+
+        let outDir = directory.appendingPathComponent("src")
+
+        var symbols = SymbolTable()
+        for symbol in externalReference?.symbols ?? [] {
+            symbols.add(
+                symbol: symbol,
+                file: .file(outDir.appendingPathComponent("externals.ts"))
+            )
+        }
+
         self.packageGenerator = PackageGenerator(
             context: context,
             fileManager: fileManager,
             typeConverterProvider: typeConverterProvider,
+            symbols: symbols,
             importFileExtension: .none,
-            externalReference: externalReference,
-            outputDirectory: directory.appendingPathComponent("src")
+            outputDirectory: outDir
         )
 
         self.isSkipped = Env.get("SKIP_TSC") != nil
@@ -69,6 +82,7 @@ struct PackageBuildTester {
     var typeConverterProvider: TypeConverterProvider
     var fileManager: FileManager
     var directory: URL
+    var externalReference: ExternalReference?
     var packageGenerator: PackageGenerator
     var isSkipped: Bool
 
@@ -77,8 +91,18 @@ struct PackageBuildTester {
         
         let entries = try packageGenerator.generate(modules: [module])
         try packageGenerator.write(entries: entries)
+        try writeExternals()
         try writeTSConfig()
         try buildTypeScript()
+    }
+
+    private func writeExternals() throws {
+        guard let externalReference else { return }
+        let data = externalReference.code.data(using: .utf8)!
+        try data.write(
+            to: packageGenerator.outputDirectory.appendingPathComponent("externals.ts"),
+            options: .atomic
+        )
     }
 
     private func writeTSConfig() throws {

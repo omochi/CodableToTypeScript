@@ -7,9 +7,8 @@ public final class PackageGenerator {
         context: SwiftTypeReader.Context,
         fileManager: FileManager = .default,
         typeConverterProvider: TypeConverterProvider = TypeConverterProvider(),
-        standardLibrarySymbols: Set<String> = SymbolTable.standardLibrarySymbols,
+        symbols: SymbolTable,
         importFileExtension: ImportFileExtension,
-        externalReference: ExternalReference,
         outputDirectory: URL
     ) {
         self.context = context
@@ -18,25 +17,23 @@ public final class PackageGenerator {
             context: context,
             typeConverterProvider: typeConverterProvider
         )
-        self.standardLibrarySymbols = standardLibrarySymbols
+        self.symbols = symbols
         self.importFileExtension = importFileExtension
-        self.externalReference = externalReference
         self.outputDirectory = outputDirectory
     }
 
     public let context: SwiftTypeReader.Context
     public let fileManager: FileManager
     public let codeGenerator: CodeGenerator
-    public let standardLibrarySymbols: Set<String>
+    public let symbols: SymbolTable
     public let importFileExtension: ImportFileExtension
-    public let externalReference: ExternalReference
     public let outputDirectory: URL
     public var didWrite: ((URL, Data) -> Void)?
 
     public func generate(modules: [Module]) throws -> [PackageEntry] {
         var entries: [PackageEntry] = [
             PackageEntry(
-                file: "common.ts",
+                file: path("common.ts"),
                 source: codeGenerator.generateHelperLibrary()
             )
         ]
@@ -51,20 +48,14 @@ public final class PackageGenerator {
                 let source = try typeConverter.source()
 
                 let entry = PackageEntry(
-                    file: "\(name).ts",
+                    file: path("\(name).ts"),
                     source: source
                 )
                 entries.append(entry)
             }
         }
 
-        var symbols = SymbolTable(standardLibrarySymbols: standardLibrarySymbols)
-
-        for symbol in externalReference.symbols {
-            if symbols.table[symbol] == nil {
-                symbols.add(symbol: symbol, file: .file("externals.ts"))
-            }
-        }
+        var symbols = self.symbols
 
         for entry in entries {
             symbols.add(source: entry.source, file: entry.file)
@@ -80,23 +71,17 @@ public final class PackageGenerator {
             source.replaceImportDecls(imports)
         }
 
-        if !externalReference.code.isEmpty {
-            let entry = PackageEntry(
-                file: "externals.ts",
-                source: TSSourceFile([
-                    TSCustomDecl(text: externalReference.code)
-                ])
-            )
-            entries.append(entry)
-        }
-
         return entries
+    }
+
+    private func path(_ name: String) -> URL {
+        outputDirectory.appendingPathComponent(name)
     }
 
     public func write(
         entry: PackageEntry
     ) throws {
-        let path = outputDirectory.appendingPathComponent(entry.file)
+        let path = entry.file
         try fileManager.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
 
         let data = entry.source.print().data(using: .utf8)!

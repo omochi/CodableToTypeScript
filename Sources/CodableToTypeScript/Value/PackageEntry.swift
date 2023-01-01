@@ -3,13 +3,13 @@ import TypeScriptAST
 
 public struct PackageEntry {
     public init(
-        file: String,
+        file: URL,
         source: TSSourceFile
     ) {
         self.file = file
         self.source = source
     }
     
-    public var file: String
+    public var file: URL
     public var source: TSSourceFile
 }

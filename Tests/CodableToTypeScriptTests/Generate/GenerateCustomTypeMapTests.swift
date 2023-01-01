@@ -43,6 +43,7 @@ struct S {
 """,
             typeMap: typeMap,
             externalReference: ExternalReference(
+                symbols: ["Date_decode"],
                 code: """
                 export function Date_decode(json: string): Date { throw 0; }
                 """
@@ -87,6 +88,7 @@ struct S {
 """,
             typeMap: typeMap,
             externalReference: ExternalReference(
+                symbols: ["Date_decode"],
                 code: """
                 export function Date_decode(json: string): Date { throw 0; }
                 """
@@ -136,6 +138,7 @@ struct S {
 """,
             typeMap: typeMap,
             externalReference: ExternalReference(
+                symbols: ["Date_encode"],
                 code: """
                 export function Date_encode(date: Date): string { throw 0; }
                 """
@@ -178,6 +181,7 @@ struct S {
 """,
             typeMap: typeMap,
             externalReference: ExternalReference(
+                symbols: ["Date_decode", "Date_encode"],
                 code: """
                 export function Date_decode(json: string): Date { throw 0; }
                 export function Date_encode(date: Date): string { throw 0; }
@@ -233,6 +237,11 @@ struct S {
 """,
             typeMap: typeMap,
             externalReference: ExternalReference(
+                symbols: [
+                    "Date_decode", "Date_encode",
+                    "Vector2", "Vector2_JSON",
+                    "Vector2_decode", "Vector2_encode"
+                ],
                 code: """
                 export function Date_decode(json: string): Date { throw 0; }
                 export function Date_encode(date: Date): string { throw 0; }
