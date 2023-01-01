@@ -110,8 +110,8 @@ export type S_JSON<A_JSON, B_JSON> = {
 """, """
 export function S_decode<
     A,
-    B,
     A_JSON,
+    B,
     B_JSON
 >(json: S_JSON<A_JSON, B_JSON>, A_decode: (json: A_JSON) => A, B_decode: (json: B_JSON) => B): S<A, B> {
     const a = A_decode(json.a);
@@ -149,10 +149,10 @@ export type S_JSON<A_JSON, B_JSON, C_JSON> = {
 """, """
 export function S_decode<
     A,
-    B,
-    C,
     A_JSON,
+    B,
     B_JSON,
+    C,
     C_JSON
 >(
     json: S_JSON<A_JSON, B_JSON, C_JSON>,
