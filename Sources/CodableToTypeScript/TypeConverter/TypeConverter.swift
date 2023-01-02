@@ -28,7 +28,7 @@ public protocol TypeConverter {
     func encodeSignature() throws -> TSFunctionDecl?
     func encodeDecl() throws -> TSFunctionDecl?
     func ownDecls() throws -> TypeOwnDeclarations
-    func source() throws -> TSSourceFile
+    func decls() throws -> [any TSDecl]
 }
 
 extension TypeConverter {
@@ -136,17 +136,19 @@ extension TypeConverter {
         )
     }
 
-    public func source() throws -> TSSourceFile {
-        var decls: [any ASTNode] = []
+    public func decls() throws -> [any TSDecl] {
+        var decls: [any TSDecl] = []
 
         if let typeDecl = swiftType.typeDecl {
             try typeDecl.walkTypeDecls { (type) in
-                let converter = try generator.converter(for: type.declaredInterfaceType)
-                decls += try converter.ownDecls().decls
+                if let converter = try? generator.converter(for: type.declaredInterfaceType) {
+                    decls += try converter.ownDecls().decls
+                }
+
                 return true
             }
         }
 
-        return TSSourceFile(decls)
+        return decls
     }
 }

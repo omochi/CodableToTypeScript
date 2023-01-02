@@ -4,8 +4,6 @@ import SwiftTypeReader
 import TypeScriptAST
 
 struct PackageBuildTester {
-    static let launchName: String = makeLaunchName()
-
     private static func makeLaunchName() -> String {
         let now = Date()
         let formatter = DateFormatter()
@@ -22,6 +20,18 @@ struct PackageBuildTester {
     }
     private static var isAddPathDone = false
 
+    private static func launchDirectory(fileManager: FileManager) -> URL {
+        if let dir = launchDirectoryCache { return dir }
+
+        let dir = fileManager.temporaryDirectory
+            .appendingPathComponent("CodableToTypeScriptTests")
+            .appendingPathComponent(makeLaunchName())
+        print("[PackageBuildTester]: \(dir.path)")
+        launchDirectoryCache = dir
+        return dir
+    }
+    private static var launchDirectoryCache: URL?
+
     init(
         fileManager: FileManager = .default,
         context: Context,
@@ -35,9 +45,7 @@ struct PackageBuildTester {
         self.typeConverterProvider = typeConverterProvider
         self.fileManager = fileManager
 
-        self.directory = fileManager.temporaryDirectory
-            .appendingPathComponent("CodableToTypeScriptTests")
-            .appendingPathComponent(Self.launchName)
+        self.directory = Self.launchDirectory(fileManager: fileManager)
             .appendingPathComponent(Self.testName(file: file))
             .appendingPathComponent(Self.funcName(function: function) + "L\(line)")
 

@@ -28,6 +28,7 @@ public final class PackageGenerator {
     public let symbols: SymbolTable
     public let importFileExtension: ImportFileExtension
     public let outputDirectory: URL
+    public var didGenerateEntry: ((SourceFile, PackageEntry) -> Void)?
     public var didWrite: ((URL, Data) -> Void)?
 
     public func generate(modules: [Module]) throws -> [PackageEntry] {
@@ -39,19 +40,15 @@ public final class PackageGenerator {
         ]
 
         for module in modules {
-            for type in module.types {
-                let typeConverter = try codeGenerator.converter(
-                    for: type.declaredInterfaceType
-                )
-
-                let name = try typeConverter.name(for: .entity)
-                let source = try typeConverter.source()
+            for source in module.sources {
+                let tsSource = try codeGenerator.convert(source: source)
 
                 let entry = PackageEntry(
-                    file: path("\(name).ts"),
-                    source: source
+                    file: path(source.file.replacingPathExtension("ts").relativePath),
+                    source: tsSource
                 )
                 entries.append(entry)
+                didGenerateEntry?(source, entry)
             }
         }
 

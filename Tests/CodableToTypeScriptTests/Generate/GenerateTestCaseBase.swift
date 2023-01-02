@@ -71,7 +71,9 @@ class GenerateTestCaseBase: XCTestCase {
             let gen = packageTester.packageGenerator.codeGenerator
 
             func generate(type: any TypeDecl) throws -> TSSourceFile {
-                let code = try gen.converter(for: type.declaredInterfaceType).source()
+                let code = TSSourceFile(
+                    try gen.converter(for: type.declaredInterfaceType).decls()
+                )
                 let imports = try code.buildAutoImportDecls(
                     from: URL(fileURLWithPath: "test.ts"),
                     symbolTable: SymbolTable(),

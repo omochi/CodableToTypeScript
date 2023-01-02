@@ -23,6 +23,20 @@ public final class CodeGenerator {
         self.requestToken = RequestToken(generator: self)
     }
 
+    public func convert(source: SourceFile) throws -> TSSourceFile {
+        let tsSource = TSSourceFile([])
+
+        for type in source.types {
+            if let typeConverter = try? converter(
+                for: type.declaredInterfaceType
+            ) {
+                tsSource.elements += try typeConverter.decls()
+            }
+        }
+
+        return tsSource
+    }
+
     public func converter(for type: any SType) throws -> any TypeConverter {
         return try context.evaluator(
             ConverterRequest(token: requestToken, type: type)
