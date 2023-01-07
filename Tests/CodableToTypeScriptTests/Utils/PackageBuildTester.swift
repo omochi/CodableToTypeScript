@@ -26,7 +26,7 @@ struct PackageBuildTester {
         let dir = fileManager.temporaryDirectory
             .appendingPathComponent("CodableToTypeScriptTests")
             .appendingPathComponent(makeLaunchName())
-        print("[PackageBuildTester]: \(dir.path)")
+        print("[PackageBuildTester]: launchDir=\(dir.path)")
         launchDirectoryCache = dir
         return dir
     }
