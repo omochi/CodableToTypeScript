@@ -28,8 +28,8 @@ public final class PackageGenerator {
     public let symbols: SymbolTable
     public let importFileExtension: ImportFileExtension
     public let outputDirectory: URL
-    public var didGenerateEntry: ((SourceFile, PackageEntry) -> Void)?
-    public var didWrite: ((URL, Data) -> Void)?
+    public var didGenerateEntry: ((SourceFile, PackageEntry) throws -> Void)?
+    public var didWrite: ((URL, Data) throws -> Void)?
 
     public func generate(modules: [Module]) throws -> [PackageEntry] {
         var entries: [PackageEntry] = [
@@ -48,7 +48,7 @@ public final class PackageGenerator {
                     source: tsSource
                 )
                 entries.append(entry)
-                didGenerateEntry?(source, entry)
+                try didGenerateEntry?(source, entry)
             }
         }
 
@@ -101,7 +101,7 @@ public final class PackageGenerator {
         }
 
         try data.write(to: path, options: .atomic)
-        didWrite?(path, data)
+        try didWrite?(path, data)
     }
 
     public func write(
