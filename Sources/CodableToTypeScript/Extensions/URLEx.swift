@@ -9,6 +9,10 @@ extension URL {
         if !ext.isEmpty {
             base += "." + ext
         }
-        return dir.appendingPathComponent(base)
+        if dir.relativePath == "." {
+            return URL(fileURLWithPath: base, relativeTo: baseURL)
+        } else {
+            return dir.appendingPathComponent(base)
+        }
     }
 }
