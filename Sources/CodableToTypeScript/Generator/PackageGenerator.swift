@@ -44,7 +44,7 @@ public final class PackageGenerator {
                 let tsSource = try codeGenerator.convert(source: source)
 
                 let entry = PackageEntry(
-                    file: path(source.file.replacingPathExtension("ts").relativePath),
+                    file: try tsPath(module: module, file: source.file),
                     source: tsSource
                 )
                 entries.append(entry)
@@ -69,6 +69,17 @@ public final class PackageGenerator {
         }
 
         return entries
+    }
+
+    private func tsPath(module: Module, file: URL) throws -> URL {
+        if file.baseURL == nil {
+            throw MessageError("needs relative path: \(file.path)")
+        }
+
+        return self.path(
+            module.name + "/" +
+            file.replacingPathExtension("ts").relativePath
+        )
     }
 
     private func path(_ name: String) -> URL {
