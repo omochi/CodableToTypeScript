@@ -93,9 +93,7 @@ public final class PackageGenerator {
         entry: PackageEntry
     ) throws {
         let path = entry.file
-        try fileManager.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
-
-        let data = entry.source.print().data(using: .utf8)!
+        let data = entry.serialize()
 
         if let old = try? Data(contentsOf: path),
            old == data
@@ -103,6 +101,7 @@ public final class PackageGenerator {
             return
         }
 
+        try fileManager.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: path, options: .atomic)
         try didWrite?(path, data)
     }
