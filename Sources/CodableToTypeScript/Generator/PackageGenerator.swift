@@ -9,7 +9,8 @@ public final class PackageGenerator {
         typeConverterProvider: TypeConverterProvider = TypeConverterProvider(),
         symbols: SymbolTable,
         importFileExtension: ImportFileExtension,
-        outputDirectory: URL
+        outputDirectory: URL,
+        typeScriptExtension: String = "ts"
     ) {
         self.context = context
         self.fileManager = fileManager
@@ -20,6 +21,7 @@ public final class PackageGenerator {
         self.symbols = symbols
         self.importFileExtension = importFileExtension
         self.outputDirectory = outputDirectory
+        self.typeScriptExtension = typeScriptExtension
     }
 
     public let context: SwiftTypeReader.Context
@@ -28,13 +30,14 @@ public final class PackageGenerator {
     public let symbols: SymbolTable
     public let importFileExtension: ImportFileExtension
     public let outputDirectory: URL
+    public let typeScriptExtension: String
     public var didGenerateEntry: ((SourceFile, PackageEntry) throws -> Void)?
     public var didWrite: ((URL, Data) throws -> Void)?
 
     public func generate(modules: [Module]) throws -> [PackageEntry] {
         var entries: [PackageEntry] = [
             PackageEntry(
-                file: path("common.ts"),
+                file: self.path("common.\(typeScriptExtension)"),
                 source: codeGenerator.generateHelperLibrary()
             )
         ]
@@ -78,7 +81,7 @@ public final class PackageGenerator {
 
         return self.path(
             module.name + "/" +
-            file.replacingPathExtension("ts").relativePath
+            file.replacingPathExtension(typeScriptExtension).relativePath
         )
     }
 
