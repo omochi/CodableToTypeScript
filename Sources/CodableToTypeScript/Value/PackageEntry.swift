@@ -12,4 +12,8 @@ public struct PackageEntry {
     
     public var file: URL
     public var source: TSSourceFile
+
+    public func serialize() -> Data {
+        source.print().data(using: .utf8)!
+    }
 }
