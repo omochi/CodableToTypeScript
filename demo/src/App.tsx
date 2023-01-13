@@ -14,7 +14,7 @@ function App() {
         justifyContent: "space-between",
       }}>
         <h3 style={{ margin: "8pt" }}>
-          CodableToTypeScript
+          CodableToTypeScript DEMO
         </h3>
         <a href="https://github.com/omochi/CodableToTypeScript" target="_blank">
           <picture style={{ display: "flex", marginInlineEnd: "8pt" }}>
