@@ -7,8 +7,8 @@ WABT_URL="https://github.com/WebAssembly/wabt/releases/download/1.0.32/wabt-1.0.
 
 set -x
 
-apt-get update
-apt-get install \
+sudo apt-get update
+sudo apt-get install \
     binutils \
     git \
     gnupg2 \
