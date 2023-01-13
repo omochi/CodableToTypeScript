@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "wasm-opt": "wasm-opt -Os .build/release/C2TS.wasm -o public/C2TS.wasm"
+    "wasmbuild": "swift build --product C2TS --triple wasm32-unknown-wasi -c release && wasm-opt -Os .build/release/C2TS.wasm -o public/C2TS.wasm && wasm-strip public/C2TS.wasm"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.4.6",
