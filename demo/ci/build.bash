@@ -32,7 +32,7 @@ cd temp
 
 curl -sLo swift.tar.gz "$SWIFT_URL"
 tar zxf swift.tar.gz
-sudo rsync -rlpt swift-wasm-5.7-SNAPSHOT-2023-01-09-a/ /usr/local
+sudo rsync -rlpt swift-wasm-5.7-SNAPSHOT-2023-01-09-a/ /
 
 curl -sLo binaryen.tar.gz "$BINARYEN_URL"
 tar xzf binaryen.tar.gz
