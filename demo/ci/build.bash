@@ -7,8 +7,8 @@ WABT_URL="https://github.com/WebAssembly/wabt/releases/download/1.0.32/wabt-1.0.
 
 set -x
 
-sudo apt-get update
-sudo apt-get install \
+sudo apt-get -q update
+sudo apt-get -q install \
     binutils \
     git \
     gnupg2 \
@@ -29,14 +29,14 @@ sudo apt-get install \
 mkdir -p temp
 cd temp
 
-curl -o swift.tar.gz -L "$SWIFT_URL"
-tar zxfk swift.tar.gz -C / --strip-components 1
+curl -sLo swift.tar.gz "$SWIFT_URL"
+sudo tar zxfk swift.tar.gz -C / --strip-components 1
 
-curl -o binaryen.tar.gz -L "$BINARYEN_URL"
-tar xzfk binaryen.tar.gz -C / --strip-components 1
+curl -sLo binaryen.tar.gz "$BINARYEN_URL"
+sudo tar xzfk binaryen.tar.gz -C / --strip-components 1
 
-curl -o wabt.tar.gz -L "$WABT_URL"
-tar xzfk wabt.tar.gz -C / --strip-components 1
+curl -sLo wabt.tar.gz "$WABT_URL"
+sudo tar xzfk wabt.tar.gz -C / --strip-components 1
 
 cd ..
 
