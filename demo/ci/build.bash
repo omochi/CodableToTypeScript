@@ -24,19 +24,23 @@ sudo apt-get -q install \
     pkg-config \
     tzdata \
     uuid-dev \
-    zlib1g-dev
+    zlib1g-dev \
+    rsync
 
 mkdir -p temp
 cd temp
 
 curl -sLo swift.tar.gz "$SWIFT_URL"
-sudo tar zxfk swift.tar.gz -C / --strip-components 1
+tar zxf swift.tar.gz
+sudo rsync -rlpt swift-wasm-5.7-SNAPSHOT-2023-01-09-a/ /usr/local
 
 curl -sLo binaryen.tar.gz "$BINARYEN_URL"
-sudo tar xzfk binaryen.tar.gz -C / --strip-components 1
+tar xzf binaryen.tar.gz
+sudo rsync -rlpt binaryen-version_111/ /usr/local
 
 curl -sLo wabt.tar.gz "$WABT_URL"
-sudo tar xzfk wabt.tar.gz -C / --strip-components 1
+tar xzf wabt.tar.gz
+sudo rsync -rlpt wabt-1.0.32/ /usr/local
 
 cd ..
 
