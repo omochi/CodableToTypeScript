@@ -1,0 +1,3 @@
+import WasmCallableKit
+
+WasmCallableKit.install()

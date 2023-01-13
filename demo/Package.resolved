@@ -1,0 +1,68 @@
+{
+  "pins" : [
+    {
+      "identity" : "codabletotypescript",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sidepelican/CodableToTypeScript.git",
+      "state" : {
+        "branch" : "wasi",
+        "revision" : "77100a51e3b5e7be803356bb744da714f0bb7b3b"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser",
+      "state" : {
+        "revision" : "fddd1c00396eed152c45a46bea9f47b98e59301d",
+        "version" : "1.2.0"
+      }
+    },
+    {
+      "identity" : "swift-collections",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-collections",
+      "state" : {
+        "revision" : "937e904258d22af6e447a0b72c0bc67583ef64a2",
+        "version" : "1.0.4"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sidepelican/swift-syntax",
+      "state" : {
+        "branch" : "wasi",
+        "revision" : "24c34287f5567d2aeab360fd8e2de8e68b88492a"
+      }
+    },
+    {
+      "identity" : "swifttypereader",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/omochi/SwiftTypeReader",
+      "state" : {
+        "branch" : "wasi",
+        "revision" : "0c56979fc213403b0335e3ff76d1565731712f7e"
+      }
+    },
+    {
+      "identity" : "typescriptast",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/omochi/TypeScriptAST",
+      "state" : {
+        "revision" : "fd7961c8cb06954f1934852756f59541742672e9",
+        "version" : "1.8.5"
+      }
+    },
+    {
+      "identity" : "wasmcallablekit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sidepelican/WasmCallableKit.git",
+      "state" : {
+        "revision" : "8d0ccfb35e62875fb0578df7ba68828a68e37d77",
+        "version" : "0.3.0"
+      }
+    }
+  ],
+  "version" : 2
+}
