@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - run: demo/ci/build.bash
+      - run: ci/build.bash
         working-directory: demo
       - uses: peaceiris/actions-gh-pages@v3
         with:
