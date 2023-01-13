@@ -46,7 +46,6 @@ export const Editors: React.FC = () => {
         tsEditor.setValue((e as any).toString());
       }
     }
-    console.debug(monaco?.editor.getModels());
   }, [isReady, swiftEditor, tsEditor]);
 
   useEffect(() => {
