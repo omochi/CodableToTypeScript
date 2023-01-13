@@ -1,4 +1,4 @@
-name: test
+name: demo-deoloy
 
 on:
   push:
