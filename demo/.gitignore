@@ -1,1 +1,10 @@
+.DS_Store
+/.build
+/Packages
+/*.xcodeproj
+xcuserdata/
+DerivedData/
+.swiftpm/xcode
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+
 node_modules/
