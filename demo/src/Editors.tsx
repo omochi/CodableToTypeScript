@@ -1,39 +1,35 @@
-import Editor from "@monaco-editor/react";
+import Editor, { useMonaco } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import { useCallback, useEffect, useState } from "react";
 import { useC2TS } from "./C2TSContext";
-import { C2TS } from "./Gen/C2TS.gen";
+import { Generator } from "./Gen/Generator.gen";
 
-type ConverterState = {
+type GeneratorState = {
   isReady: false,
-  convert?: never,
+  generator?: never,
 } | {
   isReady: true,
-  convert: (v: string) => string,
+  generator: Generator,
 };
 
-const useConverter = (): ConverterState => {
+const useGenerator = (): GeneratorState => {
   const { isReady } = useC2TS();
-
-  const [c2ts, setC2ts] = useState<C2TS | null>(null);
+  const [g, setG] = useState<Generator | null>(null);
   useEffect(() => {
     if (isReady) {
-      setC2ts(new C2TS());
+      setG(new Generator());
     }
   }, [isReady]);
 
-  if (c2ts == null) {
-    return { isReady: false }
+  if (g == null) {
+    return { isReady: false };
   }
-
-  return {
-    isReady: true,
-    convert: c2ts.convert.bind(c2ts),
-  }
+  return { isReady: true, generator: g };
 }
 
 export const Editors: React.FC = () => {
-  const { isReady, convert } = useConverter();
+  const monaco = useMonaco();
+  const { isReady, generator } = useGenerator();
 
   const [swiftEditor, setSwiftEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [tsEditor, setTsEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -41,7 +37,7 @@ export const Editors: React.FC = () => {
   const updateTSCode = useCallback(() => {
     if (!isReady || !swiftEditor || !tsEditor) return;
     try {
-      const source = convert(swiftEditor.getValue());
+      const source = generator.tsTypes(swiftEditor.getValue());
       tsEditor.setValue(source);
     } catch (e) {
       if (e instanceof Error) {
@@ -50,11 +46,20 @@ export const Editors: React.FC = () => {
         tsEditor.setValue((e as any).toString());
       }
     }
+    console.debug(monaco?.editor.getModels());
   }, [isReady, swiftEditor, tsEditor]);
 
   useEffect(() => {
     // when all components ready, convert default initial code
     if (isReady && swiftEditor && tsEditor) {
+      // install common library
+      try {
+        monaco?.editor.createModel(
+          generator.commonLib(),
+          "typescript",
+          monaco.Uri.from({ scheme: "file", path: "./common.gen.ts" })
+        );
+      } catch (e) { console.error(e) };
       updateTSCode();
     }
   }, [isReady, swiftEditor, tsEditor, updateTSCode]);
@@ -65,6 +70,7 @@ export const Editors: React.FC = () => {
         defaultLanguage="swift"
         defaultValue={defaultSwiftCode}
         onMount={setSwiftEditor}
+        path="/Types.swift"
         options={{
           minimap: {
             enabled: false,
@@ -78,8 +84,8 @@ export const Editors: React.FC = () => {
         defaultLanguage="typescript"
         defaultValue="Loading CodableToTypeScript wasm binary..."
         onMount={setTsEditor}
+        path="/types.gen.ts"
         options={{
-          readOnly: true,
           minimap: {
             enabled: false,
           },

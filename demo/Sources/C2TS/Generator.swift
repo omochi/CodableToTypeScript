@@ -3,7 +3,7 @@ import Foundation
 import SwiftTypeReader
 import TypeScriptAST
 
-public final class C2TS {
+public final class Generator {
     private let commonLibSource: TSSourceFile
 
     public init() {
@@ -11,7 +11,7 @@ public final class C2TS {
         commonLibSource = CodeGenerator(context: tmpContext).generateHelperLibrary()
     }
 
-    public func convert(swiftSource: String) throws -> String {
+    public func tsTypes(swiftSource: String) throws -> String {
         try withExtendedLifetime(SwiftTypeReader.Context()) { context in
             let reader = SwiftTypeReader.Reader(context: context)
             let swiftSource = try reader.read(source: swiftSource, file: URL(fileURLWithPath: "/Types.swift"))
@@ -34,5 +34,9 @@ public final class C2TS {
 
             return tsSource.print()
         }
+    }
+
+    public func commonLib() -> String {
+        commonLibSource.print()
     }
 }

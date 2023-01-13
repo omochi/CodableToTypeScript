@@ -4,7 +4,7 @@ extension WasmCallableKit {
     static func install() {
         
         registerClassMetadata(meta: [
-            buildC2TSMetadata(),
+            buildGeneratorMetadata(),
         ])
     }
 }

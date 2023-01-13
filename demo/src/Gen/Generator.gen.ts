@@ -1,6 +1,6 @@
 import { SwiftRuntime, globalRuntime } from "./SwiftRuntime.gen.js";
 
-export class C2TS {
+export class Generator {
     #runtime: SwiftRuntime;
     #id: number;
 
@@ -10,12 +10,13 @@ export class C2TS {
         this.#runtime.autorelease(this, this.#id);
     }
 
-    /** 
-     * @throws {Error}
-    */
-    convert(swiftSource: string): string {
+    tsTypes(swiftSource: string): string {
         return this.#runtime.classSend(this.#id, 0, {
             _0: swiftSource
         }) as string;
+    }
+
+    commonLib(): string {
+        return this.#runtime.classSend(this.#id, 1, {}) as string;
     }
 }
