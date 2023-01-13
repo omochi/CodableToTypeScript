@@ -8,3 +8,7 @@ DerivedData/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 
 node_modules/
+
+dist/
+public/
+temp/
