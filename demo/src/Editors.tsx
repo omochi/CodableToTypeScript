@@ -1,46 +1,83 @@
 import Editor from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useC2TS } from "./C2TSContext";
 import { C2TS } from "./Gen/C2TS.gen";
 
-export const Editors: React.FC = () => {
+type ConverterState = {
+  isReady: false,
+  convert?: never,
+} | {
+  isReady: true,
+  convert: (v: string) => string,
+};
+
+const useConverter = (): ConverterState => {
   const { isReady } = useC2TS();
 
-  const tsEditorRef = useRef<monaco.editor.IStandaloneCodeEditor>(null!);
-  const onChange = useCallback((value: string | undefined, ev: monaco.editor.IModelContentChangedEvent) => {
-     if (isReady) {
-       const c2ts = new C2TS();
-       try {
-         const source = c2ts.convert(value || "");
-         tsEditorRef.current.setValue(source);
-      } catch (e) {
-        if (e instanceof Error) {
-          tsEditorRef.current.setValue(e.message);
-        } else {
-          tsEditorRef.current.setValue((e as any).toString());
-        }
+  const [c2ts, setC2ts] = useState<C2TS | null>(null);
+  useEffect(() => {
+    if (isReady) {
+      setC2ts(new C2TS());
+    }
+  }, [isReady]);
+
+  if (c2ts == null) {
+    return { isReady: false }
+  }
+
+  return {
+    isReady: true,
+    convert: c2ts.convert.bind(c2ts),
+  }
+}
+
+export const Editors: React.FC = () => {
+  const { isReady, convert } = useConverter();
+
+  const [swiftEditor, setSwiftEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const [tsEditor, setTsEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
+
+  const updateTSCode = useCallback(() => {
+    if (!isReady || !swiftEditor || !tsEditor) return;
+    try {
+      const source = convert(swiftEditor.getValue());
+      tsEditor.setValue(source);
+    } catch (e) {
+      if (e instanceof Error) {
+        tsEditor.setValue(e.message);
+      } else {
+        tsEditor.setValue((e as any).toString());
       }
     }
-  }, []);
+  }, [isReady, swiftEditor, tsEditor]);
+
+  useEffect(() => {
+    // when all components ready, convert default initial code
+    if (isReady && swiftEditor && tsEditor) {
+      updateTSCode();
+    }
+  }, [isReady, swiftEditor, tsEditor, updateTSCode]);
 
   return <>
     <div style={{ flex: 1 }}>
       <Editor
         defaultLanguage="swift"
-        defaultValue="// some comment"
+        defaultValue={defaultSwiftCode}
+        onMount={setSwiftEditor}
         options={{
           minimap: {
             enabled: false,
           },
         }}
-        onChange={onChange}
+        onChange={updateTSCode}
       />
     </div>
     <div style={{ flex: 1 }}>
       <Editor
         defaultLanguage="typescript"
-        onMount={(e) => { tsEditorRef.current = e}}        
+        defaultValue="Loading CodableToTypeScript wasm binary..."
+        onMount={setTsEditor}
         options={{
           readOnly: true,
           minimap: {
@@ -50,5 +87,17 @@ export const Editors: React.FC = () => {
       />
     </div>
   </>
-
 }
+
+const defaultSwiftCode = `// Write swift code here!
+
+enum Language: String, Codable {
+  case swift
+  case typescript
+}
+
+struct User: Codable {
+  var name: String
+  var favorite: Language
+}
+`;
