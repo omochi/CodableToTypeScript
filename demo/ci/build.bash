@@ -42,6 +42,8 @@ curl -sLo wabt.tar.gz "$WABT_URL"
 tar xzf wabt.tar.gz
 sudo rsync -rlpt wabt-1.0.32/ /usr/local
 
+env
+
 cd ..
 
 npm install
