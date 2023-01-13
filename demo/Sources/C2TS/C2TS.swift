@@ -26,7 +26,7 @@ public final class C2TS {
 
             // generate imports
             let imports = try tsSource.buildAutoImportDecls(
-                from: URL(fileURLWithPath: "/", isDirectory: true),
+                from: URL(fileURLWithPath: "/types.gen.ts"),
                 symbolTable: symbolTable,
                 fileExtension: .js
             )
