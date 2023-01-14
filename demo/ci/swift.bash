@@ -1,7 +1,7 @@
 #!/bin/bash
 set -uexo pipefail
 
-SWIFT_URL="https://github.com/swiftwasm/swift/releases/download/swift-wasm-5.7-SNAPSHOT-2023-01-09-a/swift-wasm-5.7-SNAPSHOT-2023-01-09-a-ubuntu20.04_x86_64.tar.gz"
+SWIFT_URL="https://github.com/swiftwasm/swift/releases/download/swift-wasm-5.7-SNAPSHOT-2023-01-09-a/swift-wasm-5.7-SNAPSHOT-2023-01-09-a-ubuntu22.04_x86_64.tar.gz"
 
 mkdir -p temp && cd temp
 
