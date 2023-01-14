@@ -27,6 +27,9 @@ sudo apt-get -q install \
     zlib1g-dev \
     rsync
 
+which -a clang
+ls /usr/include
+
 mkdir -p temp
 cd temp
 
@@ -41,6 +44,9 @@ sudo rsync -rlpt binaryen-version_111/ /usr/local
 curl -sLo wabt.tar.gz "$WABT_URL"
 tar xzf wabt.tar.gz
 sudo rsync -rlpt wabt-1.0.32/ /usr/local
+
+which -a clang
+ls /usr/include
 
 env
 
