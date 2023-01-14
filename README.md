@@ -2,6 +2,14 @@
 
 Generate typescript code for typing JSON from Swift Codable.
 
+# Live Demo
+
+https://omochi.github.io/CodableToTypeScript/
+
+This demo site runs CodableToTypeScript on your browser locally by [swiftwasm](https://swiftwasm.org) technology.
+Its also built by CodableToTypeScript, and [WasmCallableKit](https://github.com/sidepelican/WasmCallableKit).
+See [source code](demo).
+
 # Usage and Example
 
 See [test cases](Tests/CodableToTypeScriptTests/Generate/GenerateExampleTests.swift).
