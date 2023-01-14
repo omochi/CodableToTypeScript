@@ -9,6 +9,7 @@ DerivedData/
 
 node_modules/
 
-dist/
-public/
-temp/
+dist/*
+public/*
+temp/*
+!*.keep
