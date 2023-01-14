@@ -28,6 +28,8 @@ sudo apt-get -q install \
     rsync
 
 which -a clang
+which -a swift
+swift --version
 ls /usr/include
 
 mkdir -p temp
@@ -46,6 +48,8 @@ tar xzf wabt.tar.gz
 sudo rsync -rlpt wabt-1.0.32/ /usr/local
 
 which -a clang
+which -a swift
+swift --version
 ls /usr/include
 
 env
