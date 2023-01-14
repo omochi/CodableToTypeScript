@@ -13,6 +13,14 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
+      - run: ci/apt.bash
+        working-directory: demo
+      - run: ci/swift.bash
+        working-directory: demo
+      - run: ci/binaryen.bash
+        working-directory: demo
+      - run: ci/wabt.bash
+        working-directory: demo
       - run: ci/build.bash
         working-directory: demo
       - uses: peaceiris/actions-gh-pages@v3
