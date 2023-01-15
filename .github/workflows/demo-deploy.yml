@@ -13,17 +13,12 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-      - run: ci/apt.bash
-        working-directory: demo  
+      - run: demo/ci/apt.bash
       - uses: swiftwasm/setup-swiftwasm@v1
-        with:
-          swift-version: "wasm-5.7-SNAPSHOT-2023-01-09-a"
-      - run: ci/binaryen.bash
         working-directory: demo
-      - run: ci/wabt.bash
-        working-directory: demo
-      - run: ci/build.bash
-        working-directory: demo
+      - run: demo/ci/binaryen.bash
+      - run: demo/ci/wabt.bash
+      - run: demo/ci/build.bash
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

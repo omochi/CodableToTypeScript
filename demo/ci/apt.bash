@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ueo pipefail
+cd "$(dirname "$0")/.."
 
 set -x
 sudo apt-get -q update

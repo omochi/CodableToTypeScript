@@ -1,5 +1,6 @@
 #!/bin/bash
 set -uexo pipefail
+cd "$(dirname "$0")/.."
 
 BINARYEN_URL="https://github.com/WebAssembly/binaryen/releases/download/version_111/binaryen-version_111-x86_64-linux.tar.gz"
 
