@@ -1,5 +1,6 @@
 #!/bin/bash
 set -uexo pipefail
+cd "$(dirname "$0")/.."
 
 WABT_URL="https://github.com/WebAssembly/wabt/releases/download/1.0.32/wabt-1.0.32-ubuntu.tar.gz"
 
