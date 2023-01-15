@@ -15,7 +15,8 @@ jobs:
       - uses: actions/checkout@v3
       - run: demo/ci/apt.bash
       - uses: swiftwasm/setup-swiftwasm@v1
-        working-directory: demo
+        with:
+          swift-version: "wasm-5.7-SNAPSHOT-2023-01-09-a"
       - run: demo/ci/binaryen.bash
       - run: demo/ci/wabt.bash
       - run: demo/ci/build.bash
