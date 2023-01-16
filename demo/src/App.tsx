@@ -12,6 +12,7 @@ function App() {
         height: "3.2rem",
         display: "flex", flexDirection: "row", alignItems: "center",
         justifyContent: "space-between",
+        borderBottom: "1px solid var(--border-color)",
       }}>
         <h3 style={{ margin: "8pt" }}>
           CodableToTypeScript DEMO
