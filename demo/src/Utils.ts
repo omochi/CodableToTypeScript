@@ -19,6 +19,5 @@ export const useColorScheme = (): "dark" | "light" => {
       return () => query.removeEventListener("change", callback);
     }
   }, []);
-
   return scheme;
 }
