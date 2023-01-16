@@ -3,6 +3,7 @@ import * as monaco from "monaco-editor";
 import { useCallback, useEffect, useState } from "react";
 import { useC2TS } from "./C2TSContext";
 import { Generator } from "./Gen/Generator.gen";
+import { useColorScheme } from "./Utils";
 
 type GeneratorState = {
   isReady: false,
@@ -30,6 +31,7 @@ const useGenerator = (): GeneratorState => {
 export const Editors: React.FC = () => {
   const monaco = useMonaco();
   const { isReady, generator } = useGenerator();
+  const theme = useColorScheme() === "light" ? "light" : "vs-dark";
 
   const [swiftEditor, setSwiftEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [tsEditor, setTsEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -58,7 +60,7 @@ export const Editors: React.FC = () => {
           "typescript",
           monaco.Uri.from({ scheme: "file", path: "./common.gen.ts" })
         );
-      } catch (e) { console.error(e) };
+      } catch (e) {console.error(e);}
       updateTSCode();
     }
   }, [isReady, swiftEditor, tsEditor, updateTSCode]);
@@ -76,6 +78,7 @@ export const Editors: React.FC = () => {
           },
         }}
         onChange={updateTSCode}
+        theme={theme}
       />
     </div>
     <div style={{ flex: 1 }}>
@@ -89,6 +92,7 @@ export const Editors: React.FC = () => {
             enabled: false,
           },
         }}
+        theme={theme}
       />
     </div>
   </>
