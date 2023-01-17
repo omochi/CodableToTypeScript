@@ -11,15 +11,17 @@ on:
 jobs:
   demo-deoloy:
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: demo
     steps:
       - uses: actions/checkout@v3
-      - run: demo/ci/apt.bash
+      - run: ci/apt.bash
       - uses: swiftwasm/setup-swiftwasm@v1
         with:
           swift-version: "wasm-5.7-SNAPSHOT-2023-01-09-a"
-      - run: demo/ci/binaryen.bash
-      - run: demo/ci/wabt.bash
-      - run: demo/ci/build.bash
+      - run: ci/wabt.bash
+      - run: ci/build.bash
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
