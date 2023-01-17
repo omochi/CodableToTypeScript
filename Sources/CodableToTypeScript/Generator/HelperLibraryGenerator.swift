@@ -306,30 +306,30 @@ struct HelperLibraryGenerator {
             name: name(.tagOf),
             genericParams: [.init("Type")],
             type: TSConditionalType(
-                TSIdentType("Type"),
-                extends: TSIdentType(name(.tagRecord), genericArgs: [TSInferType(name: "TAG")]),
+                TSTupleType(TSIdentType("Type")),
+                extends: TSTupleType(TSIdentType(name(.tagRecord), genericArgs: [TSInferType(name: "TAG")])),
                 true: TSIdentType("TAG"),
                 false: TSConditionalType(
                     TSIdentType.null, extends: TSIdentType("Type"),
                     true: TSIntersectionType(
                         TSStringLiteralType("Optional"),
-                        TSIdentType(name(.tagOf), genericArgs: [
+                        TSTupleType(TSIdentType(name(.tagOf), genericArgs: [
                             TSIdentType("Exclude", genericArgs: [TSIdentType("Type"), TSIdentType.null])
-                        ])
+                        ]))
                     ),
                     false: TSConditionalType(
                         TSIdentType("Type"),
                         extends: TSArrayType(TSInferType(name: "E")),
                         true: TSIntersectionType(
                             TSStringLiteralType("Array"),
-                            TSIdentType(name(.tagOf), genericArgs: [TSIdentType("E")])
+                            TSTupleType(TSIdentType(name(.tagOf), genericArgs: [TSIdentType("E")]))
                         ),
                         false: TSConditionalType(
                             TSIdentType("Type"),
                             extends: TSIdentType.map(TSIdentType.string, TSInferType(name: "V")),
                             true: TSIntersectionType(
                                 TSStringLiteralType("Dictionary"),
-                                TSIdentType(name(.tagOf), genericArgs: [TSIdentType("V")])
+                                TSTupleType(TSIdentType(name(.tagOf), genericArgs: [TSIdentType("V")]))
                             ),
                             false: TSIdentType.never
                         )
