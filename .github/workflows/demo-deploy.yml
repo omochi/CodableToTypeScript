@@ -6,6 +6,8 @@ on:
     paths:
       - "demo/**"
   pull_request:
+    paths:
+      - "demo/**"
   workflow_dispatch:
 
 jobs:
