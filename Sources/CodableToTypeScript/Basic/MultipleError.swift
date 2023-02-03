@@ -1,47 +1,53 @@
-struct MultipleError: Error, CustomStringConvertible {
-    var errors: [any Error]
+struct MultipleLocatedError: Error, CustomStringConvertible {
+    struct Entry: CustomStringConvertible {
+        var location: [String]
+        var error: any Error
+        var description: String {
+            "\(location.joined(separator: "."))\t: \(error)"
+        }
+    }
+    var entries: [Entry]
 
     var description: String {
-        errors.map { "\($0)" }
+        entries.map(\.description)
             .joined(separator: "\n")
     }
 
     class ErrorCollector {
-        fileprivate var errors: [any Error] = []
+        fileprivate var entries: [MultipleLocatedError.Entry] = []
 
         func callAsFunction<T>(
-            _ context: String? = nil,
+            at: String? = nil,
             _ run: (() throws -> T)
         ) -> T? {
             do {
                 return try run()
             } catch {
-                if let context {
-                    if let multiple = error as? MultipleError {
-                        errors.append(contentsOf: multiple.errors.map { ContextError(context, error: $0) })
-                    } else {
-                        errors.append(ContextError(context, error: error))
-                    }
+                var newEntries: [Entry]
+                if let multiple = error as? MultipleLocatedError {
+                    newEntries = multiple.entries
                 } else {
-                    if let multiple = error as? MultipleError {
-                        errors.append(contentsOf: multiple.errors)
-                    } else {
-                        errors.append(error)
+                    newEntries = [.init(location: [], error: error)]
+                }
+
+                if let at {
+                    for i in newEntries.indices {
+                        newEntries[i].location.insert(at, at: 0)
                     }
                 }
-            }
-            return nil
-        }
-    }
 
-    static func collect<T>(
-        _ run: (_ `do`: ErrorCollector) -> T
-    ) throws -> T {
-        let collector = ErrorCollector()
-        let result = run(collector)
-        if !collector.errors.isEmpty {
-            throw MultipleError(errors: collector.errors)
+                entries.append(contentsOf: newEntries)
+                return nil
+            }
         }
-        return result
     }
+}
+
+func withErrorCollector<T>(_ run: (_ `collect`: MultipleLocatedError.ErrorCollector) -> T) throws -> T {
+    let collector = MultipleLocatedError.ErrorCollector()
+    let result = run(collector)
+    if !collector.entries.isEmpty {
+        throw MultipleLocatedError(entries: collector.entries)
+    }
+    return result
 }

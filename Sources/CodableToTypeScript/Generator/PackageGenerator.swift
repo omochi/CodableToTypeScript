@@ -42,10 +42,10 @@ public final class PackageGenerator {
             )
         ]
 
-        try MultipleError.collect { `do` in
+        try withErrorCollector { collect in
             for module in modules {
                 for source in module.sources {
-                    `do` {
+                    collect {
                         let tsSource = try codeGenerator.convert(source: source)
 
                         let entry = PackageEntry(
@@ -65,9 +65,9 @@ public final class PackageGenerator {
             symbols.add(source: entry.source, file: entry.file)
         }
 
-        try MultipleError.collect { `do` in
+        try withErrorCollector { collect in
             for entry in entries {
-                `do`("\(entry.file.lastPathComponent)") {
+                collect(at: "\(entry.file.lastPathComponent)") {
                     let source = entry.source
                     let imports = try source.buildAutoImportDecls(
                         from: entry.file,

@@ -140,10 +140,10 @@ extension TypeConverter {
         var decls: [any TSDecl] = []
 
         if let typeDecl = swiftType.typeDecl {
-            try MultipleError.collect { `do` in
+            try withErrorCollector { collect in
                 typeDecl.walkTypeDecls { (type) in
                     if let converter = try? generator.converter(for: type.declaredInterfaceType) {
-                        `do`("\(type.declaredInterfaceType)") {
+                        collect(at: "\(type.declaredInterfaceType)") {
                             decls += try converter.ownDecls().decls
                         }
                     }

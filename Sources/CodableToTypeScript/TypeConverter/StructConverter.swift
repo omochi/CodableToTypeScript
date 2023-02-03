@@ -17,9 +17,9 @@ struct StructConverter: TypeConverter {
 
         var fields: [TSObjectType.Field] = []
 
-        try MultipleError.collect { `do` in
+        try withErrorCollector { collect in
             for property in decl.storedProperties {
-                `do`("\(property.name)") {
+                collect(at: "\(property.name)") {
                     let (type, isOptional) = try generator.converter(for: property.interfaceType)
                         .fieldType(for: target)
                     fields.append(
@@ -60,9 +60,9 @@ struct StructConverter: TypeConverter {
         let map = `struct`.contextSubstitutionMap()
 
         var result: [CodecPresence] = [.identity]
-        try MultipleError.collect { `do` in
+        try withErrorCollector { collect in
             for p in decl.storedProperties {
-                `do`("\(p.name)") {
+                collect(at: "\(p.name)") {
                     let converter = try generator.converter(for: p.interfaceType.subst(map: map))
                     result.append(try converter.decodePresence())
                 }
@@ -76,13 +76,13 @@ struct StructConverter: TypeConverter {
 
         var fields: [TSObjectExpr.Field] = []
 
-        try MultipleError.collect { `do` in
+        try withErrorCollector { collect in
             for field in decl.storedProperties {
                 var expr: any TSExpr = TSMemberExpr(
                     base: TSIdentExpr.json,
                     name: field.name
                 )
-                `do`("\(field.name)") {
+                collect(at: "\(field.name)") {
                     expr = try generator.converter(for: field.interfaceType)
                         .callDecodeField(json: expr)
                 }
@@ -118,9 +118,9 @@ struct StructConverter: TypeConverter {
         let map = `struct`.contextSubstitutionMap()
 
         var result: [CodecPresence] = [.identity]
-        try MultipleError.collect { `do` in
+        try withErrorCollector { collect in
             for p in decl.storedProperties {
-                `do`("\(p.name)") {
+                collect(at: "\(p.name)") {
                     let converter = try generator.converter(for: p.interfaceType.subst(map: map))
                     result.append(try converter.encodePresence())
                 }
