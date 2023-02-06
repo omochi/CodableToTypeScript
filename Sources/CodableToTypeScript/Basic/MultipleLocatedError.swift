@@ -3,7 +3,7 @@ struct MultipleLocatedError: Error, CustomStringConvertible {
         var location: [String]
         var error: any Error
         var description: String {
-            "\(location.joined(separator: "."))\t: \(error)"
+            "\(location.joined(separator: ".")): \(error)"
         }
     }
     var entries: [Entry]
