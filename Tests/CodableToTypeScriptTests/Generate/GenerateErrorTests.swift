@@ -48,4 +48,22 @@ final class GenerateErrorTests: GenerateTestCaseBase {
             """)
         }
     }
+
+    func testEnum() throws {
+        XCTAssertThrowsError(try assertGenerate(
+            source: """
+            enum S {
+                case a(A)
+                enum T {
+                    case b(B)
+                }
+            }
+            """
+        )) { (error) in
+            XCTAssertEqual("\(error)", """
+            S.a._0: Error type can't be evaluated: A
+            S.T.b._0: Error type can't be evaluated: B
+            """)
+        }
+    }
 }
