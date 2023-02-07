@@ -26,11 +26,15 @@ public final class CodeGenerator {
     public func convert(source: SourceFile) throws -> TSSourceFile {
         let tsSource = TSSourceFile([])
 
-        for type in source.types {
-            if let typeConverter = try? converter(
-                for: type.declaredInterfaceType
-            ) {
-                tsSource.elements += try typeConverter.decls()
+        try withErrorCollector { collect in
+            for type in source.types {
+                if let typeConverter = try? converter(
+                    for: type.declaredInterfaceType
+                ) {
+                    collect {
+                        tsSource.elements += try typeConverter.decls()
+                    }
+                }
             }
         }
 

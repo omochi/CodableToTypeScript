@@ -42,16 +42,20 @@ public final class PackageGenerator {
             )
         ]
 
-        for module in modules {
-            for source in module.sources {
-                let tsSource = try codeGenerator.convert(source: source)
+        try withErrorCollector { collect in
+            for module in modules {
+                for source in module.sources {
+                    collect {
+                        let tsSource = try codeGenerator.convert(source: source)
 
-                let entry = PackageEntry(
-                    file: try tsPath(module: module, file: source.file),
-                    source: tsSource
-                )
-                entries.append(entry)
-                try didGenerateEntry?(source, entry)
+                        let entry = PackageEntry(
+                            file: try tsPath(module: module, file: source.file),
+                            source: tsSource
+                        )
+                        entries.append(entry)
+                        try didGenerateEntry?(source, entry)
+                    }
+                }
             }
         }
 
@@ -61,14 +65,18 @@ public final class PackageGenerator {
             symbols.add(source: entry.source, file: entry.file)
         }
 
-        for entry in entries {
-            let source = entry.source
-            let imports = try source.buildAutoImportDecls(
-                from: entry.file,
-                symbolTable: symbols,
-                fileExtension: importFileExtension
-            )
-            source.replaceImportDecls(imports)
+        try withErrorCollector { collect in
+            for entry in entries {
+                collect(at: "\(entry.file.lastPathComponent)") {
+                    let source = entry.source
+                    let imports = try source.buildAutoImportDecls(
+                        from: entry.file,
+                        symbolTable: symbols,
+                        fileExtension: importFileExtension
+                    )
+                    source.replaceImportDecls(imports)
+                }
+            }
         }
 
         return entries

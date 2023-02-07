@@ -70,8 +70,12 @@ struct EnumConverter: TypeConverter {
         default: break
         }
 
-        let items: [any TSType] = try decl.caseElements.map { (ce) in
-            try transpile(caseElement: ce, target: target)
+        let items: [any TSType] = try withErrorCollector { collect in
+            decl.caseElements.compactMap { (ce) in
+                collect(at: ce.name) {
+                    try transpile(caseElement: ce, target: target)
+                }
+            }
         }
 
         let name = try name(for: target)
@@ -120,17 +124,21 @@ struct EnumConverter: TypeConverter {
 
         var innerFields: [TSObjectType.Field] = []
 
-        for value in caseElement.associatedValues {
-            let (type, isOptional) = try generator.converter(for: value.interfaceType)
-                .fieldType(for: target)
+        try withErrorCollector { collect in
+            for (i, value) in caseElement.associatedValues.enumerated() {
+                collect(at: value.interfaceName ?? "_\(i)") {
+                    let (type, isOptional) = try generator.converter(for: value.interfaceType)
+                        .fieldType(for: target)
 
-            innerFields.append(
-                .field(
-                    name: value.codableLabel,
-                    isOptional: isOptional,
-                    type: type
-                )
-            )
+                    innerFields.append(
+                        .field(
+                            name: value.codableLabel,
+                            isOptional: isOptional,
+                            type: type
+                        )
+                    )
+                }
+            }
         }
 
         outerFields.append(
@@ -168,23 +176,22 @@ struct EnumConverter: TypeConverter {
 
         let map = `enum`.contextSubstitutionMap()
 
-        var result: CodecPresence = .identity
+        var result: [CodecPresence] = [.identity]
 
-        for caseElement in decl.caseElements {
-            for value in caseElement.associatedValues {
-                let value = try generator.converter(
-                    for: value.interfaceType.subst(map: map)
-                )
-                switch try value.encodePresence() {
-                case .identity: break
-                case .required: return .required
-                case .conditional:
-                    result = .conditional
+        try withErrorCollector { collect in
+            for caseElement in decl.caseElements {
+                for (i, value) in caseElement.associatedValues.enumerated() {
+                    collect(at: "\(caseElement.name).\(value.interfaceName ?? "_\(i)")") {
+                        let value = try generator.converter(
+                            for: value.interfaceType.subst(map: map)
+                        )
+                        result.append(try value.encodePresence())
+                    }
                 }
             }
         }
 
-        return result
+        return result.max()!
     }
 
     func encodeDecl() throws -> TSFunctionDecl? {
@@ -213,18 +220,22 @@ private struct DecodeFuncGen {
         caseElement: EnumCaseElementDecl,
         json: any TSExpr
     ) throws -> [TSVarDecl] {
-        return try caseElement.associatedValues.map { (value) in
-            let label = value.codableLabel
+        return try withErrorCollector { collect in
+            caseElement.associatedValues.enumerated().compactMap { (i, value) in
+                collect(at: value.interfaceName ?? "_\(i)") {
+                    let label = value.codableLabel
 
-            var expr: any TSExpr = TSMemberExpr(base: json, name: label)
+                    var expr: any TSExpr = TSMemberExpr(base: json, name: label)
 
-            expr = try generator.converter(for: value.interfaceType)
-                .callDecodeField(json: expr)
+                    expr = try generator.converter(for: value.interfaceType)
+                        .callDecodeField(json: expr)
 
-            return TSVarDecl(
-                kind: .const, name: label,
-                initializer: expr
-            )
+                    return TSVarDecl(
+                        kind: .const, name: label,
+                        initializer: expr
+                    )
+                }
+            }
         }
     }
 
@@ -309,14 +320,18 @@ private struct DecodeFuncGen {
             return ifStmt
         }
 
-        for ce in type.caseElements {
-            let ifSt = TSIfStmt(
-                condition: condCode(caseElement: ce),
-                then: try thenCode(caseElement: ce),
-                else: nil
-            )
-
-            appendElse(stmt: ifSt)
+        try withErrorCollector { collect in
+            for ce in type.caseElements {
+                collect(at: ce.name) {
+                    let ifSt = TSIfStmt(
+                        condition: condCode(caseElement: ce),
+                        then: try thenCode(caseElement: ce),
+                        else: nil
+                    )
+                    
+                    appendElse(stmt: ifSt)
+                }
+            }
         }
 
         appendElse(stmt: lastElseCode())
@@ -335,18 +350,22 @@ private struct EncodeFuncGen {
     var type: EnumDecl
 
     func encodeAssociatedValues(element: EnumCaseElementDecl) throws -> [TSVarDecl] {
-        return try element.associatedValues.map { (value) in
-            var expr: any TSExpr = TSMemberExpr(
-                base: TSIdentExpr("e"), name: value.codableLabel
-            )
+        return try withErrorCollector { collect in
+            element.associatedValues.enumerated().compactMap { (i, value) in
+                collect(at: value.interfaceName ?? "_\(i)") {
+                    var expr: any TSExpr = TSMemberExpr(
+                        base: TSIdentExpr("e"), name: value.codableLabel
+                    )
 
-            expr = try generator.converter(for: value.interfaceType)
-                .callEncodeField(entity: expr)
+                    expr = try generator.converter(for: value.interfaceType)
+                        .callEncodeField(entity: expr)
 
-            return TSVarDecl(
-                kind: .const, name: value.codableLabel,
-                initializer: expr
-            )
+                    return TSVarDecl(
+                        kind: .const, name: value.codableLabel,
+                        initializer: expr
+                    )
+                }
+            }
         }
     }
 
@@ -394,12 +413,16 @@ private struct EncodeFuncGen {
             expr: TSMemberExpr(base: TSIdentExpr.entity, name: "kind")
         )
 
-        for caseElement in type.caseElements {
-            `switch`.cases.append(
-                TSCaseStmt(expr: TSStringLiteralExpr(caseElement.name), elements: [
-                    TSBlockStmt(try caseBody(element: caseElement))
-                ])
-            )
+        try withErrorCollector { collect in
+            for caseElement in type.caseElements {
+                collect(at: caseElement.name) {
+                    `switch`.cases.append(
+                        TSCaseStmt(expr: TSStringLiteralExpr(caseElement.name), elements: [
+                            TSBlockStmt(try caseBody(element: caseElement))
+                        ])
+                    )
+                }
+            }
         }
 
         `switch`.cases.append(

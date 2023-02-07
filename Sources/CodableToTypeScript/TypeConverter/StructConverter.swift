@@ -17,17 +17,20 @@ struct StructConverter: TypeConverter {
 
         var fields: [TSObjectType.Field] = []
 
-        for property in decl.storedProperties {
-            let (type, isOptional) = try generator.converter(for: property.interfaceType)
-                .fieldType(for: target)
-
-            fields.append(
-                .field(
-                    name: property.name,
-                    isOptional: isOptional,
-                    type: type
-                )
-            )
+        try withErrorCollector { collect in
+            for property in decl.storedProperties {
+                collect(at: "\(property.name)") {
+                    let (type, isOptional) = try generator.converter(for: property.interfaceType)
+                        .fieldType(for: target)
+                    fields.append(
+                        .field(
+                            name: property.name,
+                            isOptional: isOptional,
+                            type: type
+                        )
+                    )
+                }
+            }
         }
 
         let name = try self.name(for: target)
@@ -56,22 +59,16 @@ struct StructConverter: TypeConverter {
     func decodePresence() throws -> CodecPresence {
         let map = `struct`.contextSubstitutionMap()
 
-        let fields = try decl.storedProperties.map {
-            try generator.converter(for: $0.interfaceType.subst(map: map))
-        }
-
-        var result: CodecPresence = .identity
-
-        for field in fields {
-            switch try field.decodePresence() {
-            case .identity: break
-            case .required: return .required
-            case .conditional:
-                result = .conditional
+        var result: [CodecPresence] = [.identity]
+        try withErrorCollector { collect in
+            for p in decl.storedProperties {
+                collect(at: "\(p.name)") {
+                    let converter = try generator.converter(for: p.interfaceType.subst(map: map))
+                    result.append(try converter.decodePresence())
+                }
             }
         }
-
-        return result
+        return result.max()!
     }
 
     func decodeDecl() throws -> TSFunctionDecl? {
@@ -79,21 +76,24 @@ struct StructConverter: TypeConverter {
 
         var fields: [TSObjectExpr.Field] = []
 
-        for field in decl.storedProperties {
-            var expr: any TSExpr = TSMemberExpr(
-                base: TSIdentExpr.json,
-                name: field.name
-            )
+        try withErrorCollector { collect in
+            for field in decl.storedProperties {
+                var expr: any TSExpr = TSMemberExpr(
+                    base: TSIdentExpr.json,
+                    name: field.name
+                )
+                collect(at: "\(field.name)") {
+                    expr = try generator.converter(for: field.interfaceType)
+                        .callDecodeField(json: expr)
+                }
 
-            expr = try generator.converter(for: field.interfaceType)
-                .callDecodeField(json: expr)
+                let def = TSVarDecl(
+                    kind: .const, name: field.name,
+                    initializer: expr
+                )
 
-            let def = TSVarDecl(
-                kind: .const, name: field.name,
-                initializer: expr
-            )
-
-            function.body.elements.append(def)
+                function.body.elements.append(def)
+            }
         }
 
         for field in decl.storedProperties {
@@ -117,22 +117,16 @@ struct StructConverter: TypeConverter {
     func encodePresence() throws -> CodecPresence {
         let map = `struct`.contextSubstitutionMap()
 
-        let fields = try decl.storedProperties.map {
-            try generator.converter(for: $0.interfaceType.subst(map: map))
-        }
-
-        var result: CodecPresence = .identity
-
-        for field in fields {
-            switch try field.encodePresence() {
-            case .identity: break
-            case .required: return .required
-            case .conditional:
-                result = .conditional
+        var result: [CodecPresence] = [.identity]
+        try withErrorCollector { collect in
+            for p in decl.storedProperties {
+                collect(at: "\(p.name)") {
+                    let converter = try generator.converter(for: p.interfaceType.subst(map: map))
+                    result.append(try converter.encodePresence())
+                }
             }
         }
-
-        return result
+        return result.max()!
     }
 
     func encodeDecl() throws -> TSFunctionDecl? {
