@@ -50,7 +50,7 @@ class GenerateTestCaseBase: XCTestCase {
 
         try withExtendedLifetime(context) { context in
             let module = context.getOrCreateModule(name: "main")
-            _ = try Reader(context: context, module: module)
+            _ = Reader(context: context, module: module)
                 .read(source: source, file: URL(fileURLWithPath: "main.swift"))
 
             let typeMap = typeMap ?? .default

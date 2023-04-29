@@ -5,7 +5,7 @@ import XCTest
 final class SubstitutionTests: XCTestCase {
     func testStruct() throws {
         let context = Context()
-        let source = try Reader(context: context).read(source: """
+        let source = Reader(context: context).read(source: """
 struct S<T> {
     var value: T
 }

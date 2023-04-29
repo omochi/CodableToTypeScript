@@ -24,12 +24,12 @@ final class GenerateErrorTests: GenerateTestCaseBase {
 
     func testPackageGenerator() throws {
         let context = Context()
-        let module = try Reader(context: context).read(source: """
+        let module = Reader(context: context).read(source: """
         struct S {
             var t: T
         }
         """, file: URL(fileURLWithPath: "A.swift")).module
-        _ = try Reader(context: context, module: module).read(source: """
+        _ = Reader(context: context, module: module).read(source: """
         struct T {
             var b: B
         }
