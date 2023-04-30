@@ -13,7 +13,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/omochi/SwiftTypeReader", from: "2.5.0"),
-        .package(url: "https://github.com/omochi/TypeScriptAST", from: "1.8.5")
+        .package(url: "https://github.com/omochi/TypeScriptAST", from: "1.8.6")
     ],
     targets: [
         .target(

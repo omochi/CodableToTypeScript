@@ -97,7 +97,7 @@ struct PackageBuildTester {
     func build(module: Module) throws {
         if isSkipped { return }
         
-        let entries = try packageGenerator.generate(modules: [module])
+        let entries = try packageGenerator.generate(modules: [module]).entries
         try packageGenerator.write(entries: entries)
         try writeExternals()
         try writeTSConfig()

@@ -34,7 +34,12 @@ public final class PackageGenerator {
     public var didGenerateEntry: ((SourceFile, PackageEntry) throws -> Void)?
     public var didWrite: ((URL, Data) throws -> Void)?
 
-    public func generate(modules: [Module]) throws -> [PackageEntry] {
+    public struct GenerateResult {
+        public var entries: [PackageEntry]
+        public var symbols: SymbolTable
+    }
+
+    public func generate(modules: [Module]) throws -> GenerateResult {
         var entries: [PackageEntry] = [
             PackageEntry(
                 file: self.path("common.\(typeScriptExtension)"),
@@ -79,7 +84,10 @@ public final class PackageGenerator {
             }
         }
 
-        return entries
+        return GenerateResult(
+            entries: entries,
+            symbols: symbols
+        )
     }
 
     private func tsPath(module: Module, file: URL) throws -> URL {
@@ -89,7 +97,7 @@ public final class PackageGenerator {
 
         return self.path(
             module.name + "/" +
-            file.replacingPathExtension(typeScriptExtension).relativePath
+            URLs.replacingPathExtension(of: file, to: typeScriptExtension).relativePath
         )
     }
 
