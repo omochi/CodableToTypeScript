@@ -14,7 +14,7 @@ public final class Generator {
     public func tsTypes(swiftSource: String) throws -> String {
         try withExtendedLifetime(SwiftTypeReader.Context()) { context in
             let reader = SwiftTypeReader.Reader(context: context)
-            let swiftSource = try reader.read(source: swiftSource, file: URL(fileURLWithPath: "/Types.swift"))
+            let swiftSource = reader.read(source: swiftSource, file: URL(fileURLWithPath: "/Types.swift"))
 
             let tsSource = try CodeGenerator(context: context)
                 .convert(source: swiftSource)

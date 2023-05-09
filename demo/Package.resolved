@@ -1,21 +1,12 @@
 {
   "pins" : [
     {
-      "identity" : "codabletotypescript",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/sidepelican/CodableToTypeScript.git",
-      "state" : {
-        "branch" : "wasi",
-        "revision" : "4df44f23c6eaf2f33f57300b5ceb7dd717782cea"
-      }
-    },
-    {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser",
       "state" : {
-        "revision" : "4ad606ba5d7673ea60679a61ff867cc1ff8c8e86",
-        "version" : "1.2.1"
+        "revision" : "fee6933f37fde9a5e12a1e4aeaa93fe60116ff2a",
+        "version" : "1.2.2"
       }
     },
     {
@@ -30,10 +21,10 @@
     {
       "identity" : "swift-syntax",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/sidepelican/swift-syntax",
+      "location" : "https://github.com/apple/swift-syntax",
       "state" : {
-        "branch" : "wasi",
-        "revision" : "24c34287f5567d2aeab360fd8e2de8e68b88492a"
+        "revision" : "cd793adf5680e138bf2bcbaacc292490175d0dcd",
+        "version" : "508.0.0"
       }
     },
     {
@@ -41,8 +32,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/omochi/SwiftTypeReader",
       "state" : {
-        "branch" : "wasi",
-        "revision" : "0c56979fc213403b0335e3ff76d1565731712f7e"
+        "revision" : "dca7ae04b1cc71db4fb82ea713982adaa0c0a695",
+        "version" : "2.5.1"
       }
     },
     {
@@ -50,8 +41,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/omochi/TypeScriptAST",
       "state" : {
-        "revision" : "fd7961c8cb06954f1934852756f59541742672e9",
-        "version" : "1.8.5"
+        "revision" : "c64e4a060a3daa9f8c964699ca4d8210235df20b",
+        "version" : "1.8.7"
       }
     },
     {
@@ -59,8 +50,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sidepelican/WasmCallableKit.git",
       "state" : {
-        "revision" : "8d0ccfb35e62875fb0578df7ba68828a68e37d77",
-        "version" : "0.3.0"
+        "revision" : "6b551cdaf5d8518848b06bcaf345d1a757496045",
+        "version" : "0.3.2"
       }
     }
   ],

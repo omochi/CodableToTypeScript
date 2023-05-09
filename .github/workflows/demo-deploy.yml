@@ -21,7 +21,7 @@ jobs:
       - run: ci/apt.bash
       - uses: swiftwasm/setup-swiftwasm@v1
         with:
-          swift-version: "wasm-5.7-SNAPSHOT-2023-01-09-a"
+          swift-version: "wasm-5.8.0-RELEASE"
       - run: ci/wabt.bash
       - run: ci/build.bash
       - uses: peaceiris/actions-gh-pages@v3
