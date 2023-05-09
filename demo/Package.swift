@@ -9,9 +9,8 @@ let package = Package(
         .executable(name: "C2TS", targets: ["C2TS"]),
     ],
     dependencies: [
-//        .package(path: ".."),
-        .package(url: "https://github.com/sidepelican/CodableToTypeScript.git", branch: "wasi"),
-        .package(url: "https://github.com/sidepelican/WasmCallableKit.git", from: "0.3.0"),
+        .package(path: ".."),
+        .package(url: "https://github.com/sidepelican/WasmCallableKit.git", from: "0.3.2"),
     ],
     targets: [
         .executableTarget(

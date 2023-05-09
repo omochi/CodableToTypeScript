@@ -2,6 +2,7 @@ import Foundation
 import SwiftTypeReader
 import TypeScriptAST
 
+#if !os(WASI)
 public final class PackageGenerator {
     public init(
         context: SwiftTypeReader.Context,
@@ -130,3 +131,4 @@ public final class PackageGenerator {
         }
     }
 }
+#endif
