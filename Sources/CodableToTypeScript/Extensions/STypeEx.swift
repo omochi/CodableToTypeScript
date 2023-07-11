@@ -47,7 +47,7 @@ extension NominalTypeDecl {
     public func rawValueType() -> (any SType)? {
         for type in inheritedTypes {
             if type.isStandardLibraryType("String") { return type }
-            if type.isStandardLibraryType(/U?Int(8|16|32|64)?/) { return type }
+            if type.isStandardLibraryType(/^U?Int(8|16|32|64)?$/) { return type }
         }
 
         if let property = find(name: "rawValue") as? VarDecl {
