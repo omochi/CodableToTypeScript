@@ -193,7 +193,7 @@ struct EnumConverter: TypeConverter {
     func decodeDecl() throws -> TSFunctionDecl? {
         switch kind {
         case .never, .string:
-            throw MessageError("logical error")
+            return nil
         case .int:
             return try DecodeIntFuncGen(
                 converter: self,
@@ -239,7 +239,7 @@ struct EnumConverter: TypeConverter {
     func encodeDecl() throws -> TSFunctionDecl? {
         switch kind {
         case .never, .string:
-            throw MessageError("logical error")
+            return nil
         case .int:
             return try EncodeIntFuncGen(
                 converter: self,
