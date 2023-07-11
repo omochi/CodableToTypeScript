@@ -1,10 +1,10 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 5.8
 
 import PackageDescription
 
 let package = Package(
     name: "CodableToTypeScript",
-    platforms: [.macOS(.v12)],
+    platforms: [.macOS(.v13)],
     products: [
         .library(
             name: "CodableToTypeScript",
@@ -12,7 +12,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/omochi/SwiftTypeReader", from: "2.5.0"),
+        .package(url: "https://github.com/omochi/SwiftTypeReader", branch: "case_rawvalue"),
         .package(url: "https://github.com/omochi/TypeScriptAST", from: "1.8.6")
     ],
     targets: [
@@ -24,6 +24,9 @@ let package = Package(
             dependencies: [
                 .product(name: "SwiftTypeReader", package: "SwiftTypeReader"),
                 .product(name: "TypeScriptAST", package: "TypeScriptAST")
+            ],
+            swiftSettings: [
+                .enableUpcomingFeature("BareSlashRegexLiterals"),
             ]
         ),
         .testTarget(
