@@ -53,9 +53,19 @@ public struct TypeMap {
         "Void": .identity(name: "void"),
         "Bool": .identity(name: "boolean"),
         "Int": .identity(name: "number"),
+        "Int8": .identity(name: "number"),
+        "Int16": .identity(name: "number"),
+        "Int32": .identity(name: "number"),
+        "Int64": .identity(name: "number"),
+        "UInt8": .identity(name: "number"),
+        "UInt16": .identity(name: "number"),
+        "UInt32": .identity(name: "number"),
+        "UInt64": .identity(name: "number"),
         "Float": .identity(name: "number"),
+        "Float32": .identity(name: "number"),
+        "Float64": .identity(name: "number"),
         "Double": .identity(name: "number"),
-        "String": .identity(name: "string")
+        "String": .identity(name: "string"),
     ]
 
     public init(
