@@ -12,8 +12,8 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/omochi/SwiftTypeReader", branch: "case_rawvalue"),
-        .package(url: "https://github.com/omochi/TypeScriptAST", from: "1.8.6")
+        .package(url: "https://github.com/omochi/SwiftTypeReader", from: "2.6.0"),
+        .package(url: "https://github.com/omochi/TypeScriptAST", from: "1.8.6"),
     ],
     targets: [
         .target(
