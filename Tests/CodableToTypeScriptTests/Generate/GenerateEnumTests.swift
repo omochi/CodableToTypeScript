@@ -243,6 +243,45 @@ export type E = "a" |
         )
     }
 
+    func testIntRawValueCase() throws {
+        try assertGenerate(
+            source: """
+enum E: Int, Codable, Sendable {
+    case a
+    case b = -100
+    case c
+}
+""",
+            expecteds: ["""
+export type E = "a" | "b" | "c";
+""", """
+export type E_JSON = 0 | -100 | -99;
+""", """
+export function E_decode(json: E_JSON): E {
+    switch (json) {
+    case 0:
+        return "a";
+    case -100:
+        return "b";
+    case -99:
+        return "c";
+    }
+}
+""", """
+export function E_encode(entity: E): E_JSON {
+    switch (entity) {
+    case "a":
+        return 0;
+    case "b":
+        return -100;
+    case "c":
+        return -99;
+    }
+}
+"""]
+        )
+    }
+
     func testAssociatedValueDecode() throws {
         try assertGenerate(
             source: """

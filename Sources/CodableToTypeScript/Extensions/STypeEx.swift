@@ -39,9 +39,15 @@ extension NominalTypeDecl {
         self.name == name
     }
 
+    public func isStandardLibraryType(_ regex: some RegexComponent) -> Bool {
+        return moduleContext.name == "Swift" &&
+        !self.name.matches(of: regex).isEmpty
+    }
+
     public func rawValueType() -> (any SType)? {
         for type in inheritedTypes {
             if type.isStandardLibraryType("String") { return type }
+            if type.isStandardLibraryType(/^U?Int(8|16|32|64)?$/) { return type }
         }
 
         if let property = find(name: "rawValue") as? VarDecl {
@@ -128,6 +134,11 @@ extension SType {
     public func isStandardLibraryType(_ name: String) -> Bool {
         guard let self = self.asNominal else { return false }
         return self.nominalTypeDecl.isStandardLibraryType(name)
+    }
+
+    public func isStandardLibraryType(_ regex: some RegexComponent) -> Bool {
+        guard let self = self.asNominal else { return false }
+        return self.nominalTypeDecl.isStandardLibraryType(regex)
     }
 }
 

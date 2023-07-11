@@ -18,6 +18,10 @@ struct EnumConverter: TypeConverter {
                 self.kind = .string
                 return
             }
+            if raw.isStandardLibraryType(/^U?Int(8|16|32|64)?$/) {
+                self.kind = .int
+                return
+            }
         }
 
         self.kind = .normal
@@ -34,6 +38,7 @@ struct EnumConverter: TypeConverter {
     enum Kind {
         case never
         case string
+        case int
         case normal
     }
 
@@ -67,7 +72,32 @@ struct EnumConverter: TypeConverter {
                 genericParams: genericParams,
                 type: TSUnionType(items)
             )
-        default: break
+        case .int:
+            switch target {
+            case .entity:
+                let items: [any TSType] = decl.caseElements.map { (ce) in
+                    TSStringLiteralType(ce.name)
+                }
+
+                return TSTypeDecl(
+                    modifiers: [.export],
+                    name: try name(for: target),
+                    genericParams: genericParams,
+                    type: TSUnionType(items)
+                )
+            case .json:
+                let items: [any TSType] = decl.caseElements.withIntegerRawValues.map { (_, rawValue) in
+                    return TSNumberLiteralType(rawValue)
+                }
+
+                return TSTypeDecl(
+                    modifiers: [.export],
+                    name: try name(for: target),
+                    genericParams: genericParams,
+                    type: TSUnionType(items)
+                )
+            }
+        case .normal: break
         }
 
         let items: [any TSType] = try withErrorCollector { collect in
@@ -155,22 +185,34 @@ struct EnumConverter: TypeConverter {
         switch kind {
         case .never: return .identity
         case .string: return .identity
+        case .int: return .required
         case .normal: return .required
         }
     }
 
     func decodeDecl() throws -> TSFunctionDecl? {
-        return try DecodeFuncGen(
-            generator: generator,
-            converter: self,
-            type: `enum`.decl
-        ).generate()
+        switch kind {
+        case .never, .string:
+            return nil
+        case .int:
+            return try DecodeIntFuncGen(
+                converter: self,
+                type: `enum`.decl
+            ).generate()
+        case .normal:
+            return try DecodeObjFuncGen(
+                generator: generator,
+                converter: self,
+                type: `enum`.decl
+            ).generate()
+        }
     }
 
     func encodePresence() throws -> CodecPresence {
         switch kind {
         case .never: return .identity
         case .string: return .identity
+        case .int: return .required
         case .normal: break
         }
 
@@ -195,15 +237,25 @@ struct EnumConverter: TypeConverter {
     }
 
     func encodeDecl() throws -> TSFunctionDecl? {
-        return try EncodeFuncGen(
-            generator: generator,
-            converter: self,
-            type: `enum`.decl
-        ).generate()
+        switch kind {
+        case .never, .string:
+            return nil
+        case .int:
+            return try EncodeIntFuncGen(
+                converter: self,
+                type: `enum`.decl
+            ).generate()
+        case .normal:
+            return try EncodeObjFuncGen(
+                generator: generator,
+                converter: self,
+                type: `enum`.decl
+            ).generate()
+        }
     }
 }
 
-private struct DecodeFuncGen {
+private struct DecodeObjFuncGen {
     var generator: CodeGenerator
     var converter: EnumConverter
     var type: EnumDecl
@@ -344,7 +396,7 @@ private struct DecodeFuncGen {
     }
 }
 
-private struct EncodeFuncGen {
+private struct EncodeObjFuncGen {
     var generator: CodeGenerator
     var converter: EnumConverter
     var type: EnumDecl
@@ -442,5 +494,64 @@ private struct EncodeFuncGen {
 
         decl.body.elements.append(`switch`)
         return decl
+    }
+}
+
+private struct DecodeIntFuncGen {
+    var converter: EnumConverter
+    var type: EnumDecl
+
+    func generate() throws -> TSFunctionDecl? {
+        guard let decl = try converter.decodeSignature() else { return nil }
+
+        let `switch` = TSSwitchStmt(expr: TSIdentExpr.json)
+
+        for (caseDecl, rawValue) in type.caseElements.withIntegerRawValues {
+            `switch`.cases.append(
+                TSCaseStmt(expr: TSNumberLiteralExpr(rawValue), elements: [
+                    TSReturnStmt(TSStringLiteralExpr(caseDecl.name))
+                ])
+            )
+        }
+
+        decl.body.elements.append(`switch`)
+        return decl
+    }
+}
+
+private struct EncodeIntFuncGen {
+    var converter: EnumConverter
+    var type: EnumDecl
+
+    func generate() throws -> TSFunctionDecl? {
+        guard let decl = try converter.encodeSignature() else { return nil }
+
+        let `switch` = TSSwitchStmt(expr: TSIdentExpr.entity)
+
+        for (caseDecl, rawValue) in type.caseElements.withIntegerRawValues {
+            `switch`.cases.append(
+                TSCaseStmt(expr: TSStringLiteralExpr(caseDecl.name), elements: [
+                    TSReturnStmt(TSNumberLiteralExpr(rawValue))
+                ])
+            )
+        }
+
+        decl.body.elements.append(`switch`)
+        return decl
+    }
+}
+
+extension [EnumCaseElementDecl] {
+    fileprivate var withIntegerRawValues: [(EnumCaseElementDecl, Int)] {
+        var currentIndex = -1
+        return self.map { (ce) in
+            if case .integer(let value) = ce.rawValue {
+                currentIndex = value
+                return (ce, currentIndex)
+            } else {
+                currentIndex += 1
+                return (ce, currentIndex)
+            }
+        }
     }
 }
