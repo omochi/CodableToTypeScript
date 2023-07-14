@@ -54,6 +54,8 @@ public final class PackageGenerator {
                     collect {
                         let tsSource = try codeGenerator.convert(source: source)
 
+                        if tsSource.elements.isEmpty { return }
+
                         let entry = PackageEntry(
                             file: try tsPath(module: module, file: source.file),
                             source: tsSource
