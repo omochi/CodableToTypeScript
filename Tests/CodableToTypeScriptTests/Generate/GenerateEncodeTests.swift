@@ -130,4 +130,63 @@ export function S_encode(entity: S): S_JSON {
             ]
         )
     }
+
+    func testVariableNameEscaping() throws {
+        try assertGenerate(
+            source: """
+struct S<T> {
+    var `class`: T
+}
+""",
+            expecteds: ["""
+export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S<T> {
+    const _class = T_decode(json.class);
+    return {
+        class: _class
+    };
+}
+""", """
+export function S_encode<T, T_JSON>(entity: S<T>, T_encode: (entity: T) => T_JSON): S_JSON<T_JSON> {
+    const _class = T_encode(entity.class);
+    return {
+        class: _class
+    };
+}
+"""]
+        )
+
+            try assertGenerate(
+                source: """
+enum E<T> {
+    case `class`(break: T)
+}
+""",
+                expecteds: ["""
+export function E_decode<T, T_JSON>(json: E_JSON<T_JSON>, T_decode: (json: T_JSON) => T): E<T> {
+    if ("class" in json) {
+        const j = json.class;
+        const _break = T_decode(j.break);
+        return {
+            kind: "class",
+            class: {
+                break: _break
+            }
+        };
+    } else {
+        throw new Error("unknown kind");
+    }
+}
+""", """
+export function E_encode<T, T_JSON>(entity: E<T>, T_encode: (entity: T) => T_JSON): E_JSON<T_JSON> {
+    const e = entity.class;
+    const _break = T_encode(e.break);
+    return {
+        class: {
+            break: _break
+        }
+    };
+}
+"""]
+        )
+    }
 }

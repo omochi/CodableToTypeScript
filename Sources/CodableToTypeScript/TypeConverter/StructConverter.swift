@@ -88,7 +88,7 @@ struct StructConverter: TypeConverter {
                 }
 
                 let def = TSVarDecl(
-                    kind: .const, name: field.name,
+                    kind: .const, name: TSKeyword.escaped(field.name),
                     initializer: expr
                 )
 
@@ -97,7 +97,7 @@ struct StructConverter: TypeConverter {
         }
 
         for field in decl.storedProperties {
-            let expr = TSIdentExpr(field.name)
+            let expr = TSIdentExpr(TSKeyword.escaped(field.name))
 
             fields.append(
                 .named(
@@ -144,7 +144,7 @@ struct StructConverter: TypeConverter {
                 .callEncodeField(entity: expr)
 
             let def = TSVarDecl(
-                kind: .const, name: field.name,
+                kind: .const, name: TSKeyword.escaped(field.name),
                 initializer: expr
             )
 
@@ -152,7 +152,7 @@ struct StructConverter: TypeConverter {
         }
 
         for field in decl.storedProperties {
-            let expr = TSIdentExpr(field.name)
+            let expr = TSIdentExpr(TSKeyword.escaped(field.name))
 
             fields.append(
                 .named(
