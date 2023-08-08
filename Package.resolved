@@ -23,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/omochi/SwiftTypeReader",
       "state" : {
-        "branch" : "case_unescape",
-        "revision" : "6c94e34fb7f44ec3645c7c6f0372b103abe80a42"
+        "revision" : "263508132d36cf08de4875c43eb9ba4aa4d0f967",
+        "version" : "2.6.1"
       }
     },
     {
