@@ -283,7 +283,7 @@ private struct DecodeObjFuncGen {
                         .callDecodeField(json: expr)
 
                     return TSVarDecl(
-                        kind: .const, name: label,
+                        kind: .const, name: TSKeyword.escaped(label),
                         initializer: expr
                     )
                 }
@@ -296,7 +296,7 @@ private struct DecodeObjFuncGen {
             let label = value.codableLabel
             return TSObjectExpr.Field.named(
                 name: label,
-                value: TSIdentExpr(label)
+                value: TSIdentExpr(TSKeyword.escaped(label))
             )
         })
     }
@@ -413,7 +413,7 @@ private struct EncodeObjFuncGen {
                         .callEncodeField(entity: expr)
 
                     return TSVarDecl(
-                        kind: .const, name: value.codableLabel,
+                        kind: .const, name: TSKeyword.escaped(value.codableLabel),
                         initializer: expr
                     )
                 }
@@ -425,7 +425,7 @@ private struct EncodeObjFuncGen {
         return TSObjectExpr(element.associatedValues.map { (value) in
             return TSObjectExpr.Field.named(
                 name: value.codableLabel,
-                value: TSIdentExpr(value.codableLabel)
+                value: TSIdentExpr(TSKeyword.escaped(value.codableLabel))
             )
         })
     }
