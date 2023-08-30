@@ -43,26 +43,42 @@ extension NominalTypeDecl {
         return moduleContext.name == "Swift" &&
         !self.name.matches(of: regex).isEmpty
     }
+}
 
+extension EnumType {
     public func rawValueType() -> (any SType)? {
-        let rawCodingTypesRegex = /^(U?Int(8|16|32|64)?|Bool|String|Double|Float)$/
-
-        if self is EnumDecl {
-            for type in inheritedTypes {
-                if type.isStandardLibraryType(rawCodingTypesRegex) { return type }
-            }
+        for type in decl.inheritedTypes {
+            if type.isRawRepresentableCodingType() { return type }
         }
 
-        if inheritedTypes.contains(where: { (t) in t.asProtocol?.name == "RawRepresentable" }) {
-            if let property = find(name: "rawValue")?.asVar,
-               property.interfaceType.isStandardLibraryType(rawCodingTypesRegex) {
-                return property.interfaceType
-            }
+        return nil
+    }
+}
 
-            if let alias = findType(name: "RawValue")?.asTypeAlias,
-               alias.underlyingType.isStandardLibraryType(rawCodingTypesRegex) {
-                return alias.underlyingType
-            }
+extension StructType {
+    public func rawValueType() -> (any SType)? {
+        guard decl.inheritedTypes.contains(where: { (t) in t.asProtocol?.name == "RawRepresentable" }) else {
+            return nil
+        }
+        
+        let rawValueType: (any SType)?
+        if let property = decl.find(name: "rawValue")?.asVar {
+            rawValueType = property.interfaceType
+        } else if let alias = decl.findType(name: "RawValue")?.asTypeAlias {
+            rawValueType = alias.underlyingType
+        } else {
+            rawValueType = nil
+        }
+        guard let rawValueType else { return nil }
+
+        if rawValueType.isRawRepresentableCodingType() {
+            return rawValueType
+        }
+
+        let map = contextSubstitutionMap()
+        let resolved = rawValueType.subst(map: map)
+        if resolved.isRawRepresentableCodingType() {
+            return resolved
         }
 
         return nil
@@ -150,6 +166,10 @@ extension SType {
     public func isStandardLibraryType(_ regex: some RegexComponent) -> Bool {
         guard let self = self.asNominal else { return false }
         return self.nominalTypeDecl.isStandardLibraryType(regex)
+    }
+
+    public func isRawRepresentableCodingType() -> Bool {
+        isStandardLibraryType(/^(U?Int(8|16|32|64)?|Bool|String|Double|Float)$/)
     }
 }
 
