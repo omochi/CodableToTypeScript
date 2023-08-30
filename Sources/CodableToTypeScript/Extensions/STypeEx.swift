@@ -45,13 +45,22 @@ extension NominalTypeDecl {
     }
 
     public func rawValueType() -> (any SType)? {
-        for type in inheritedTypes {
-            if type.isStandardLibraryType("String") { return type }
-            if type.isStandardLibraryType(/^U?Int(8|16|32|64)?$/) { return type }
+        let rawCodingTypesRegex = /^(U?Int(8|16|32|64)?|Bool|String|Double|Float)$/
+        
+        if self is EnumDecl {
+            for type in inheritedTypes {
+                if type.isStandardLibraryType(rawCodingTypesRegex) { return type }
+            }
         }
 
-        if let property = find(name: "rawValue") as? VarDecl {
+        if let property = find(name: "rawValue")?.asVar,
+           property.interfaceType.isStandardLibraryType(rawCodingTypesRegex) {
             return property.interfaceType
+        }
+
+        if let alias = findType(name: "RawValue")?.asTypeAlias,
+           alias.underlyingType.isStandardLibraryType(rawCodingTypesRegex) {
+            return alias.underlyingType
         }
 
         return nil
