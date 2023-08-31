@@ -47,20 +47,18 @@ export type K = {
 }
 """, """
 export type K_JSON = {
-    a: string;
+    a: S_JSON;
 };
 """, """
 export function K_decode(json: K_JSON): K {
-    const a = {
-        rawValue: json.a
-    };
+    const a = S_decode(json.a);
     return {
         a: a
     };
 }
 """, """
 export function K_encode(entity: K): K_JSON {
-    const a = entity.a.rawValue;
+    const a = S_encode(entity.a);
     return {
         a: a
     };
@@ -255,14 +253,12 @@ export type User = {
 } & TagRecord<"User">;
 """, """
 export type User_JSON = {
-    id: string;
+    id: User_ID_JSON;
     date: string;
 };
 """, """
 export function User_decode(json: User_JSON): User {
-    const id = {
-        rawValue: json.id
-    };
+    const id = User_ID_decode(json.id);
     const date = Date_decode(json.date);
     return {
         id: id,
@@ -271,7 +267,7 @@ export function User_decode(json: User_JSON): User {
 }
 """, """
 export function User_encode(entity: User): User_JSON {
-    const id = entity.id.rawValue;
+    const id = User_ID_encode(entity.id);
     const date = Date_encode(entity.date);
     return {
         id: id,

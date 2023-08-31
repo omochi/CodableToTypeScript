@@ -5,22 +5,26 @@ struct RawRepresentableConverter: TypeConverter {
     init(
         generator: CodeGenerator,
         swiftType: any SType,
-        rawValueType raw: any SType
+        rawValueType substitutedRaw: any SType
     ) throws {
         let map = swiftType.contextSubstitutionMap()
-        let raw = raw.subst(map: map)
 
         self.generator = generator
         self.swiftType = swiftType
-        self.rawValueType = try generator.converter(for: raw)
+        self.rawValueType = try generator.converter(for: substitutedRaw)
+
+        let doesRawRepresentableCoding = substitutedRaw.isRawRepresentableCodingType()
+        let rawValueHasArchetype = !map.signature.isEmpty
+        self.needsSpecialize = doesRawRepresentableCoding && rawValueHasArchetype
     }
 
     var generator: CodeGenerator
     var swiftType: any SType
     var rawValueType: any TypeConverter
+    var needsSpecialize: Bool
 
     func type(for target: GenerationTarget) throws -> any TSType {
-        if case .json = target, rawValueType.swiftType.isRawRepresentableCodingType() {
+        if case .json = target, needsSpecialize {
             return try generator.converter(for: rawValueType.swiftType).type(for: target)
         }
 
@@ -89,7 +93,7 @@ struct RawRepresentableConverter: TypeConverter {
     }
 
     func callDecode(json: any TSExpr) throws -> any TSExpr {
-        if rawValueType.swiftType.isRawRepresentableCodingType() {
+        if needsSpecialize {
             let value = try rawValueType.callDecodeField(json: json)
             let field = try rawValueType.valueToField(value: value, for: .entity)
             return TSObjectExpr([
@@ -119,7 +123,7 @@ struct RawRepresentableConverter: TypeConverter {
     }
 
     func callEncode(entity: any TSExpr) throws -> TSExpr {
-        if rawValueType.swiftType.isRawRepresentableCodingType() {
+        if needsSpecialize {
             let field = try rawValueType.callEncodeField(
                 entity: TSMemberExpr(base: entity, name: "rawValue")
             )
