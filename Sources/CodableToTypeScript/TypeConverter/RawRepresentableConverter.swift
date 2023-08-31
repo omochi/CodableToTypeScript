@@ -5,17 +5,20 @@ struct RawRepresentableConverter: TypeConverter {
     init(
         generator: CodeGenerator,
         swiftType: any SType,
-        rawValueType substitutedRaw: any SType
+        rawValueType raw: any SType
     ) throws {
         let map = swiftType.contextSubstitutionMap()
+        let substituted = raw.subst(map: map)
 
         self.generator = generator
         self.swiftType = swiftType
-        self.rawValueType = try generator.converter(for: substitutedRaw)
+        self.rawValueType = try generator.converter(for: substituted)
 
-        let doesRawRepresentableCoding = substitutedRaw.isRawRepresentableCodingType()
-        let rawValueHasArchetype = !map.signature.isEmpty
-        self.needsSpecialize = doesRawRepresentableCoding && rawValueHasArchetype
+        let doesRawRepresentableCoding = substituted.isRawRepresentableCodingType()
+        let rawValueIsArchetype = raw.asGenericParam.map {
+            map.signature.params.contains($0)
+        } ?? false
+        self.needsSpecialize = doesRawRepresentableCoding && rawValueIsArchetype
     }
 
     var generator: CodeGenerator

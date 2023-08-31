@@ -78,7 +78,7 @@ extension StructType {
         let map = contextSubstitutionMap()
         let resolved = rawValueType.subst(map: map)
         if resolved.isRawRepresentableCodingType() {
-            return resolved
+            return rawValueType
         }
 
         return nil
