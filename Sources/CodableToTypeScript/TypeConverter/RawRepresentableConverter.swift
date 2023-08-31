@@ -14,11 +14,10 @@ struct RawRepresentableConverter: TypeConverter {
         self.swiftType = swiftType
         self.rawValueType = try generator.converter(for: substituted)
 
-        let doesRawRepresentableCoding = substituted.isRawRepresentableCodingType()
         let rawValueIsArchetype = raw.asGenericParam.map {
             map.signature.params.contains($0)
         } ?? false
-        self.needsSpecialize = doesRawRepresentableCoding && rawValueIsArchetype
+        self.needsSpecialize = rawValueIsArchetype
     }
 
     var generator: CodeGenerator
