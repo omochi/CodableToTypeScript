@@ -62,10 +62,10 @@ extension StructType {
         }
         
         let rawValueType: (any SType)?
-        if let property = decl.find(name: "rawValue")?.asVar {
-            rawValueType = property.interfaceType
-        } else if let alias = decl.findType(name: "RawValue")?.asTypeAlias {
+        if let alias = decl.findType(name: "RawValue")?.asTypeAlias {
             rawValueType = alias.underlyingType
+        } else if let property = decl.find(name: "rawValue")?.asVar {
+            rawValueType = property.interfaceType
         } else {
             rawValueType = nil
         }

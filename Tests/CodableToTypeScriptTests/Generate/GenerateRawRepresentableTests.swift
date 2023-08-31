@@ -47,7 +47,7 @@ export type K = {
 }
 """, """
 export type K_JSON = {
-    a: S_JSON;
+    a: string;
 };
 """, """
 export function K_decode(json: K_JSON): K {
@@ -212,7 +212,6 @@ export function K_encode(entity: K): K_JSON {
 """
                        ]
         )
-
     }
 
     func testNestedID() throws {
@@ -252,7 +251,7 @@ export type User = {
 } & TagRecord<"User">;
 """, """
 export type User_JSON = {
-    id: User_ID_JSON;
+    id: string;
     date: string;
 };
 """, """
@@ -289,6 +288,8 @@ struct ID<G>: RawRepresentable {
 export type ID<G> = {
     rawValue: string;
 } & TagRecord<"ID", [G]>;
+""", """
+export type ID_JSON<G_JSON> = string;
 """]
         )
     }
