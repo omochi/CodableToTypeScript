@@ -131,7 +131,7 @@ export type User_JSON = {
 """, """
 export type User_ID = GenericID<User>;
 """, """
-export type User_ID_JSON = GenericID_JSON<User_JSON>;
+export type User_ID_JSON = string;
 """, """
 export function User_ID_decode(json: User_ID_JSON): User_ID {
     return GenericID_decode<User, User_JSON>(json, User_decode);
