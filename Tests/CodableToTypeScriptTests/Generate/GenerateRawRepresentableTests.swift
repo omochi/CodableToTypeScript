@@ -51,14 +51,16 @@ export type K_JSON = {
 };
 """, """
 export function K_decode(json: K_JSON): K {
-    const a = S_decode(json.a);
+    const a = {
+        rawValue: json.a
+    };
     return {
         a: a
     };
 }
 """, """
 export function K_encode(entity: K): K_JSON {
-    const a = S_encode(entity.a);
+    const a = entity.a.rawValue;
     return {
         a: a
     };
@@ -197,14 +199,16 @@ export type K_JSON = {
 }
 """, """
 export function K_decode(json: K_JSON): K {
-    const a = S_decode<number, number>(json.a, identity);
+    const a = {
+        rawValue: json.a
+    };
     return {
         a: a
     };
 }
 """, """
 export function K_encode(entity: K): K_JSON {
-    const a = S_encode<number, number>(entity.a, identity);
+    const a = entity.a.rawValue;
     return {
         a: a
     };
@@ -256,7 +260,9 @@ export type User_JSON = {
 };
 """, """
 export function User_decode(json: User_JSON): User {
-    const id = User_ID_decode(json.id);
+    const id = {
+        rawValue: json.id
+    };
     const date = Date_decode(json.date);
     return {
         id: id,
@@ -265,7 +271,7 @@ export function User_decode(json: User_JSON): User {
 }
 """, """
 export function User_encode(entity: User): User_JSON {
-    const id = User_ID_encode(entity.id);
+    const id = entity.id.rawValue;
     const date = Date_encode(entity.date);
     return {
         id: id,

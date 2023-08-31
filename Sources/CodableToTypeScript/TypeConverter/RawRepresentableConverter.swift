@@ -88,6 +88,17 @@ struct RawRepresentableConverter: TypeConverter {
         return decl
     }
 
+    func callDecode(json: any TSExpr) throws -> any TSExpr {
+        if rawValueType.swiftType.isRawRepresentableCodingType() {
+            let value = try rawValueType.callDecodeField(json: json)
+            let field = try rawValueType.valueToField(value: value, for: .entity)
+            return TSObjectExpr([
+                .named(name: "rawValue", value: field)
+            ])
+        }
+        return try `default`.callDecode(json: json)
+    }
+
     func encodePresence() throws -> CodecPresence {
         return .required
     }
@@ -105,5 +116,16 @@ struct RawRepresentableConverter: TypeConverter {
         )
 
         return decl
+    }
+
+    func callEncode(entity: any TSExpr) throws -> TSExpr {
+        if rawValueType.swiftType.isRawRepresentableCodingType() {
+            let field = try rawValueType.callEncodeField(
+                entity: TSMemberExpr(base: entity, name: "rawValue")
+            )
+            let value = try rawValueType.fieldToValue(field: field, for: .json)
+            return value
+        }
+        return try `default`.callEncode(entity: entity)
     }
 }
