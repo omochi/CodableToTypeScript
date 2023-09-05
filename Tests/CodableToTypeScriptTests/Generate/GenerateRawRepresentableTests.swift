@@ -193,20 +193,18 @@ export type K = {
 }
 """, """
 export type K_JSON = {
-    a: number;
+    a: S_JSON<number>;
 }
 """, """
 export function K_decode(json: K_JSON): K {
-    const a = {
-        rawValue: json.a
-    };
+    const a = S_decode<number, number>(json.a, identity);
     return {
         a: a
     };
 }
 """, """
 export function K_encode(entity: K): K_JSON {
-    const a = entity.a.rawValue;
+    const a = S_encode<number, number>(entity.a, identity);
     return {
         a: a
     };

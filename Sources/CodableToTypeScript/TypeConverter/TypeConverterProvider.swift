@@ -34,7 +34,7 @@ public struct TypeConverterProvider {
             return EnumConverter(generator: generator, enum: type)
         } else if let type = type.asStruct {
             if let raw = type.rawValueType() {
-                return try RawRepresentableConverter(
+                return try RawValueTransferringConverter(
                     generator: generator,
                     swiftType: type,
                     rawValueType: raw

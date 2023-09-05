@@ -1,7 +1,7 @@
 import SwiftTypeReader
 import TypeScriptAST
 
-struct RawRepresentableConverter: TypeConverter {
+struct RawValueTransferringConverter: TypeConverter {
     init(
         generator: CodeGenerator,
         swiftType: any SType,
@@ -13,25 +13,11 @@ struct RawRepresentableConverter: TypeConverter {
         self.generator = generator
         self.swiftType = swiftType
         self.rawValueType = try generator.converter(for: substituted)
-
-        let rawValueIsArchetype = raw.asGenericParam.map {
-            map.signature.params.contains($0)
-        } ?? false
-        self.needsSpecialize = rawValueIsArchetype
     }
 
     var generator: CodeGenerator
     var swiftType: any SType
     var rawValueType: any TypeConverter
-    var needsSpecialize: Bool
-
-    func type(for target: GenerationTarget) throws -> any TSType {
-        if case .json = target, needsSpecialize {
-            return try generator.converter(for: rawValueType.swiftType).type(for: target)
-        }
-
-        return try `default`.type(for: target)
-    }
 
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         let name = try self.name(for: target)
@@ -94,17 +80,6 @@ struct RawRepresentableConverter: TypeConverter {
         return decl
     }
 
-    func callDecode(json: any TSExpr) throws -> any TSExpr {
-        if needsSpecialize {
-            let value = try rawValueType.callDecodeField(json: json)
-            let field = try rawValueType.valueToField(value: value, for: .entity)
-            return TSObjectExpr([
-                .named(name: "rawValue", value: field)
-            ])
-        }
-        return try `default`.callDecode(json: json)
-    }
-
     func encodePresence() throws -> CodecPresence {
         return .required
     }
@@ -122,16 +97,5 @@ struct RawRepresentableConverter: TypeConverter {
         )
 
         return decl
-    }
-
-    func callEncode(entity: any TSExpr) throws -> TSExpr {
-        if needsSpecialize {
-            let field = try rawValueType.callEncodeField(
-                entity: TSMemberExpr(base: entity, name: "rawValue")
-            )
-            let value = try rawValueType.fieldToValue(field: field, for: .json)
-            return value
-        }
-        return try `default`.callEncode(entity: entity)
     }
 }
