@@ -142,6 +142,401 @@ export type S = {
         ])
     }
 
+    private let rawValueTransferCodingProvider: TypeConverterProvider.CustomProvider = { (generator, stype) in
+        if let `struct` = stype.asStruct,
+           let rawValueType = `struct`.rawValueType(checkRawRepresentableCodingType: false) {
+            return try? RawValueTransferringConverter(generator: generator, swiftType: stype, rawValueType: rawValueType)
+        }
+        return nil
+    }
+
+    func testOptionalComplex() throws {
+        try assertGenerate(
+            source: """
+struct K: RawRepresentable {
+    var rawValue: Int
+}
+
+struct S: RawRepresentable {
+    var rawValue: K?
+}
+""",
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
+            expecteds: ["""
+export type S = {
+    rawValue?: K;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = K_JSON | null;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: Optional_decode<K, K_JSON>(json, K_decode) ?? undefined
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return OptionalField_encode<K, K_JSON>(entity.rawValue, K_encode) ?? null;
+}
+"""
+       ])
+    }
+
+    func testDoubleOptional() throws {
+        try assertGenerate(
+            source: """
+struct S: RawRepresentable {
+    var rawValue: Int??
+}
+""",
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
+            expecteds: ["""
+export type S = {
+    rawValue?: number | null;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = number | null;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: json as number | null ?? undefined
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue ?? null;
+}
+"""
+       ])
+    }
+
+    func testDoubleOptionalComplex() throws {
+        try assertGenerate(
+            source: """
+struct K: RawRepresentable {
+    var rawValue: Int
+}
+
+struct S: RawRepresentable {
+    var rawValue: K??
+}
+""",
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
+            expecteds: ["""
+export type S = {
+    rawValue?: K | null;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = K_JSON | null;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: Optional_decode<K, K_JSON>(json, K_decode) ?? undefined
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return OptionalField_encode<K | null, K_JSON | null>(entity.rawValue, (entity: K | null): K_JSON | null => {
+        return Optional_encode<K, K_JSON>(entity, K_encode);
+    }) ?? null;
+}
+"""
+                       ])
+    }
+
+    func testArray() throws {
+        try assertGenerate(
+            source: """
+struct S: RawRepresentable {
+    var rawValue: [String]
+}
+""",
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
+            expecteds: ["""
+export type S = {
+    rawValue: string[];
+} & TagRecord<"S">;
+""", """
+export type S_JSON = string[];
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: json as string[]
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue as string[];
+}
+"""]
+        )
+    }
+
+    func testStruct() throws {
+        try assertGenerate(
+            source: """
+struct K {
+    var a: Int
+}
+
+struct S: RawRepresentable {
+    var rawValue: K
+}
+""",
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
+            expecteds: ["""
+export type S = {
+    rawValue: K;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = K;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: json
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue;
+}
+"""]
+        )
+    }
+
+    func testEnum() throws {
+        try assertGenerate(
+            source: """
+enum E {
+    case a(Int)
+}
+
+struct S: RawRepresentable {
+    var rawValue: E
+}
+""",
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
+            expecteds: ["""
+export type S = {
+    rawValue: E;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = E_JSON;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: E_decode(json)
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue as E_JSON;
+}
+"""
+                       ]
+        )
+    }
+
+    func testEncodeStruct() throws {
+        try assertGenerate(
+            source: """
+struct K {
+    var a: Date
+}
+
+struct S: RawRepresentable {
+    var rawValue: K
+}
+""",
+            typeConverterProvider: .init(typeMap: dateTypeMap(), customProvider: rawValueTransferCodingProvider),
+            externalReference: dateTypeExternal(),
+            expecteds: ["""
+export type S = {
+    rawValue: K;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = K_JSON;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: K_decode(json)
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return K_encode(entity.rawValue);
+}
+"""
+                       ]
+        )
+    }
+
+    func testCustomMap() throws {
+        try assertGenerate(
+            source: """
+struct S: RawRepresentable {
+    var rawValue: Date
+}
+""",
+            typeConverterProvider: .init(typeMap: dateTypeMap(), customProvider: rawValueTransferCodingProvider),
+            externalReference: dateTypeExternal(),
+            expecteds: ["""
+export type S = {
+    rawValue: Date;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = string;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: Date_decode(json)
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return Date_encode(entity.rawValue);
+}
+"""
+                       ]
+        )
+    }
+
+    func testBoundGenericDecodeEncode() throws {
+        try assertGenerate(
+            source: """
+struct K<T> {
+    var a: T
+}
+
+struct S: RawRepresentable {
+    var rawValue: K<Date>
+}
+""",
+            typeConverterProvider: .init(typeMap: dateTypeMap(), customProvider: rawValueTransferCodingProvider),
+            externalReference: dateTypeExternal(),
+            expecteds: ["""
+export type S = {
+    rawValue: K<Date>;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = K_JSON<string>;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: K_decode<Date, string>(json, Date_decode)
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return K_encode<Date, string>(entity.rawValue, Date_encode);
+}
+"""
+                       ]
+        )
+    }
+
+    func testBoundGenericDecodeOnly() throws {
+        try assertGenerate(
+            source: """
+enum E { case a }
+
+struct K<T> {
+    var a: T
+}
+
+struct S: RawRepresentable {
+    var rawValue: K<E>
+}
+""",
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
+            expecteds: ["""
+export type S = {
+    rawValue: K<E>;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = K_JSON<E_JSON>;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: K_decode<E, E_JSON>(json, E_decode)
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue as K_JSON<E_JSON>;
+}
+"""
+                       ]
+        )
+    }
+
+    func testBoundGenericIdentity() throws {
+        try assertGenerate(
+            source: """
+struct K<T> {
+    var a: T
+}
+
+struct S: RawRepresentable {
+    var rawValue: K<Int>
+}
+""",
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
+            expecteds: ["""
+export type S = {
+    rawValue: K<number>;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = K<number>;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: json as K<number>
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue as K<number>;
+}
+"""
+                       ]
+        )
+    }
+
+    func testMapGeneric() throws {
+        try assertGenerate(
+            source: """
+struct K<T> {
+    var a: T
+}
+
+struct S<U>: RawRepresentable {
+    var rawValue: K<U>
+}
+""",
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
+            expecteds: ["""
+export type S<U> = {
+    rawValue: K<U>;
+} & TagRecord<"S", [U]>;
+""", """
+export type S_JSON<U_JSON> = K_JSON<U_JSON>;
+""", """
+export function S_decode<U, U_JSON>(json: S_JSON<U_JSON>, U_decode: (json: U_JSON) => U): S<U> {
+    return {
+        rawValue: K_decode<U, U_JSON>(json, U_decode)
+    };
+}
+""", """
+export function S_encode<U, U_JSON>(entity: S<U>, U_encode: (entity: U) => U_JSON): S_JSON<U_JSON> {
+    return K_encode<U, U_JSON>(entity.rawValue, U_encode);
+}
+"""
+                       ]
+        )
+    }
+
+
     func testGenericParam() throws {
         try assertGenerate(
             source: """
