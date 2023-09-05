@@ -68,37 +68,6 @@ export function K_encode(entity: K): K_JSON {
         )
     }
 
-    func testTypeAlias() throws {
-        try assertGenerate(
-            source: """
-struct S: RawRepresentable {
-    typealias RawValue = Int
-    var rawValue: RawValue
-}
-""",
-            expecteds: ["""
-export type S_RawValue = number;
-""", """
-export type S = {
-    rawValue: number;
-} & TagRecord<"S">;
-""", """
-export type S_JSON = number;
-""", """
-export function S_decode(json: S_JSON): S {
-    return {
-        rawValue: json
-    };
-}
-""", """
-export function S_encode(entity: S): S_JSON {
-    return entity.rawValue;
-}
-"""
-                       ]
-        )
-    }
-
     func testComputedProperty() throws {
         try assertGenerate(
             source: """
@@ -686,6 +655,37 @@ export type ID<G> = {
 """, """
 export type ID_JSON<G_JSON> = string;
 """]
+        )
+    }
+
+    func testTypeAlias() throws {
+        try assertGenerate(
+            source: """
+struct S: RawRepresentable {
+    typealias RawValue = Int
+    var rawValue: RawValue
+}
+""",
+            expecteds: ["""
+export type S_RawValue = number;
+""", """
+export type S = {
+    rawValue: number;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = number;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: json
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue;
+}
+"""
+                       ]
         )
     }
 }
