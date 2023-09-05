@@ -1,14 +1,19 @@
 import SwiftTypeReader
 import TypeScriptAST
 
-struct StructConverter: TypeConverter {
-    var generator: CodeGenerator
-    var `struct`: StructType
-    var swiftType: any SType { `struct` }
+public struct StructConverter: TypeConverter {
+    public init(generator: CodeGenerator, `struct`: StructType) {
+        self.generator = generator
+        self.`struct` = `struct`
+    }
+    
+    public var generator: CodeGenerator
+    public var `struct`: StructType
+    public var swiftType: any SType { `struct` }
 
     private var decl: StructDecl { `struct`.decl }
 
-    func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
+    public func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         switch target {
         case .entity: break
         case .json:
@@ -56,7 +61,7 @@ struct StructConverter: TypeConverter {
         )
     }
 
-    func decodePresence() throws -> CodecPresence {
+    public func decodePresence() throws -> CodecPresence {
         let map = `struct`.contextSubstitutionMap()
 
         var result: [CodecPresence] = [.identity]
@@ -71,7 +76,7 @@ struct StructConverter: TypeConverter {
         return result.max()!
     }
 
-    func decodeDecl() throws -> TSFunctionDecl? {
+    public func decodeDecl() throws -> TSFunctionDecl? {
         guard let function = try decodeSignature() else { return nil }
 
         var fields: [TSObjectExpr.Field] = []
@@ -114,7 +119,7 @@ struct StructConverter: TypeConverter {
         return function
     }
 
-    func encodePresence() throws -> CodecPresence {
+    public func encodePresence() throws -> CodecPresence {
         let map = `struct`.contextSubstitutionMap()
 
         var result: [CodecPresence] = [.identity]
@@ -129,7 +134,7 @@ struct StructConverter: TypeConverter {
         return result.max()!
     }
 
-    func encodeDecl() throws -> TSFunctionDecl? {
+    public func encodeDecl() throws -> TSFunctionDecl? {
         guard let function = try encodeSignature() else { return nil }
 
         var fields: [TSObjectExpr.Field] = []
