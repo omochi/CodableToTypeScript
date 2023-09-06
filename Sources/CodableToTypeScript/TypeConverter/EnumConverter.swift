@@ -1,8 +1,8 @@
 import SwiftTypeReader
 import TypeScriptAST
 
-struct EnumConverter: TypeConverter {
-    init(generator: CodeGenerator, `enum`: EnumType) {
+public struct EnumConverter: TypeConverter {
+    public init(generator: CodeGenerator, `enum`: EnumType) {
         self.generator = generator
         self.`enum` = `enum`
 
@@ -13,7 +13,7 @@ struct EnumConverter: TypeConverter {
             return
         }
 
-        if let raw = decl.rawValueType() {
+        if let raw = `enum`.rawValueType() {
             if raw.isStandardLibraryType("String") {
                 self.kind = .string
                 return
@@ -27,10 +27,10 @@ struct EnumConverter: TypeConverter {
         self.kind = .normal
     }
 
-    var generator: CodeGenerator
-    var `enum`: EnumType
-    
-    var swiftType: any SType { `enum` }
+    public var generator: CodeGenerator
+    public var `enum`: EnumType
+
+    public var swiftType: any SType { `enum` }
 
     private var decl: EnumDecl { `enum`.decl }
     private var kind: Kind
@@ -42,7 +42,7 @@ struct EnumConverter: TypeConverter {
         case normal
     }
 
-    func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
+    public func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         switch target {
         case .entity: break
         case .json:
@@ -181,7 +181,7 @@ struct EnumConverter: TypeConverter {
         return TSObjectType(outerFields)
     }
 
-    func decodePresence() throws -> CodecPresence {
+    public func decodePresence() throws -> CodecPresence {
         switch kind {
         case .never: return .identity
         case .string: return .identity
@@ -190,7 +190,7 @@ struct EnumConverter: TypeConverter {
         }
     }
 
-    func decodeDecl() throws -> TSFunctionDecl? {
+    public func decodeDecl() throws -> TSFunctionDecl? {
         switch kind {
         case .never, .string:
             return nil
@@ -208,7 +208,7 @@ struct EnumConverter: TypeConverter {
         }
     }
 
-    func encodePresence() throws -> CodecPresence {
+    public func encodePresence() throws -> CodecPresence {
         switch kind {
         case .never: return .identity
         case .string: return .identity
@@ -236,7 +236,7 @@ struct EnumConverter: TypeConverter {
         return result.max()!
     }
 
-    func encodeDecl() throws -> TSFunctionDecl? {
+    public func encodeDecl() throws -> TSFunctionDecl? {
         switch kind {
         case .never, .string:
             return nil

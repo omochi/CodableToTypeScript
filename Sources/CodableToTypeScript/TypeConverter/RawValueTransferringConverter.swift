@@ -1,25 +1,25 @@
 import SwiftTypeReader
 import TypeScriptAST
 
-struct RawRepresentableConverter: TypeConverter {
-    init(
+public struct RawValueTransferringConverter: TypeConverter {
+    public init(
         generator: CodeGenerator,
         swiftType: any SType,
         rawValueType raw: any SType
     ) throws {
         let map = swiftType.contextSubstitutionMap()
-        let raw = raw.subst(map: map)
+        let substituted = raw.subst(map: map)
 
         self.generator = generator
         self.swiftType = swiftType
-        self.rawValueType = try generator.converter(for: raw)
+        self.rawValueType = try generator.converter(for: substituted)
     }
 
-    var generator: CodeGenerator
-    var swiftType: any SType
+    public var generator: CodeGenerator
+    public var swiftType: any SType
     var rawValueType: any TypeConverter
 
-    func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
+    public func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         let name = try self.name(for: target)
         let genericParams: [TSTypeParameterNode] = try self.genericParams().map {
             .init(try $0.name(for: target))
@@ -59,11 +59,11 @@ struct RawRepresentableConverter: TypeConverter {
         }
     }
 
-    func decodePresence() throws -> CodecPresence {
+    public func decodePresence() throws -> CodecPresence {
         return .required
     }
 
-    func decodeDecl() throws -> TSFunctionDecl? {
+    public func decodeDecl() throws -> TSFunctionDecl? {
         guard let decl = try decodeSignature() else { return nil }
 
         let value = try rawValueType.callDecode(json: TSIdentExpr.json)
@@ -80,11 +80,11 @@ struct RawRepresentableConverter: TypeConverter {
         return decl
     }
 
-    func encodePresence() throws -> CodecPresence {
+    public func encodePresence() throws -> CodecPresence {
         return .required
     }
 
-    func encodeDecl() throws -> TSFunctionDecl? {
+    public func encodeDecl() throws -> TSFunctionDecl? {
         guard let decl = try encodeSignature() else { return nil }
 
         let field = try rawValueType.callEncodeField(

@@ -1,16 +1,21 @@
 import SwiftTypeReader
 import TypeScriptAST
 
-struct TypeAliasConverter: TypeConverter {
-    var generator: CodeGenerator
-    var swiftType: any SType { typeAlias }
-    var typeAlias: TypeAliasType
+public struct TypeAliasConverter: TypeConverter {
+    public init(generator: CodeGenerator, typeAlias: TypeAliasType) {
+        self.generator = generator
+        self.typeAlias = typeAlias
+    }
+    
+    public var generator: CodeGenerator
+    public var swiftType: any SType { typeAlias }
+    public var typeAlias: TypeAliasType
 
     private func underlying() throws -> any TypeConverter {
         try generator.converter(for: typeAlias.underlyingType)
     }
 
-    func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
+    public func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         switch target {
         case .entity: break
         case .json:
@@ -26,11 +31,11 @@ struct TypeAliasConverter: TypeConverter {
         )
     }
 
-    func decodePresence() throws -> CodecPresence {
+    public func decodePresence() throws -> CodecPresence {
         return try underlying().decodePresence()
     }
 
-    func decodeDecl() throws -> TSFunctionDecl? {
+    public func decodeDecl() throws -> TSFunctionDecl? {
         guard let decl = try decodeSignature() else { return nil }
 
         let expr = try underlying().callDecode(json: TSIdentExpr.json)
@@ -41,11 +46,11 @@ struct TypeAliasConverter: TypeConverter {
         return decl
     }
 
-    func encodePresence() throws -> CodecPresence {
+    public func encodePresence() throws -> CodecPresence {
         return try underlying().encodePresence()
     }
 
-    func encodeDecl() throws -> TSFunctionDecl? {
+    public func encodeDecl() throws -> TSFunctionDecl? {
         guard let decl = try encodeSignature() else { return nil }
 
         let expr = try underlying().callEncode(entity: TSIdentExpr.entity)

@@ -43,15 +43,38 @@ extension NominalTypeDecl {
         return moduleContext.name == "Swift" &&
         !self.name.matches(of: regex).isEmpty
     }
+}
 
+extension EnumType {
     public func rawValueType() -> (any SType)? {
-        for type in inheritedTypes {
-            if type.isStandardLibraryType("String") { return type }
-            if type.isStandardLibraryType(/^U?Int(8|16|32|64)?$/) { return type }
+        for type in decl.inheritedTypes {
+            if type.isStandardLibraryType(/^(U?Int(8|16|32|64)?|Bool|String)$/) { return type }
         }
 
-        if let property = find(name: "rawValue") as? VarDecl {
-            return property.interfaceType
+        return nil
+    }
+}
+
+extension StructType {
+    public func rawValueType(requiresTransferringRawValueType: Bool = true) -> (any SType)? {
+        guard decl.inheritedTypes.contains(where: { (t) in t.asProtocol?.name == "RawRepresentable" }) else {
+            return nil
+        }
+        
+        let rawValueType: (any SType)?
+        if let alias = decl.findType(name: "RawValue")?.asTypeAlias {
+            rawValueType = alias.underlyingType
+        } else if let property = decl.find(name: "rawValue")?.asVar {
+            rawValueType = property.interfaceType
+        } else {
+            rawValueType = nil
+        }
+        guard let rawValueType else { return nil }
+
+        if !requiresTransferringRawValueType || rawValueType.isTransferringRawValueType() {
+            let map = contextSubstitutionMap()
+            let resolved = rawValueType.subst(map: map)
+            return resolved
         }
 
         return nil
@@ -139,6 +162,10 @@ extension SType {
     public func isStandardLibraryType(_ regex: some RegexComponent) -> Bool {
         guard let self = self.asNominal else { return false }
         return self.nominalTypeDecl.isStandardLibraryType(regex)
+    }
+
+    public func isTransferringRawValueType() -> Bool {
+        isStandardLibraryType(/^(U?Int(8|16|32|64)?|Bool|String|Double|Float)$/)
     }
 }
 

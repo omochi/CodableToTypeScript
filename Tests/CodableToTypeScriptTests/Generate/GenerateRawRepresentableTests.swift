@@ -1,5 +1,6 @@
 import XCTest
 import CodableToTypeScript
+import SwiftTypeReader
 
 final class GenerateRawRepresentableTests: GenerateTestCaseBase {
     func testStoredProperty() throws {
@@ -107,20 +108,16 @@ struct S: RawRepresentable {
 export type S = {
     rawValue?: number;
 } & TagRecord<"S">;
-""", """
-export type S_JSON = number | null;
-""", """
-export function S_decode(json: S_JSON): S {
-    return {
-        rawValue: json as number | null ?? undefined
-    };
-}
-""", """
-export function S_encode(entity: S): S_JSON {
-    return entity.rawValue ?? null;
-}
 """
         ])
+    }
+
+    private let rawValueTransferCodingProvider: TypeConverterProvider.CustomProvider = { (generator, stype) in
+        if let `struct` = stype.asStruct,
+           let rawValueType = `struct`.rawValueType(requiresTransferringRawValueType: false) {
+            return try? RawValueTransferringConverter(generator: generator, swiftType: stype, rawValueType: rawValueType)
+        }
+        return nil
     }
 
     func testOptionalComplex() throws {
@@ -134,7 +131,8 @@ struct S: RawRepresentable {
     var rawValue: K?
 }
 """,
-        expecteds: ["""
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
+            expecteds: ["""
 export type S = {
     rawValue?: K;
 } & TagRecord<"S">;
@@ -151,7 +149,7 @@ export function S_encode(entity: S): S_JSON {
     return OptionalField_encode<K, K_JSON>(entity.rawValue, K_encode) ?? null;
 }
 """
-        ])
+       ])
     }
 
     func testDoubleOptional() throws {
@@ -161,7 +159,8 @@ struct S: RawRepresentable {
     var rawValue: Int??
 }
 """,
-        expecteds: ["""
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
+            expecteds: ["""
 export type S = {
     rawValue?: number | null;
 } & TagRecord<"S">;
@@ -178,7 +177,7 @@ export function S_encode(entity: S): S_JSON {
     return entity.rawValue ?? null;
 }
 """
-        ])
+       ])
     }
 
     func testDoubleOptionalComplex() throws {
@@ -192,7 +191,8 @@ struct S: RawRepresentable {
     var rawValue: K??
 }
 """,
-        expecteds: ["""
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
+            expecteds: ["""
 export type S = {
     rawValue?: K | null;
 } & TagRecord<"S">;
@@ -211,7 +211,7 @@ export function S_encode(entity: S): S_JSON {
     }) ?? null;
 }
 """
-        ])
+                       ])
     }
 
     func testArray() throws {
@@ -221,6 +221,7 @@ struct S: RawRepresentable {
     var rawValue: [String]
 }
 """,
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
             expecteds: ["""
 export type S = {
     rawValue: string[];
@@ -252,6 +253,7 @@ struct S: RawRepresentable {
     var rawValue: K
 }
 """,
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
             expecteds: ["""
 export type S = {
     rawValue: K;
@@ -283,6 +285,7 @@ struct S: RawRepresentable {
     var rawValue: E
 }
 """,
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
             expecteds: ["""
 export type S = {
     rawValue: E;
@@ -315,7 +318,7 @@ struct S: RawRepresentable {
     var rawValue: K
 }
 """,
-            typeMap: dateTypeMap(),
+            typeConverterProvider: .init(typeMap: dateTypeMap(), customProvider: rawValueTransferCodingProvider),
             externalReference: dateTypeExternal(),
             expecteds: ["""
 export type S = {
@@ -345,7 +348,7 @@ struct S: RawRepresentable {
     var rawValue: Date
 }
 """,
-            typeMap: dateTypeMap(),
+            typeConverterProvider: .init(typeMap: dateTypeMap(), customProvider: rawValueTransferCodingProvider),
             externalReference: dateTypeExternal(),
             expecteds: ["""
 export type S = {
@@ -379,7 +382,7 @@ struct S: RawRepresentable {
     var rawValue: K<Date>
 }
 """,
-            typeMap: dateTypeMap(),
+            typeConverterProvider: .init(typeMap: dateTypeMap(), customProvider: rawValueTransferCodingProvider),
             externalReference: dateTypeExternal(),
             expecteds: ["""
 export type S = {
@@ -415,6 +418,7 @@ struct S: RawRepresentable {
     var rawValue: K<E>
 }
 """,
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
             expecteds: ["""
 export type S = {
     rawValue: K<E>;
@@ -447,6 +451,7 @@ struct S: RawRepresentable {
     var rawValue: K<Int>
 }
 """,
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
             expecteds: ["""
 export type S = {
     rawValue: K<number>;
@@ -479,6 +484,7 @@ struct S<U>: RawRepresentable {
     var rawValue: K<U>
 }
 """,
+            typeConverterProvider: .init(customProvider: rawValueTransferCodingProvider),
             expecteds: ["""
 export type S<U> = {
     rawValue: K<U>;
@@ -500,6 +506,7 @@ export function S_encode<U, U_JSON>(entity: S<U>, U_encode: (entity: U) => U_JSO
         )
     }
 
+
     func testGenericParam() throws {
         try assertGenerate(
             source: """
@@ -512,16 +519,22 @@ export type S<T> = {
     rawValue: T;
 } & TagRecord<"S", [T]>;
 """, """
-export type S_JSON<T_JSON> = T_JSON;
+export type S_JSON<T_JSON> = {
+    rawValue: T_JSON;
+};
 """, """
 export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S<T> {
+    const rawValue = T_decode(json.rawValue);
     return {
-        rawValue: T_decode(json)
+        rawValue: rawValue
     };
 }
 """, """
 export function S_encode<T, T_JSON>(entity: S<T>, T_encode: (entity: T) => T_JSON): S_JSON<T_JSON> {
-    return T_encode(entity.rawValue);
+    const rawValue = T_encode(entity.rawValue);
+    return {
+        rawValue: rawValue
+    };
 }
 """
                    ]
@@ -540,33 +553,19 @@ struct K {
 }
 """,
             expecteds: ["""
-export type K_JSON = {
-    a: S_JSON<number>;
+export type K = {
+    a: S<number>;
 }
-""", """
-export function K_decode(json: K_JSON): K {
-    const a = S_decode<number, number>(json.a, identity);
-    return {
-        a: a
-    };
-}
-""", """
-export function K_encode(entity: K): K_JSON {
-    const a = S_encode<number, number>(entity.a, identity);
-    return {
-        a: a
-    };
-}
-"""]
+""",
+                       ]
         )
-
     }
 
     func testNestedID() throws {
         try assertGenerate(
             source: """
 struct User {
-    struct ID {
+    struct ID: RawRepresentable {
         var rawValue: String
     }
 
@@ -636,7 +635,78 @@ struct ID<G>: RawRepresentable {
 export type ID<G> = {
     rawValue: string;
 } & TagRecord<"ID", [G]>;
+""", """
+export type ID_JSON<G_JSON> = string;
 """]
         )
+    }
+
+    func testTypeAlias() throws {
+        try assertGenerate(
+            source: """
+struct S: RawRepresentable {
+    typealias RawValue = Int
+    var rawValue: RawValue
+}
+""",
+            expecteds: ["""
+export type S_RawValue = number;
+""", """
+export type S = {
+    rawValue: number;
+} & TagRecord<"S">;
+""", """
+export type S_JSON = number;
+""", """
+export function S_decode(json: S_JSON): S {
+    return {
+        rawValue: json
+    };
+}
+""", """
+export function S_encode(entity: S): S_JSON {
+    return entity.rawValue;
+}
+"""
+                       ]
+        )
+    }
+
+    func testRawValueType() throws {
+        let source = """
+struct A: RawRepresentable {
+    var rawValue: Int
+}
+
+struct B<T>: RawRepresentable {
+    var rawValue: T
+}
+
+struct C: RawRepresentable {
+    var rawValue: Int?
+}
+
+struct K {
+    var a: A
+    var b: B<Int>
+    var c: C
+}
+"""
+        let context = Context()
+        let reader = Reader(context: context)
+        let module = reader.read(source: source, file: URL(fileURLWithPath: "main.swift")).module
+
+        let k = try XCTUnwrap(module.find(name: "K")?.asStruct)
+        let aType = try XCTUnwrap(k.find(name: "a")?.asVar?.interfaceType.asStruct)
+        XCTAssertEqual(aType.rawValueType(requiresTransferringRawValueType: false)?.description, "Int")
+        XCTAssertEqual(aType.rawValueType(requiresTransferringRawValueType: true)?.description, "Int")
+
+        let bType = try XCTUnwrap(k.find(name: "b")?.asVar?.interfaceType.asStruct)
+        XCTAssertEqual(bType.rawValueType(requiresTransferringRawValueType: false)?.description, "Int")
+        XCTAssertEqual(bType.rawValueType(requiresTransferringRawValueType: true)?.description, nil)
+
+        let cType = try XCTUnwrap(k.find(name: "c")?.asVar?.interfaceType.asStruct)
+        XCTAssertEqual(cType.rawValueType(requiresTransferringRawValueType: false)?.description, "Optional<Int>")
+        XCTAssertEqual(cType.rawValueType(requiresTransferringRawValueType: true)?.description, nil)
     }
 }
