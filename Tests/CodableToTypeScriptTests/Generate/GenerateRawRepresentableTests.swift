@@ -1,5 +1,6 @@
 import XCTest
 import CodableToTypeScript
+import SwiftTypeReader
 
 final class GenerateRawRepresentableTests: GenerateTestCaseBase {
     func testStoredProperty() throws {
@@ -113,7 +114,7 @@ export type S = {
 
     private let rawValueTransferCodingProvider: TypeConverterProvider.CustomProvider = { (generator, stype) in
         if let `struct` = stype.asStruct,
-           let rawValueType = `struct`.rawValueType(checkRawRepresentableCodingType: false) {
+           let rawValueType = `struct`.rawValueType(requiresTransferringRawValueType: false) {
             return try? RawValueTransferringConverter(generator: generator, swiftType: stype, rawValueType: rawValueType)
         }
         return nil
@@ -555,25 +556,7 @@ struct K {
 export type K = {
     a: S<number>;
 }
-""", """
-export type K_JSON = {
-    a: S_JSON<number>;
-}
-""", """
-export function K_decode(json: K_JSON): K {
-    const a = S_decode<number, number>(json.a, identity);
-    return {
-        a: a
-    };
-}
-""", """
-export function K_encode(entity: K): K_JSON {
-    const a = S_encode<number, number>(entity.a, identity);
-    return {
-        a: a
-    };
-}
-"""
+""",
                        ]
         )
     }
@@ -687,5 +670,43 @@ export function S_encode(entity: S): S_JSON {
 """
                        ]
         )
+    }
+
+    func testRawValueType() throws {
+        let source = """
+struct A: RawRepresentable {
+    var rawValue: Int
+}
+
+struct B<T>: RawRepresentable {
+    var rawValue: T
+}
+
+struct C: RawRepresentable {
+    var rawValue: Int?
+}
+
+struct K {
+    var a: A
+    var b: B<Int>
+    var c: C
+}
+"""
+        let context = Context()
+        let reader = Reader(context: context)
+        let module = reader.read(source: source, file: URL(fileURLWithPath: "main.swift")).module
+
+        let k = try XCTUnwrap(module.find(name: "K")?.asStruct)
+        let aType = try XCTUnwrap(k.find(name: "a")?.asVar?.interfaceType.asStruct)
+        XCTAssertEqual(aType.rawValueType(requiresTransferringRawValueType: false)?.description, "Int")
+        XCTAssertEqual(aType.rawValueType(requiresTransferringRawValueType: true)?.description, "Int")
+
+        let bType = try XCTUnwrap(k.find(name: "b")?.asVar?.interfaceType.asStruct)
+        XCTAssertEqual(bType.rawValueType(requiresTransferringRawValueType: false)?.description, "Int")
+        XCTAssertEqual(bType.rawValueType(requiresTransferringRawValueType: true)?.description, nil)
+
+        let cType = try XCTUnwrap(k.find(name: "c")?.asVar?.interfaceType.asStruct)
+        XCTAssertEqual(cType.rawValueType(requiresTransferringRawValueType: false)?.description, "Optional<Int>")
+        XCTAssertEqual(cType.rawValueType(requiresTransferringRawValueType: true)?.description, nil)
     }
 }

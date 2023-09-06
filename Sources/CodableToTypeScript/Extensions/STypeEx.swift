@@ -56,7 +56,7 @@ extension EnumType {
 }
 
 extension StructType {
-    public func rawValueType(checkRawRepresentableCodingType: Bool = true) -> (any SType)? {
+    public func rawValueType(requiresTransferringRawValueType: Bool = true) -> (any SType)? {
         guard decl.inheritedTypes.contains(where: { (t) in t.asProtocol?.name == "RawRepresentable" }) else {
             return nil
         }
@@ -71,14 +71,10 @@ extension StructType {
         }
         guard let rawValueType else { return nil }
 
-        if !checkRawRepresentableCodingType || rawValueType.isRawRepresentableCodingType() {
-            return rawValueType
-        }
-
-        let map = contextSubstitutionMap()
-        let resolved = rawValueType.subst(map: map)
-        if resolved.isRawRepresentableCodingType() {
-            return rawValueType
+        if !requiresTransferringRawValueType || rawValueType.isTransferringRawValueType() {
+            let map = contextSubstitutionMap()
+            let resolved = rawValueType.subst(map: map)
+            return resolved
         }
 
         return nil
@@ -168,7 +164,7 @@ extension SType {
         return self.nominalTypeDecl.isStandardLibraryType(regex)
     }
 
-    public func isRawRepresentableCodingType() -> Bool {
+    public func isTransferringRawValueType() -> Bool {
         isStandardLibraryType(/^(U?Int(8|16|32|64)?|Bool|String|Double|Float)$/)
     }
 }
