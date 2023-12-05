@@ -12,6 +12,7 @@ final class PackageGeneratorTests: XCTestCase {
         }
         """, file: URL(fileURLWithPath: "A.swift")).module
 
+        // case1: empty for C2TS
         let generator = PackageGenerator(
             context: context,
             symbols: SymbolTable(),
@@ -21,6 +22,7 @@ final class PackageGeneratorTests: XCTestCase {
         let result = try generator.generate(modules: [module])
         XCTAssertEqual(result.entries.count, 1) // helper library anytime generated
 
+        // case2: empty for C2TS, but not for the user
         let expectation = self.expectation(description: "didGenerateEntry called")
         generator.didGenerateEntry = { source, entry in
             entry.source.elements.append(TSCustomDecl(text: "/* hello */"))
@@ -28,7 +30,7 @@ final class PackageGeneratorTests: XCTestCase {
         }
         let result2 = try generator.generate(modules: [module])
 
-        wait(for: [expectation])
+        wait(for: [expectation], timeout: 3)
         XCTAssertEqual(result2.entries.count, 2)
     }
 }
