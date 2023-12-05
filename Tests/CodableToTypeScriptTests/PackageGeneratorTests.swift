@@ -23,8 +23,8 @@ final class PackageGeneratorTests: XCTestCase {
         XCTAssertEqual(result.entries.count, 1) // helper library anytime generated
 
         // case2: empty for C2TS, but not for the user
-        let expectation = self.expectation(description: "didGenerateEntry called")
-        generator.didGenerateEntry = { source, entry in
+        let expectation = self.expectation(description: "didConvertSource called")
+        generator.didConvertSource = { source, entry in
             entry.source.elements.append(TSCustomDecl(text: "/* hello */"))
             expectation.fulfill()
         }

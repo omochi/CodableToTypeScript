@@ -32,7 +32,13 @@ public final class PackageGenerator {
     public let importFileExtension: ImportFileExtension
     public let outputDirectory: URL
     public let typeScriptExtension: String
-    public var didGenerateEntry: ((SourceFile, PackageEntry) throws -> Void)?
+    @available(*, deprecated, renamed: "didConvertSource")
+    public var didGenerateEntry: ((SourceFile, PackageEntry) throws -> Void)? {
+        get { didConvertSource }
+        set { didConvertSource = newValue }
+    }
+    public var didConvertSource: ((SourceFile, PackageEntry) throws -> Void)?
+
     public var didWrite: ((URL, Data) throws -> Void)?
 
     public struct GenerateResult {
@@ -58,7 +64,7 @@ public final class PackageGenerator {
                             file: try tsPath(module: module, file: source.file),
                             source: tsSource
                         )
-                        try didGenerateEntry?(source, entry)
+                        try didConvertSource?(source, entry)
 
                         if !entry.source.elements.isEmpty {
                             entries.append(entry)
