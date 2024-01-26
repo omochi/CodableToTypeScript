@@ -169,7 +169,7 @@ extension SType {
     }
 }
 
-extension ParamDecl {
+extension CaseParamDecl {
     var index: Int {
         if let caseElement = parentContext?.asEnumCaseElement {
             return caseElement.associatedValues.firstIndex(of: self)!
