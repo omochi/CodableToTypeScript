@@ -371,4 +371,40 @@ struct S {
 """)
         )
     }
+
+    func testStaticProperty() throws {
+        try assertGenerate(
+            source: """
+struct S {
+    static var k: Int = 0
+
+    var a: Int
+}
+""",
+            expecteds: ["""
+export type S = {
+    a: number;
+} & TagRecord<"S">;
+"""
+            ]
+        )
+    }
+
+    func testUnknownStaticProperty() throws {
+        try assertGenerate(
+            source: """
+struct S {
+    static var k: Unknown = 0
+
+    var a: Int
+}
+""",
+            expecteds: ["""
+export type S = {
+    a: number;
+} & TagRecord<"S">;
+"""
+            ]
+        )
+    }
 }
