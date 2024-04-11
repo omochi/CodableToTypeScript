@@ -23,7 +23,7 @@ public struct StructConverter: TypeConverter {
         var fields: [TSObjectType.Field] = []
 
         try withErrorCollector { collect in
-            for property in decl.storedProperties {
+            for property in decl.storedProperties.instances {
                 collect(at: "\(property.name)") {
                     let (type, isOptional) = try generator.converter(for: property.interfaceType)
                         .fieldType(for: target)
@@ -66,7 +66,7 @@ public struct StructConverter: TypeConverter {
 
         var result: [CodecPresence] = [.identity]
         try withErrorCollector { collect in
-            for p in decl.storedProperties {
+            for p in decl.storedProperties.instances {
                 collect(at: "\(p.name)") {
                     let converter = try generator.converter(for: p.interfaceType.subst(map: map))
                     result.append(try converter.decodePresence())
@@ -82,7 +82,7 @@ public struct StructConverter: TypeConverter {
         var fields: [TSObjectExpr.Field] = []
 
         try withErrorCollector { collect in
-            for field in decl.storedProperties {
+            for field in decl.storedProperties.instances {
                 var expr: any TSExpr = TSMemberExpr(
                     base: TSIdentExpr.json,
                     name: field.name
@@ -101,7 +101,7 @@ public struct StructConverter: TypeConverter {
             }
         }
 
-        for field in decl.storedProperties {
+        for field in decl.storedProperties.instances {
             let expr = TSIdentExpr(TSKeyword.escaped(field.name))
 
             fields.append(
@@ -124,7 +124,7 @@ public struct StructConverter: TypeConverter {
 
         var result: [CodecPresence] = [.identity]
         try withErrorCollector { collect in
-            for p in decl.storedProperties {
+            for p in decl.storedProperties.instances {
                 collect(at: "\(p.name)") {
                     let converter = try generator.converter(for: p.interfaceType.subst(map: map))
                     result.append(try converter.encodePresence())
@@ -139,7 +139,7 @@ public struct StructConverter: TypeConverter {
 
         var fields: [TSObjectExpr.Field] = []
 
-        for field in decl.storedProperties {
+        for field in decl.storedProperties.instances {
             var expr: any TSExpr = TSMemberExpr(
                 base: TSIdentExpr.entity,
                 name: field.name
@@ -156,7 +156,7 @@ public struct StructConverter: TypeConverter {
             function.body.elements.append(def)
         }
 
-        for field in decl.storedProperties {
+        for field in decl.storedProperties.instances {
             let expr = TSIdentExpr(TSKeyword.escaped(field.name))
 
             fields.append(
