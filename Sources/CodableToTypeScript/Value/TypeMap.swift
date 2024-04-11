@@ -65,7 +65,6 @@ public struct TypeMap {
         "Float32": .identity(name: "number"),
         "Float64": .identity(name: "number"),
         "Double": .identity(name: "number"),
-        "Character": .identity(name: "string"),
         "String": .identity(name: "string"),
     ]
 
