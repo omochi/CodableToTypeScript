@@ -1,4 +1,4 @@
-struct NamePath {
+struct NamePath: Sendable & Hashable {
     var items: [String]
 
     init(_ items: [String]) {

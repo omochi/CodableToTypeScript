@@ -1,7 +1,7 @@
 import SwiftTypeReader
 
-public struct TypeMap {
-    public struct Entry {
+public struct TypeMap: Sendable {
+    public struct Entry: Sendable {
         public static func identity(name: String) -> Entry {
             return Entry(
                 entityType: name,
@@ -43,8 +43,8 @@ public struct TypeMap {
         }
     }
 
-    public typealias MapFunction = (any SType) -> Entry?
-    
+    public typealias MapFunction = @Sendable (any SType) -> Entry?
+
     public static let `default` = TypeMap(
         table: TypeMap.defaultTable
     )
@@ -69,7 +69,7 @@ public struct TypeMap {
     ]
 
     public init(
-        table: [String : Entry]? = nil,
+        table: [String: Entry]? = nil,
         mapFunction: MapFunction? = nil
     ) {
         self.table = table ?? Self.defaultTable

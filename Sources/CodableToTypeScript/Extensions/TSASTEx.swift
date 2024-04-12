@@ -49,6 +49,6 @@ extension TSIdentType {
 }
 
 extension TSIdentExpr {
-    static let json = TSIdentExpr("json")
-    static let entity = TSIdentExpr("entity")
+    static var json: TSIdentExpr { TSIdentExpr("json") }
+    static var entity: TSIdentExpr { TSIdentExpr("entity") }
 }
