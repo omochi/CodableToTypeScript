@@ -1,4 +1,4 @@
-public enum CodecPresence: Int, Comparable {
+public enum CodecPresence: Int, Sendable & Hashable & Comparable {
     case identity       = 0
     case conditional    = 1
     case required       = 2

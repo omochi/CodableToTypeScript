@@ -1,4 +1,4 @@
-enum TSKeyword: String {
+enum TSKeyword: String, Sendable & Hashable {
     case `break`
     case `case`
     case `catch`
