@@ -112,7 +112,7 @@ public final class PackageGenerator {
     }
 
     private func path(_ name: String) -> URL {
-        URL(filePath: name, relativeTo: outputDirectory)
+        URL(fileURLWithPath: name, relativeTo: outputDirectory)
     }
 
     public func write(
