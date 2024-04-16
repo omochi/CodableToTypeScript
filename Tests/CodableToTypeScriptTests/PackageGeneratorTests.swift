@@ -33,4 +33,34 @@ final class PackageGeneratorTests: XCTestCase {
         wait(for: [expectation], timeout: 3)
         XCTAssertEqual(result2.entries.count, 2)
     }
+
+    func testDependentModule() throws {
+        let context = Context()
+
+        _ = Reader(
+            context: context,
+            module: context.getOrCreateModule(name: "A")
+        ).read(source: """
+        struct A: Codable {}
+        """, file: URL(fileURLWithPath: "A.swift"))
+
+        let bModule = Reader(
+            context: context,
+            module: context.getOrCreateModule(name: "B")
+        ).read(source: """
+        import A
+
+        struct B: Codable {
+            var a: A
+        }
+        """, file: URL(fileURLWithPath: "B.swift")).module
+
+        let generator = PackageGenerator(
+            context: context,
+            symbols: SymbolTable(),
+            importFileExtension: .js,
+            outputDirectory: URL(fileURLWithPath: "/dev/null", isDirectory: true)
+        )
+        XCTAssertNoThrow(try generator.generate(modules: [bModule]))
+    }
 }
