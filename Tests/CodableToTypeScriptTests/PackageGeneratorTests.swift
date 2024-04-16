@@ -61,6 +61,13 @@ final class PackageGeneratorTests: XCTestCase {
             importFileExtension: .js,
             outputDirectory: URL(fileURLWithPath: "/dev/null", isDirectory: true)
         )
-        XCTAssertNoThrow(try generator.generate(modules: [bModule]))
+        let result = try generator.generate(modules: [bModule])
+        let rootElements = result.entries.flatMap(\.source.elements)
+        XCTAssertTrue(rootElements.contains(where: { element in
+            return element.asDecl?.asType?.name == "A"
+        }))
+        XCTAssertTrue(rootElements.contains(where: { element in
+            return element.asDecl?.asType?.name == "B"
+        }))
     }
 }
