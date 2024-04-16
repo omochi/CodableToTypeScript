@@ -82,7 +82,7 @@ public final class PackageGenerator {
 
         try withErrorCollector { collect in
             for entry in entries {
-                collect(at: "\(entry.file.lastPathComponent)") {
+                collect(at: "\(entry.file.relativePath)") {
                     let source = entry.source
                     let imports = try source.buildAutoImportDecls(
                         from: entry.file,
@@ -112,7 +112,7 @@ public final class PackageGenerator {
     }
 
     private func path(_ name: String) -> URL {
-        outputDirectory.appendingPathComponent(name)
+        return URL(fileURLWithPath: name, relativeTo: outputDirectory.appendingPathComponent("/"))
     }
 
     public func write(
