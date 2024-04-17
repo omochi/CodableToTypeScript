@@ -50,32 +50,32 @@ public final class PackageGenerator {
         class EntryWithSymbols {
             let entry: PackageEntry
             let symbols: SymbolTable
-            var isGenerateTarget: Bool
+            var isGenerationTarget: Bool
             var isGenerated: Bool = false
             init(
                 file: URL,
                 source: TSSourceFile,
-                isGenerateTarget: Bool
+                isGenerationTarget: Bool
             ) {
                 self.entry = PackageEntry(file: file, source: source)
                 var symbols = SymbolTable(standardLibrarySymbols: [])
                 symbols.add(source: source, file: file)
                 self.symbols = symbols
-                self.isGenerateTarget = isGenerateTarget
+                self.isGenerationTarget = isGenerationTarget
             }
         }
 
         let helperEntry = EntryWithSymbols(
             file: self.path("common.\(typeScriptExtension)"),
             source: codeGenerator.generateHelperLibrary(),
-            isGenerateTarget: true
+            isGenerationTarget: true
         )
 
         var entries: [EntryWithSymbols] = [helperEntry]
 
         try withErrorCollector { collect in
             for module in context.modules.filter({ $0 !== context.swiftModule }) {
-                let isGenerateTargetModule = modules.contains(where: { $0 === module })
+                let isGenerationTargetModule = modules.contains(where: { $0 === module })
 
                 for source in module.sources {
                     collect {
@@ -91,7 +91,7 @@ public final class PackageGenerator {
                             entries.append(.init(
                                 file: entry.file,
                                 source: entry.source,
-                                isGenerateTarget: isGenerateTargetModule
+                                isGenerationTarget: isGenerationTargetModule
                             ))
                         }
                     }
@@ -124,25 +124,25 @@ public final class PackageGenerator {
         }
 
         try withErrorCollector { collect in
-            var generated: Bool
+            var `continue`: Bool
             repeat {
-                generated = false
+                `continue` = false
 
-                for entry in entries where entry.isGenerateTarget && !entry.isGenerated {
+                for entry in entries where entry.isGenerationTarget && !entry.isGenerated {
                     collect(at: "\(entry.entry.file.relativePath)") {
                         let importedSymbols = try generateEntry(entry)
 
-                        for entry in entries where !entry.isGenerateTarget && !entry.isGenerated {
+                        for entry in entries where !entry.isGenerationTarget && !entry.isGenerated {
                             if entry.symbols.table.keys.contains(where: {
                                 importedSymbols.contains($0)
                             }) {
-                                entry.isGenerateTarget = true
-                                generated = true
+                                entry.isGenerationTarget = true
+                                `continue` = true
                             }
                         }
                     }
                 }
-            } while generated
+            } while `continue`
         }
 
         return GenerateResult(
