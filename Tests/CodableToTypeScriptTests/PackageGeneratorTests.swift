@@ -55,6 +55,13 @@ final class PackageGeneratorTests: XCTestCase {
         }
         """, file: URL(fileURLWithPath: "B.swift")).module
 
+        _ = Reader(
+            context: context,
+            module: context.getOrCreateModule(name: "C")
+        ).read(source: """
+        struct Unused: Codable {}
+        """, file: URL(fileURLWithPath: "C.swift"))
+
         let generator = PackageGenerator(
             context: context,
             symbols: SymbolTable(),
@@ -68,6 +75,9 @@ final class PackageGeneratorTests: XCTestCase {
         }))
         XCTAssertTrue(rootElements.contains(where: { element in
             return element.asDecl?.asType?.name == "B"
+        }))
+        XCTAssertFalse(rootElements.contains(where: { element in
+            return element.asDecl?.asType?.name == "Unused"
         }))
     }
 }
