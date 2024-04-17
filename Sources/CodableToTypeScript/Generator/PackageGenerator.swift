@@ -47,10 +47,11 @@ public final class PackageGenerator {
     }
 
     public func generate(modules: [Module]) throws -> GenerateResult {
-        struct EntryWithSymbols {
-            var entry: PackageEntry
-            var symbols: SymbolTable
+        class EntryWithSymbols {
+            let entry: PackageEntry
+            let symbols: SymbolTable
             var isGenerateTarget: Bool
+            var isGenerated: Bool = false
             init(
                 file: URL,
                 source: TSSourceFile,
@@ -110,58 +111,42 @@ public final class PackageGenerator {
             return ret
         }()
 
-        var importedSymbols: Set<String> = []
-        var generatedEntries: [EntryWithSymbols] = []
-
-        func generateEntry(_ entry: EntryWithSymbols) throws {
+        func generateEntry(_ entry: EntryWithSymbols) throws -> Set<String> {
             let source = entry.entry.source
             let imports = try source.buildAutoImportDecls(
                 from: entry.entry.file,
                 symbolTable: allSymbols,
                 fileExtension: importFileExtension
             )
-            importedSymbols.formUnion(imports.flatMap(\.names))
             source.replaceImportDecls(imports)
-            generatedEntries.append(entry)
+            entry.isGenerated = true
+            return Set(imports.flatMap(\.names))
         }
 
         try withErrorCollector { collect in
-            for entry in entries where entry.isGenerateTarget {
-                collect(at: "\(entry.entry.file.relativePath)") {
-                    try generateEntry(entry)
-                }
-            }
-        }
+            var generated: Bool
+            repeat {
+                generated = false
 
-        try withErrorCollector { collect in
-            var dirty = true
-            while dirty {
-                dirty = false
+                for entry in entries where entry.isGenerateTarget && !entry.isGenerated {
+                    collect(at: "\(entry.entry.file.relativePath)") {
+                        let importedSymbols = try generateEntry(entry)
 
-                let notGeneratedButNeededSymbols = {
-                    var ret = importedSymbols
-                    for entry in generatedEntries {
-                        ret.subtract(entry.symbols.table.keys)
-                    }
-                    return ret
-                }()
-
-                
-                for entry in entries where !entry.isGenerateTarget {
-                    if entry.symbols.table.keys.contains(where: {
-                        notGeneratedButNeededSymbols.contains($0)
-                    }) {
-                        collect(at: "\(entry.entry.file.relativePath)") {
-                            try generateEntry(entry)
-                            dirty = true
+                        for entry in entries where !entry.isGenerateTarget && !entry.isGenerated {
+                            if entry.symbols.table.keys.contains(where: {
+                                importedSymbols.contains($0)
+                            }) {
+                                entry.isGenerateTarget = true
+                                generated = true
+                            }
                         }
                     }
                 }
-            }
+            } while generated
         }
 
         return GenerateResult(
-            entries: generatedEntries.map(\.entry),
+            entries: entries.filter(\.isGenerated).map(\.entry),
             symbols: allSymbols
         )
     }
