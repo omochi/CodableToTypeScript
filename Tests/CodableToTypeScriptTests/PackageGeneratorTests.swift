@@ -44,7 +44,14 @@ final class PackageGeneratorTests: XCTestCase {
         struct A: Codable {}
         """, file: URL(fileURLWithPath: "A.swift"))
 
-        let bModule = Reader(
+        _ = Reader(
+            context: context,
+            module: context.getOrCreateModule(name: "A")
+        ).read(source: """
+        struct UnusedA: Codable {}
+        """, file: URL(fileURLWithPath: "A+Unused.swift"))
+
+        _ = Reader(
             context: context,
             module: context.getOrCreateModule(name: "B")
         ).read(source: """
@@ -59,8 +66,19 @@ final class PackageGeneratorTests: XCTestCase {
             context: context,
             module: context.getOrCreateModule(name: "C")
         ).read(source: """
-        struct Unused: Codable {}
+        struct UnusedC: Codable {}
         """, file: URL(fileURLWithPath: "C.swift"))
+
+        let dModule = Reader(
+            context: context,
+            module: context.getOrCreateModule(name: "D")
+        ).read(source: """
+        import B
+
+        struct D: Codable {
+            var b: B
+        }
+        """, file: URL(fileURLWithPath: "D.swift")).module
 
         let generator = PackageGenerator(
             context: context,
@@ -68,16 +86,22 @@ final class PackageGeneratorTests: XCTestCase {
             importFileExtension: .js,
             outputDirectory: URL(fileURLWithPath: "/dev/null", isDirectory: true)
         )
-        let result = try generator.generate(modules: [bModule])
+        let result = try generator.generate(modules: [dModule])
         let rootElements = result.entries.flatMap(\.source.elements)
         XCTAssertTrue(rootElements.contains(where: { element in
             return element.asDecl?.asType?.name == "A"
+        }))
+        XCTAssertFalse(rootElements.contains(where: { element in
+            return element.asDecl?.asType?.name == "UnusedA"
         }))
         XCTAssertTrue(rootElements.contains(where: { element in
             return element.asDecl?.asType?.name == "B"
         }))
         XCTAssertFalse(rootElements.contains(where: { element in
-            return element.asDecl?.asType?.name == "Unused"
+            return element.asDecl?.asType?.name == "UnusedC"
+        }))
+        XCTAssertTrue(rootElements.contains(where: { element in
+            return element.asDecl?.asType?.name == "D"
         }))
     }
 }

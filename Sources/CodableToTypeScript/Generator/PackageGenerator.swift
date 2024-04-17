@@ -47,15 +47,35 @@ public final class PackageGenerator {
     }
 
     public func generate(modules: [Module]) throws -> GenerateResult {
-        var entries: [PackageEntry] = [
-            PackageEntry(
-                file: self.path("common.\(typeScriptExtension)"),
-                source: codeGenerator.generateHelperLibrary()
-            )
-        ]
+        struct EntryWithSymbols {
+            var entry: PackageEntry
+            var symbols: SymbolTable
+            var isGenerateTarget: Bool
+            init(
+                file: URL,
+                source: TSSourceFile,
+                isGenerateTarget: Bool
+            ) {
+                self.entry = PackageEntry(file: file, source: source)
+                var symbols = SymbolTable(standardLibrarySymbols: [])
+                symbols.add(source: source, file: file)
+                self.symbols = symbols
+                self.isGenerateTarget = isGenerateTarget
+            }
+        }
+
+        let helperEntry = EntryWithSymbols(
+            file: self.path("common.\(typeScriptExtension)"),
+            source: codeGenerator.generateHelperLibrary(),
+            isGenerateTarget: true
+        )
+
+        var entries: [EntryWithSymbols] = [helperEntry]
 
         try withErrorCollector { collect in
-            for module in modules {
+            for module in context.modules.filter({ $0 !== context.swiftModule }) {
+                let isGenerateTargetModule = modules.contains(where: { $0 === module })
+
                 for source in module.sources {
                     collect {
                         let tsSource = try codeGenerator.convert(source: source)
@@ -67,36 +87,82 @@ public final class PackageGenerator {
                         try didConvertSource?(source, entry)
 
                         if !entry.source.elements.isEmpty {
-                            entries.append(entry)
+                            entries.append(.init(
+                                file: entry.file,
+                                source: entry.source,
+                                isGenerateTarget: isGenerateTargetModule
+                            ))
                         }
                     }
                 }
             }
         }
 
-        var symbols = self.symbols
+        let allSymbols = try {
+            var ret = self.symbols
+            try withErrorCollector { collect in
+                for entry in entries {
+                    collect {
+                        try ret.formUnion(entry.symbols)
+                    }
+                }
+            }
+            return ret
+        }()
 
-        for entry in entries {
-            symbols.add(source: entry.source, file: entry.file)
+        var importedSymbols: Set<String> = []
+        var generatedEntries: [EntryWithSymbols] = []
+
+        func generateEntry(_ entry: EntryWithSymbols) throws {
+            let source = entry.entry.source
+            let imports = try source.buildAutoImportDecls(
+                from: entry.entry.file,
+                symbolTable: allSymbols,
+                fileExtension: importFileExtension
+            )
+            importedSymbols.formUnion(imports.flatMap(\.names))
+            source.replaceImportDecls(imports)
+            generatedEntries.append(entry)
         }
 
         try withErrorCollector { collect in
-            for entry in entries {
-                collect(at: "\(entry.file.relativePath)") {
-                    let source = entry.source
-                    let imports = try source.buildAutoImportDecls(
-                        from: entry.file,
-                        symbolTable: symbols,
-                        fileExtension: importFileExtension
-                    )
-                    source.replaceImportDecls(imports)
+            for entry in entries where entry.isGenerateTarget {
+                collect(at: "\(entry.entry.file.relativePath)") {
+                    try generateEntry(entry)
+                }
+            }
+        }
+
+        try withErrorCollector { collect in
+            var dirty = true
+            while dirty {
+                dirty = false
+
+                let notGeneratedButNeededSymbols = {
+                    var ret = importedSymbols
+                    for entry in generatedEntries {
+                        ret.subtract(entry.symbols.table.keys)
+                    }
+                    return ret
+                }()
+
+                
+                for entry in entries where !entry.isGenerateTarget {
+                    if entry.symbols.table.keys.contains(where: {
+                        notGeneratedButNeededSymbols.contains($0)
+                    }) {
+                        collect(at: "\(entry.entry.file.relativePath)") {
+                            try generateEntry(entry)
+                            dirty = true
+                        }
+                    }
                 }
             }
         }
 
         return GenerateResult(
-            entries: entries,
-            symbols: symbols
+            entries: generatedEntries.map(\.entry),
+            symbols: allSymbols
         )
     }
 
@@ -141,3 +207,11 @@ public final class PackageGenerator {
     }
 }
 #endif
+
+extension SymbolTable {
+    fileprivate mutating func formUnion(_ other: SymbolTable) throws {
+        try self.table.merge(other.table) { (a, b) in
+            throw MessageError("symbol conflict! between \(a) and \(b)")
+        }
+    }
+}
