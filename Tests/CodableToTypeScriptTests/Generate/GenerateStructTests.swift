@@ -225,6 +225,42 @@ export function S_decode(json: S_JSON): S {
         )
     }
 
+    func testSet() throws {
+        try assertGenerate(
+            source: """
+enum E { case a }
+
+struct S {
+    var e1: Set<E>
+}
+""",
+            typeSelector: .name("S"),
+            expecteds: ["""
+export type S = {
+    e1: Set<E>;
+} & TagRecord<"S">;
+
+export type S_JSON = {
+    e1: E_JSON[];
+};
+
+export function S_decode(json: S_JSON): S {
+    const e1 = Set_decode<E, E_JSON>(json.e1, E_decode);
+    return {
+        e1: e1
+    };
+}
+
+export function S_encode(entity: S): S_JSON {
+    const e1 = Set_encode<E, E_JSON>(entity.e1, identity);
+    return {
+        e1: e1
+    };
+}
+"""]
+        )
+    }
+
     func testDecodeDictionary() throws {
         try assertGenerate(
             source: """
