@@ -131,6 +131,9 @@ public final class PackageGenerator {
                 for entry in entries where entry.isGenerationTarget && !entry.isGenerated {
                     collect(at: "\(entry.entry.file.relativePath)") {
                         let importedSymbols = try generateEntry(entry)
+                        if importedSymbols.isEmpty {
+                            return
+                        }
 
                         for entry in entries where !entry.isGenerationTarget && !entry.isGenerated {
                             if entry.symbols.table.keys.contains(where: {
