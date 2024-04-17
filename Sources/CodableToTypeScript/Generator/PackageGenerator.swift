@@ -145,9 +145,18 @@ public final class PackageGenerator {
             } while `continue`
         }
 
+        var generatedSymbols = self.symbols
+        try withErrorCollector { collect in
+            for entry in entries.filter(\.isGenerated) {
+                collect {
+                    try generatedSymbols.formUnion(entry.symbols)
+                }
+            }
+        }
+
         return GenerateResult(
             entries: entries.filter(\.isGenerated).map(\.entry),
-            symbols: allSymbols
+            symbols: generatedSymbols
         )
     }
 
