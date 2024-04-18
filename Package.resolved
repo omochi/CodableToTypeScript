@@ -32,8 +32,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/omochi/TypeScriptAST",
       "state" : {
-        "revision" : "d454923c7deba1fc6a9b04404e2cc5557b34a36c",
-        "version" : "1.8.6"
+        "revision" : "072d12c92272d4d162ead6845d7446ad34bfa99d",
+        "version" : "1.8.8"
       }
     }
   ],
