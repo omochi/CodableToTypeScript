@@ -23,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/omochi/SwiftTypeReader",
       "state" : {
-        "revision" : "6a0fe53d83994eb91736ba2028f27eadfde35589",
-        "version" : "2.10.0"
+        "revision" : "075dcfe5d2d985fc69ee03919c17ceee62c07832",
+        "version" : "2.10.1"
       }
     },
     {
@@ -32,8 +32,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/omochi/TypeScriptAST",
       "state" : {
-        "revision" : "d454923c7deba1fc6a9b04404e2cc5557b34a36c",
-        "version" : "1.8.6"
+        "revision" : "072d12c92272d4d162ead6845d7446ad34bfa99d",
+        "version" : "1.8.8"
       }
     }
   ],

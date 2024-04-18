@@ -44,6 +44,14 @@ export function Array_encode<T, T_JSON>(entity: T[], T_encode: (entity: T) => T_
     return entity.map(T_encode);
 }
 """, """
+export function Set_decode<T, T_JSON>(json: T_JSON[], T_decode: (json: T_JSON) => T): Set<T> {
+    return new Set(json.map(T_decode));
+}
+""", """
+export function Set_encode<T, T_JSON>(entity: Set<T>, T_encode: (entity: T) => T_JSON): T_JSON[] {
+    return [... entity].map(T_encode);
+}
+""", """
 export function Dictionary_decode<T, T_JSON>(json: {
     [key: string]: T_JSON;
 }, T_decode: (json: T_JSON) => T): Map<string, T> {

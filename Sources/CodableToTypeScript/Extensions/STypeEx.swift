@@ -147,6 +147,13 @@ extension SType {
         return (array: array, element: element)
     }
 
+    internal func asSet() -> (set: StructType, element: any SType)? {
+        guard isStandardLibraryType("Set"),
+              let `set` = self.asStruct,
+              let element = `set`.genericArgs[safe: 0] else { return nil }
+        return (set: `set`, element: element)
+    }
+
     internal func asDictionary() -> (dictionary: StructType, value: any SType)? {
         guard isStandardLibraryType("Dictionary"),
               let dict = self.asStruct,

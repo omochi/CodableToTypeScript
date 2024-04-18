@@ -28,6 +28,8 @@ public struct TypeConverterProvider {
             return OptionalConverter(generator: generator, swiftType: type)
         } else if type.isStandardLibraryType("Array") {
             return ArrayConverter(generator: generator, swiftType: type)
+        } else if type.isStandardLibraryType("Set") {
+            return SetConverter(generator: generator, swiftType: type)
         } else if type.isStandardLibraryType("Dictionary") {
             return DictionaryConverter(generator: generator, swiftType: type)
         } else if let type = type.asEnum {

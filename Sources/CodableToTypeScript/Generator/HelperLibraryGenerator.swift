@@ -9,6 +9,8 @@ struct HelperLibraryGenerator {
         case optionalEncode
         case arrayDecode
         case arrayEncode
+        case setDecode
+        case setEncode
         case dictionaryDecode
         case dictionaryEncode
         case tagOf
@@ -36,6 +38,8 @@ struct HelperLibraryGenerator {
         case .optionalEncode: return "Optional_encode"
         case .arrayDecode: return "Array_decode"
         case .arrayEncode: return "Array_encode"
+        case .setDecode: return "Set_decode"
+        case .setEncode: return "Set_encode"
         case .dictionaryDecode: return "Dictionary_decode"
         case .dictionaryEncode: return "Dictionary_encode"
         case .tagOf: return "TagOf"
@@ -56,6 +60,8 @@ struct HelperLibraryGenerator {
         case .optionalEncode: return optionalEncodeDecl()
         case .arrayDecode: return arrayDecodeDecl()
         case .arrayEncode: return arrayEncodeDecl()
+        case .setDecode: return setDecodeDecl()
+        case .setEncode: return setEncodeDecl()
         case .dictionaryDecode: return dictionaryDecodeDecl()
         case .dictionaryEncode: return dictionaryEncodeDecl()
         case .tagOf: return tagOfDecl()
@@ -202,6 +208,58 @@ struct HelperLibraryGenerator {
                     TSCallExpr(
                         callee: TSMemberExpr(
                             base: TSIdentExpr.entity, name: "map"
+                        ),
+                        args: [tEncode()]
+                    )
+                )
+            ])
+        )
+    }
+
+    func setDecodeDecl() -> TSFunctionDecl {
+        return TSFunctionDecl(
+            modifiers: [.export],
+            name: name(.setDecode),
+            genericParams: [.init("T"), .init("T_JSON")],
+            params: [
+                .init(name: "json", type: TSArrayType(TSIdentType("T_JSON"))),
+                tDecodeParameter()
+            ],
+            result: TSIdentType("Set", genericArgs: [TSIdentType("T")]),
+            body: TSBlockStmt([
+                TSReturnStmt(
+                    TSNewExpr(
+                        callee: TSIdentType("Set"),
+                        args: [TSCallExpr(
+                            callee: TSMemberExpr(
+                                base: TSIdentExpr.json, name: "map"
+                            ),
+                            args: [tDecode()]
+                        )]
+                    )
+                )
+            ])
+        )
+    }
+
+    func setEncodeDecl() -> TSFunctionDecl {
+        return TSFunctionDecl(
+            modifiers: [.export],
+            name: name(.setEncode),
+            genericParams: [.init("T"), .init("T_JSON")],
+            params: [
+                .init(name: "entity", type: TSIdentType("Set", genericArgs: [TSIdentType("T")])),
+                tEncodeParameter()
+            ],
+            result: TSArrayType(TSIdentType("T_JSON")),
+            body: TSBlockStmt([
+                TSReturnStmt(
+                    TSCallExpr(
+                        callee: TSMemberExpr(
+                            base: TSArrayExpr([
+                                TSPrefixOperatorExpr("...", TSIdentExpr.entity),
+                            ]),
+                            name: "map"
                         ),
                         args: [tEncode()]
                     )
