@@ -121,12 +121,12 @@ extension TypeConverter {
     }
 
     private func genericParams(stype: any SType) throws -> [any TypeConverter] {
-        let parentParams = if let parent = stype.asNominal?.parent ?? stype.asTypeAlias?.parent,
-            parent.typeDecl !== stype.typeDecl {
-            try genericParams(stype: parent)
-        } else {
-            [] as [any TypeConverter]
-        }
+        let parentParams = if let parent = stype.typeDecl?.parentContext,
+            let parentType = parent.selfInterfaceType {
+                try genericParams(stype: parentType)
+            } else {
+                [] as [any TypeConverter]
+            }
 
         guard let decl = stype.typeDecl,
               let genericContext = decl as? any GenericContext else
