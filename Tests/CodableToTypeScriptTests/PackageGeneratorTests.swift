@@ -66,7 +66,9 @@ final class PackageGeneratorTests: XCTestCase {
             context: context,
             module: context.getOrCreateModule(name: "C")
         ).read(source: """
-        struct UnusedC: Codable {}
+        struct NotTSConvertibleC: Codable {
+            var a: UnknownType
+        }
         """, file: URL(fileURLWithPath: "C.swift"))
 
         let dModule = Reader(
@@ -98,7 +100,7 @@ final class PackageGeneratorTests: XCTestCase {
             return element.asDecl?.asType?.name == "B"
         }))
         XCTAssertFalse(rootElements.contains(where: { element in
-            return element.asDecl?.asType?.name == "UnusedC"
+            return element.asDecl?.asType?.name == "NotTSConvertibleC"
         }))
         XCTAssertTrue(rootElements.contains(where: { element in
             return element.asDecl?.asType?.name == "D"

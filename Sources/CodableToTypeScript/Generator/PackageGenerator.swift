@@ -47,119 +47,81 @@ public final class PackageGenerator {
     }
 
     public func generate(modules: [Module]) throws -> GenerateResult {
-        class EntryWithSymbols {
-            let entry: PackageEntry
-            let symbols: SymbolTable
-            var isGenerationTarget: Bool
-            var isGenerated: Bool = false
-            init(
-                file: URL,
-                source: TSSourceFile,
-                isGenerationTarget: Bool
-            ) {
-                self.entry = PackageEntry(file: file, source: source)
-                var symbols = SymbolTable(standardLibrarySymbols: [])
-                symbols.add(source: source, file: file)
-                self.symbols = symbols
-                self.isGenerationTarget = isGenerationTarget
-            }
-        }
-
-        let helperEntry = EntryWithSymbols(
+        let helperEntry = PackageEntry(
             file: self.path("common.\(typeScriptExtension)"),
-            source: codeGenerator.generateHelperLibrary(),
-            isGenerationTarget: true
+            source: codeGenerator.generateHelperLibrary()
         )
 
-        var entries: [EntryWithSymbols] = [helperEntry]
+        var symbolToSource: [String: SourceFile] = [:]
 
-        try withErrorCollector { collect in
-            for module in context.modules.filter({ $0 !== context.swiftModule }) {
-                let isGenerationTargetModule = modules.contains(where: { $0 === module })
-
-                for source in module.sources {
-                    collect {
-                        let tsSource = try codeGenerator.convert(source: source)
-
-                        let entry = PackageEntry(
-                            file: try tsPath(module: module, file: source.file),
-                            source: tsSource
-                        )
-                        try didConvertSource?(source, entry)
-
-                        if !entry.source.elements.isEmpty {
-                            entries.append(.init(
-                                file: entry.file,
-                                source: entry.source,
-                                isGenerationTarget: isGenerationTargetModule
-                            ))
-                        }
+        // collect symbols included in for each swift source file
+        for module in context.modules.filter({ $0 !== context.swiftModule }) {
+            for source in module.sources {
+                for type in source.types {
+                    guard
+                        let typeConverter = try? codeGenerator.converter(for: type.declaredInterfaceType),
+                        let declaredNames = try? typeConverter.decls().compactMap(\.declaredName)
+                    else {
+                        continue
+                    }
+                    for declaredName in declaredNames {
+                        symbolToSource[declaredName] = source
                     }
                 }
             }
         }
 
-        let allSymbols = try {
-            var ret = self.symbols
-            try withErrorCollector { collect in
-                for entry in entries {
-                    collect {
-                        try ret.formUnion(entry.symbols)
-                    }
-                }
-            }
-            return ret
-        }()
-
-        func generateEntry(_ entry: EntryWithSymbols) throws -> Set<String> {
-            let source = entry.entry.source
-            let imports = try source.buildAutoImportDecls(
-                from: entry.entry.file,
-                symbolTable: allSymbols,
-                fileExtension: importFileExtension
+        // convert collected symbols to SymbolTable for use of buildAutoImportDecls
+        var allSymbols = self.symbols
+        allSymbols.add(source: helperEntry.source, file: helperEntry.file)
+        for (symbol, source) in symbolToSource {
+            allSymbols.add(
+                symbol: symbol,
+                file: .file(try tsPath(module: source.module, file: source.file))
             )
-            source.replaceImportDecls(imports)
-            entry.isGenerated = true
-            return Set(imports.flatMap(\.names))
         }
 
+        var targetSources: [SourceFile] = modules.flatMap(\.sources)
+        var generatedSources: Set<SourceFile> = []
+        var generatedEntries: [PackageEntry] = [helperEntry]
+
         try withErrorCollector { collect in
-            var `continue`: Bool
-            repeat {
-                `continue` = false
+            while let source = targetSources.popLast() {
+                generatedSources.insert(source)
+                collect(at: source.file.lastPathComponent) {
+                    let tsSource = try codeGenerator.convert(source: source)
 
-                for entry in entries where entry.isGenerationTarget && !entry.isGenerated {
-                    collect(at: "\(entry.entry.file.relativePath)") {
-                        let importedSymbols = try generateEntry(entry)
-                        if importedSymbols.isEmpty {
-                            return
-                        }
+                    let entry = PackageEntry(
+                        file: try tsPath(module: source.module, file: source.file),
+                        source: tsSource
+                    )
+                    try didConvertSource?(source, entry)
 
-                        for entry in entries where !entry.isGenerationTarget && !entry.isGenerated {
-                            if entry.symbols.table.keys.contains(where: {
-                                importedSymbols.contains($0)
-                            }) {
-                                entry.isGenerationTarget = true
-                                `continue` = true
+                    if !entry.source.elements.isEmpty {
+                        generatedEntries.append(.init(
+                            file: entry.file,
+                            source: entry.source
+                        ))
+
+                        let imports = try tsSource.buildAutoImportDecls(
+                            from: entry.file,
+                            symbolTable: allSymbols,
+                            fileExtension: importFileExtension
+                        )
+                        tsSource.replaceImportDecls(imports)
+                        for importedDecl in imports.flatMap(\.names) {
+                            if let source = symbolToSource[importedDecl], !generatedSources.contains(source) {
+                                targetSources.append(source)
                             }
                         }
                     }
-                }
-            } while `continue`
-        }
-
-        var generatedSymbols = self.symbols
-        try withErrorCollector { collect in
-            for entry in entries.filter(\.isGenerated) {
-                collect {
-                    try generatedSymbols.formUnion(entry.symbols)
                 }
             }
         }
 
         return GenerateResult(
-            entries: entries.filter(\.isGenerated).map(\.entry),
-            symbols: generatedSymbols
+            entries: generatedEntries,
+            symbols: allSymbols
         )
     }
 
@@ -204,11 +166,3 @@ public final class PackageGenerator {
     }
 }
 #endif
-
-extension SymbolTable {
-    fileprivate mutating func formUnion(_ other: SymbolTable) throws {
-        try self.table.merge(other.table) { (a, b) in
-            throw MessageError("symbol conflict! between \(a) and \(b)")
-        }
-    }
-}
