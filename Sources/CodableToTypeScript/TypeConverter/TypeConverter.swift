@@ -117,14 +117,25 @@ extension TypeConverter {
     }
 
     public func genericParams() throws -> [any TypeConverter] {
-        guard let decl = self.swiftType.typeDecl,
+        return try genericParams(stype: self.swiftType)
+    }
+
+    private func genericParams(stype: any SType) throws -> [any TypeConverter] {
+        let parentParams = if let parent = self.swiftType.asNominal?.parent ?? self.swiftType.asTypeAlias?.parent,
+            parent.typeDecl !== stype.typeDecl {
+            try genericParams(stype: parent)
+        } else {
+            [] as [any TypeConverter]
+        }
+
+        guard let decl = stype.typeDecl,
               let genericContext = decl as? any GenericContext else
         {
-            return []
+            return parentParams
         }
-        return try genericContext.genericParams.items.map { (param) in
+        return parentParams + (try genericContext.genericParams.items.map { (param) in
             try generator.converter(for: param.declaredInterfaceType)
-        }
+        })
     }
 
     public func ownDecls() throws -> TypeOwnDeclarations {
