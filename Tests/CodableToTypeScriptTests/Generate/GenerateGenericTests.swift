@@ -482,4 +482,39 @@ struct Y<T> {
 """)
     }
 
+    func testParentGenericParameter() throws {
+        try assertGenerate(
+            source: """
+struct S<X> {
+    struct K {
+        var x: X
+    }
+}
+""",
+            typeSelector: .name("K", recursive: true),
+            expecteds: ["""
+export type S_K<X> = {
+    x: X;
+} & TagRecord<"S_K", [X]>;
+"""])
+    }
+
+    func testNestedParentGenericParameter() throws {
+        try assertGenerate(
+            source: """
+struct S<X> {
+    struct T {
+        struct K {
+            var x: X
+        }
+    }
+}
+""",
+            typeSelector: .name("K", recursive: true),
+            expecteds: ["""
+export type S_T_K<X> = {
+    x: X;
+} & TagRecord<"S_T_K", [X]>;
+"""])
+    }
 }
