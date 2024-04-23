@@ -39,13 +39,14 @@ public struct StructConverter: TypeConverter {
         }
 
         let name = try self.name(for: target)
+        let genericParams = try genericParams()
 
         var type: any TSType = TSObjectType(fields)
         switch target {
         case .entity:
             let tag = try generator.tagRecord(
                 name: name,
-                genericArgs: try genericParams().map { try $0.type(for: .entity) }
+                genericArgs: try genericParams.map { try $0.type(for: .entity) }
             )
             type = TSIntersectionType(type, tag)
         case .json: break
@@ -54,26 +55,26 @@ public struct StructConverter: TypeConverter {
         return TSTypeDecl(
             modifiers: [.export],
             name: name,
-            genericParams: try genericParams().map {
+            genericParams: try genericParams.map {
                 .init(try $0.name(for: target))
             },
             type: type
         )
     }
-
-    public func decodePresence() throws -> CodecPresence {
+    
+    public func hasDecode() throws -> Bool {
         let map = `struct`.contextSubstitutionMap()
 
-        var result: [CodecPresence] = [.identity]
+        var result = false
         try withErrorCollector { collect in
             for p in decl.storedProperties.instances {
-                collect(at: "\(p.name)") {
+                result = result || collect(at: "\(p.name)") {
                     let converter = try generator.converter(for: p.interfaceType.subst(map: map))
-                    result.append(try converter.decodePresence())
-                }
+                    return try converter.hasDecode()
+                } ?? false
             }
         }
-        return result.max()!
+        return result
     }
 
     public func decodeDecl() throws -> TSFunctionDecl? {
@@ -119,19 +120,19 @@ public struct StructConverter: TypeConverter {
         return function
     }
 
-    public func encodePresence() throws -> CodecPresence {
+    public func hasEncode() throws -> Bool {
         let map = `struct`.contextSubstitutionMap()
 
-        var result: [CodecPresence] = [.identity]
+        var result = false
         try withErrorCollector { collect in
             for p in decl.storedProperties.instances {
-                collect(at: "\(p.name)") {
+                result = result || collect(at: "\(p.name)") {
                     let converter = try generator.converter(for: p.interfaceType.subst(map: map))
-                    result.append(try converter.encodePresence())
-                }
+                    return try converter.hasEncode()
+                } ?? false
             }
         }
-        return result.max()!
+        return result
     }
 
     public func encodeDecl() throws -> TSFunctionDecl? {

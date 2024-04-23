@@ -22,8 +22,8 @@ final class GenerateCustomTypeConverterTests: GenerateTestCaseBase {
             return nil
         }
 
-        func decodePresence() throws -> CodecPresence {
-            return .required
+        func hasDecode() throws -> Bool {
+            return true
         }
 
         func decodeName() throws -> String {
@@ -34,8 +34,8 @@ final class GenerateCustomTypeConverterTests: GenerateTestCaseBase {
             return nil
         }
 
-        func encodePresence() throws -> CodecPresence {
-            return .required
+        func hasEncode() throws -> Bool {
+            return true
         }
 
         func encodeName() throws -> String {
