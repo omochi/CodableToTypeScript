@@ -463,7 +463,6 @@ export function E_decode<T, T_JSON>(json: E_JSON<T_JSON>, T_decode: (json: T_JSO
     }
 }
 """
-
             ]
         )
     }
@@ -500,6 +499,46 @@ export type S_K<X> = {
 export type S_K_JSON<X_JSON> = {
     x: X_JSON;
 };
+"""])
+    }
+
+    func testParentGenericParameterCoding() throws {
+        try assertGenerate(
+            source: """
+struct S<X> {
+    struct K {
+        var x: X
+    }
+    typealias K2 = K
+}
+
+enum E { case a }
+
+struct U {
+    var k: S<E>.K
+    var k2: S<E>.K2
+}
+""",
+            typeSelector: .name("U", recursive: true),
+            expecteds: ["""
+export type U = {
+    k: S_K<E>;
+    k2: S_K2<E>;
+} & TagRecord<"U">;
+""", """
+export type U_JSON = {
+    k: S_K_JSON<E_JSON>;
+    k2: S_K2_JSON<E_JSON>;
+};
+""", """
+export function U_decode(json: U_JSON): U {
+    const k = S_K_decode<E, E_JSON>(json.k, E_decode);
+    const k2 = S_K2_decode<E, E_JSON>(json.k2, E_decode);
+    return {
+        k: k,
+        k2: k2
+    };
+}
 """])
     }
 

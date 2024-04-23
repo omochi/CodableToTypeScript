@@ -39,13 +39,14 @@ public struct StructConverter: TypeConverter {
         }
 
         let name = try self.name(for: target)
+        let genericParams = try genericParams()
 
         var type: any TSType = TSObjectType(fields)
         switch target {
         case .entity:
             let tag = try generator.tagRecord(
                 name: name,
-                genericArgs: try genericParams().map { try $0.type(for: .entity) }
+                genericArgs: try genericParams.map { try $0.type(for: .entity) }
             )
             type = TSIntersectionType(type, tag)
         case .json: break
@@ -54,7 +55,7 @@ public struct StructConverter: TypeConverter {
         return TSTypeDecl(
             modifiers: [.export],
             name: name,
-            genericParams: try genericParams().map {
+            genericParams: try genericParams.map {
                 .init(try $0.name(for: target))
             },
             type: type

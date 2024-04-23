@@ -82,10 +82,18 @@ extension StructType {
 }
 
 extension SType {
-    internal var genericArgs: [any SType] {
+    internal var tsGenericArgs: [any SType] {
         switch self {
-        case let type as any NominalType: return type.genericArgs
-        case let type as TypeAliasType: return type.genericArgs
+        case let type as any NominalType:
+            if let parent = type.parent {
+                return parent.tsGenericArgs + type.genericArgs
+            }
+            return type.genericArgs
+        case let type as TypeAliasType:
+            if let parent = type.parent {
+                return parent.tsGenericArgs + type.genericArgs
+            }
+            return type.genericArgs
         case let type as ErrorType:
             guard let repr = type.repr as? IdentTypeRepr,
                   let element = repr.elements.last,

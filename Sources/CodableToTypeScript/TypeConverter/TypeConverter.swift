@@ -101,7 +101,7 @@ extension TypeConverter {
 
     // MARK: - extensions
     public func genericArgs() throws -> [any TypeConverter] {
-        return try swiftType.genericArgs.map { (type) in
+        return try swiftType.tsGenericArgs.map { (type) in
             try generator.converter(for: type)
         }
     }

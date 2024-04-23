@@ -21,7 +21,8 @@ public struct RawValueTransferringConverter: TypeConverter {
 
     public func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
         let name = try self.name(for: target)
-        let genericParams: [TSTypeParameterNode] = try self.genericParams().map {
+        let genericParams = try genericParams()
+        let tsGenericParams: [TSTypeParameterNode] = try genericParams.map {
             .init(try $0.name(for: target))
         }
         switch target {
@@ -36,7 +37,7 @@ public struct RawValueTransferringConverter: TypeConverter {
 
             let tag = try generator.tagRecord(
                 name: name,
-                genericArgs: try self.genericParams().map { (param) in
+                genericArgs: try genericParams.map { (param) in
                     TSIdentType(try param.name(for: .entity))
                 }
             )
@@ -46,14 +47,14 @@ public struct RawValueTransferringConverter: TypeConverter {
             return TSTypeDecl(
                 modifiers: [.export],
                 name: name,
-                genericParams: genericParams,
+                genericParams: tsGenericParams,
                 type: type
             )
         case .json:
             return TSTypeDecl(
                 modifiers: [.export],
                 name: name,
-                genericParams: genericParams,
+                genericParams: tsGenericParams,
                 type: try rawValueType.type(for: target)
             )
         }

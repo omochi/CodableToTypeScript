@@ -110,7 +110,7 @@ public struct DefaultTypeConverter {
             )
         }
 
-        if !swiftType.genericArgs.isEmpty {
+        if !swiftType.tsGenericArgs.isEmpty {
             return try makeClosure()
         }
         return TSIdentExpr(
@@ -119,7 +119,7 @@ public struct DefaultTypeConverter {
     }
 
     public func callDecode(json: any TSExpr) throws -> any TSExpr {
-        return try callDecode(genericArgs: swiftType.genericArgs, json: json)
+        return try callDecode(genericArgs: swiftType.tsGenericArgs, json: json)
     }
 
     public func callDecode(genericArgs: [any SType], json: any TSExpr) throws -> any TSExpr {
@@ -244,7 +244,7 @@ public struct DefaultTypeConverter {
             )
         }
 
-        if !swiftType.genericArgs.isEmpty {
+        if !swiftType.tsGenericArgs.isEmpty {
             return try makeClosure()
         }
         return TSIdentExpr(
@@ -253,7 +253,7 @@ public struct DefaultTypeConverter {
     }
 
     public func callEncode(entity: any TSExpr) throws -> any TSExpr {
-        return try callEncode(genericArgs: swiftType.genericArgs, entity: entity)
+        return try callEncode(genericArgs: swiftType.tsGenericArgs, entity: entity)
     }
 
     public func callEncode(genericArgs: [any SType], entity: any TSExpr) throws -> any TSExpr {
