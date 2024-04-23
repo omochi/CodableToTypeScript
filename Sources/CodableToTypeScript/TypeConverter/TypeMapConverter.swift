@@ -30,18 +30,10 @@ public struct TypeMapConverter: TypeConverter {
     }
 
     public func hasDecode() throws -> Bool {
-        switch try decodePresence() {
-        case .identity: return false
-        case .conditional: throw MessageError("unexpected case")
-        case .required: return true
-        }
-    }
-
-    public func decodePresence() throws -> CodecPresence {
         if let _ = entry.decode {
-            return .required
+            return true
         }
-        return .identity
+        return false
     }
 
     public func decodeName() throws -> String {
@@ -53,18 +45,10 @@ public struct TypeMapConverter: TypeConverter {
     }
 
     public func hasEncode() throws -> Bool {
-        switch try encodePresence() {
-        case .identity: return false
-        case .conditional: throw MessageError("unexpected case")
-        case .required: return true
-        }
-    }
-
-    public func encodePresence() throws -> CodecPresence {
         if let _ = entry.encode {
-            return .required
+            return true
         }
-        return .identity
+        return false
     }
 
     public func encodeName() throws -> String {

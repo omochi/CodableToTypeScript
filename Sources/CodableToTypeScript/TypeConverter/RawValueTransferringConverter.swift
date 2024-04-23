@@ -63,10 +63,6 @@ public struct RawValueTransferringConverter: TypeConverter {
         return true
     }
 
-    public func decodePresence() throws -> CodecPresence {
-        return .required
-    }
-
     public func decodeDecl() throws -> TSFunctionDecl? {
         guard let decl = try decodeSignature() else { return nil }
 
@@ -86,10 +82,6 @@ public struct RawValueTransferringConverter: TypeConverter {
 
     public func hasEncode() throws -> Bool {
         return true
-    }
-
-    public func encodePresence() throws -> CodecPresence {
-        return .required
     }
 
     public func encodeDecl() throws -> TSFunctionDecl? {

@@ -32,10 +32,6 @@ public struct SetConverter: TypeConverter {
         return true
     }
 
-    public func decodePresence() throws -> CodecPresence {
-        return .required
-    }
-
     public func decodeName() throws -> String? {
         return generator.helperLibrary().name(.setDecode)
     }
@@ -46,10 +42,6 @@ public struct SetConverter: TypeConverter {
 
     public func hasEncode() throws -> Bool {
         return true
-    }
-
-    public func encodePresence() throws -> CodecPresence {
-        return .required
     }
 
     public func encodeName() throws -> String {

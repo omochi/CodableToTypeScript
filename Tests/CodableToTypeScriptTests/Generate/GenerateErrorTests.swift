@@ -61,8 +61,8 @@ final class GenerateErrorTests: GenerateTestCaseBase {
             """
         )) { (error) in
             XCTAssertEqual("\(error)", """
-            S.a._0: Error type can't be converted: A
-            S.T.b._0: Error type can't be converted: B
+            S.a._0: Error type can't be evaluated: A
+            S.T.b._0: Error type can't be evaluated: B
             """)
         }
     }

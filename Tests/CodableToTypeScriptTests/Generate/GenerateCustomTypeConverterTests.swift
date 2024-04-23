@@ -26,10 +26,6 @@ final class GenerateCustomTypeConverterTests: GenerateTestCaseBase {
             return true
         }
 
-        func decodePresence() throws -> CodecPresence {
-            return .required
-        }
-
         func decodeName() throws -> String {
             return "Custom_decode"
         }
@@ -40,10 +36,6 @@ final class GenerateCustomTypeConverterTests: GenerateTestCaseBase {
 
         func hasEncode() throws -> Bool {
             return true
-        }
-
-        func encodePresence() throws -> CodecPresence {
-            return .required
         }
 
         func encodeName() throws -> String {

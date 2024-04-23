@@ -33,10 +33,6 @@ public struct DictionaryConverter: TypeConverter {
         return true
     }
 
-    public func decodePresence() throws -> CodecPresence {
-        return .required
-    }
-
     public func decodeName() throws -> String? {
         return generator.helperLibrary().name(.dictionaryDecode)
     }
@@ -54,10 +50,6 @@ public struct DictionaryConverter: TypeConverter {
 
     public func hasEncode() throws -> Bool {
         return true
-    }
-
-    public func encodePresence() throws -> CodecPresence {
-        return .required
     }
 
     public func encodeName() throws -> String {

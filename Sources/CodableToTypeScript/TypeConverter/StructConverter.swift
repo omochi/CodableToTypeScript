@@ -62,26 +62,18 @@ public struct StructConverter: TypeConverter {
     }
     
     public func hasDecode() throws -> Bool {
-        switch try decodePresence() {
-        case .identity: return false
-        case .conditional: throw MessageError("unexpected case")
-        case .required: return true
-        }
-    }
-
-    public func decodePresence() throws -> CodecPresence {
         let map = `struct`.contextSubstitutionMap()
 
-        var result: [CodecPresence] = [.identity]
+        var result = false
         try withErrorCollector { collect in
             for p in decl.storedProperties.instances {
-                collect(at: "\(p.name)") {
+                result = result || collect(at: "\(p.name)") {
                     let converter = try generator.converter(for: p.interfaceType.subst(map: map))
-                    result.append(try converter.decodePresence())
-                }
+                    return try converter.hasDecode()
+                } ?? false
             }
         }
-        return result.max()!
+        return result
     }
 
     public func decodeDecl() throws -> TSFunctionDecl? {
@@ -128,26 +120,18 @@ public struct StructConverter: TypeConverter {
     }
 
     public func hasEncode() throws -> Bool {
-        switch try encodePresence() {
-        case .identity: return false
-        case .conditional: throw MessageError("unexpected case")
-        case .required: return true
-        }
-    }
-
-    public func encodePresence() throws -> CodecPresence {
         let map = `struct`.contextSubstitutionMap()
 
-        var result: [CodecPresence] = [.identity]
+        var result = false
         try withErrorCollector { collect in
             for p in decl.storedProperties.instances {
-                collect(at: "\(p.name)") {
+                result = result || collect(at: "\(p.name)") {
                     let converter = try generator.converter(for: p.interfaceType.subst(map: map))
-                    result.append(try converter.encodePresence())
-                }
+                    return try converter.hasEncode()
+                } ?? false
             }
         }
-        return result.max()!
+        return result
     }
 
     public func encodeDecl() throws -> TSFunctionDecl? {

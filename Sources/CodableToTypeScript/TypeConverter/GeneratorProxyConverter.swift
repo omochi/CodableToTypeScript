@@ -35,12 +35,6 @@ struct GeneratorProxyConverter: TypeConverter {
         return try impl.hasDecode()
     }
 
-    func decodePresence() throws -> CodecPresence {
-        return try generator.context.evaluator(
-            CodeGenerator.DecodePresenceRequest(token: generator.requestToken, type: swiftType)
-        )
-    }
-
     func decodeName() throws -> String? {
         return try impl.decodeName()
     }
@@ -67,12 +61,6 @@ struct GeneratorProxyConverter: TypeConverter {
 
     func hasEncode() throws -> Bool {
         return try impl.hasEncode()
-    }
-
-    func encodePresence() throws -> CodecPresence {
-        return try generator.context.evaluator(
-            CodeGenerator.EncodePresenceRequest(token: generator.requestToken, type: swiftType)
-        )
     }
 
     func encodeName() throws -> String {

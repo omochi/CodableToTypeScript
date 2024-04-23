@@ -12,7 +12,6 @@ public protocol TypeConverter {
     func fieldToValue(field: any TSExpr, for target: GenerationTarget) throws -> any TSExpr
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl?
     func hasDecode() throws -> Bool
-    func decodePresence() throws -> CodecPresence
     func decodeName() throws -> String
     func boundDecode() throws -> any TSExpr
     func callDecode(json: any TSExpr) throws -> any TSExpr
@@ -20,7 +19,6 @@ public protocol TypeConverter {
     func decodeSignature() throws -> TSFunctionDecl?
     func decodeDecl() throws -> TSFunctionDecl?
     func hasEncode() throws -> Bool
-    func encodePresence() throws -> CodecPresence
     func encodeName() throws -> String
     func boundEncode() throws -> any TSExpr
     func callEncode(entity: any TSExpr) throws -> any TSExpr

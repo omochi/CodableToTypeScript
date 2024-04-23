@@ -19,20 +19,12 @@ public struct GenericParamConverter: TypeConverter {
         return true
     }
 
-    public func decodePresence() throws -> CodecPresence {
-        return .required
-    }
-
     public func decodeDecl() throws -> TSFunctionDecl? {
         throw MessageError("Unsupported type: \(swiftType)")
     }
 
     public func hasEncode() throws -> Bool {
         return true
-    }
-
-    public func encodePresence() throws -> CodecPresence {
-        return .required
     }
 
     public func encodeDecl() throws -> TSFunctionDecl? {

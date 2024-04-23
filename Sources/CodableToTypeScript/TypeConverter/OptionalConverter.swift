@@ -45,10 +45,6 @@ public struct OptionalConverter: TypeConverter {
         return try wrapped(limit: nil).hasDecode()
     }
 
-    public func decodePresence() throws -> CodecPresence {
-        return try wrapped(limit: nil).decodePresence()
-    }
-
     public func decodeName() throws -> String? {
         return generator.helperLibrary().name(.optionalDecode)
     }
@@ -76,10 +72,6 @@ public struct OptionalConverter: TypeConverter {
 
     public func hasEncode() throws -> Bool {
         return try wrapped(limit: nil).hasEncode()
-    }
-
-    public func encodePresence() throws -> CodecPresence {
-        return try wrapped(limit: nil).encodePresence()
     }
 
     public func encodeName() throws -> String {

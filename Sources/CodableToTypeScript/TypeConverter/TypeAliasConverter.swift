@@ -35,10 +35,6 @@ public struct TypeAliasConverter: TypeConverter {
         return try underlying().hasDecode()
     }
 
-    public func decodePresence() throws -> CodecPresence {
-        return try underlying().decodePresence()
-    }
-
     public func decodeDecl() throws -> TSFunctionDecl? {
         guard let decl = try decodeSignature() else { return nil }
 
@@ -52,10 +48,6 @@ public struct TypeAliasConverter: TypeConverter {
 
     public func hasEncode() throws -> Bool {
         return try underlying().hasEncode()
-    }
-
-    public func encodePresence() throws -> CodecPresence {
-        return try underlying().encodePresence()
     }
 
     public func encodeDecl() throws -> TSFunctionDecl? {
