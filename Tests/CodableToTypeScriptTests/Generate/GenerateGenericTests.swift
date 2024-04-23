@@ -26,6 +26,24 @@ export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSO
 }
 """]
         )
+
+        try assertGenerate(
+            source: """
+struct S<T> {
+    var a: Int
+}
+""",
+            expecteds: ["""
+export type S<T> = {
+    a: number;
+} & TagRecord<"S", [T]>;
+"""],
+            unexpecteds: ["""
+export type S_JSON<T_JSON>
+""", """
+export function S_decode<T, T_JSON>
+"""]
+        )
     }
 
     func testParamIdentity() throws {
@@ -517,6 +535,7 @@ enum E { case a }
 struct U {
     var k: S<E>.K
     var k2: S<E>.K2
+    var k3: S<Int>.K
 }
 """,
             typeSelector: .name("U", recursive: true),
@@ -524,19 +543,23 @@ struct U {
 export type U = {
     k: S_K<E>;
     k2: S_K2<E>;
+    k3: S_K<number>;
 } & TagRecord<"U">;
 """, """
 export type U_JSON = {
     k: S_K_JSON<E_JSON>;
     k2: S_K2_JSON<E_JSON>;
+    k3: S_K<number>;
 };
 """, """
 export function U_decode(json: U_JSON): U {
     const k = S_K_decode<E, E_JSON>(json.k, E_decode);
     const k2 = S_K2_decode<E, E_JSON>(json.k2, E_decode);
+    const k3 = json.k3 as S_K<number>;
     return {
         k: k,
-        k2: k2
+        k2: k2,
+        k3: k3
     };
 }
 """])
@@ -559,5 +582,75 @@ export type S_T_K<X> = {
     x: X;
 } & TagRecord<"S_T_K", [X]>;
 """])
+    }
+
+    func testUnusedParentGenericParameter() throws {
+        try assertGenerate(
+            source: """
+struct S<X> {
+    struct K {
+        var x: Int
+    }
+}
+""",
+            typeSelector: .name("K", recursive: true),
+            expecteds: ["""
+export type S_K<X> = {
+    x: number;
+} & TagRecord<"S_K", [X]>;
+"""])
+    }
+
+    func testComplexNestedParentGeneric() throws {
+        try assertGenerate(
+            source: """
+struct S<T> {
+    struct G<U> {
+         var t: T
+         var u: U
+    }
+}
+
+enum E { case o }
+
+struct K<T> {
+    var k: S<E>.G<T>
+}
+""",
+            typeSelector: .name("K", recursive: true),
+            expecteds: ["""
+export type K<T> = {
+    k: S_G<E, T>;
+} & TagRecord<"K", [T]>;
+""", """
+export type K_JSON<T_JSON> = {
+    k: S_G_JSON<E_JSON, T_JSON>;
+};
+""", """
+export function K_decode<T, T_JSON>(json: K_JSON<T_JSON>, T_decode: (json: T_JSON) => T): K<T> {
+    const k = S_G_decode<
+        E,
+        E_JSON,
+        T,
+        T_JSON
+    >(json.k, E_decode, T_decode);
+    return {
+        k: k
+    };
+}
+""", """
+export function K_encode<T, T_JSON>(entity: K<T>, T_encode: (entity: T) => T_JSON): K_JSON<T_JSON> {
+    const k = S_G_encode<
+        E,
+        E_JSON,
+        T,
+        T_JSON
+    >(entity.k, identity, T_encode);
+    return {
+        k: k
+    };
+}
+"""]
+        )
     }
 }
