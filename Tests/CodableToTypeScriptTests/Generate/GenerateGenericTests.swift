@@ -496,6 +496,10 @@ struct S<X> {
 export type S_K<X> = {
     x: X;
 } & TagRecord<"S_K", [X]>;
+""", """
+export type S_K_JSON<X_JSON> = {
+    x: X_JSON;
+};
 """])
     }
 

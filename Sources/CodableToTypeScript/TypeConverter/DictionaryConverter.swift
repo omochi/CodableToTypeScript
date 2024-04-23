@@ -29,6 +29,10 @@ public struct DictionaryConverter: TypeConverter {
         throw MessageError("Unsupported type: \(swiftType)")
     }
 
+    public func hasDecode() throws -> Bool {
+        return true
+    }
+
     public func decodePresence() throws -> CodecPresence {
         return .required
     }
@@ -46,6 +50,10 @@ public struct DictionaryConverter: TypeConverter {
 
     public func decodeDecl() throws -> TSFunctionDecl? {
         throw MessageError("Unsupported type: \(swiftType)")
+    }
+
+    public func hasEncode() throws -> Bool {
+        return true
     }
 
     public func encodePresence() throws -> CodecPresence {

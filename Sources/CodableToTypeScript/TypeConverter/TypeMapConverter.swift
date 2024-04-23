@@ -29,6 +29,14 @@ public struct TypeMapConverter: TypeConverter {
         return nil
     }
 
+    public func hasDecode() throws -> Bool {
+        switch try decodePresence() {
+        case .identity: return false
+        case .conditional: throw MessageError("unexpected case")
+        case .required: return true
+        }
+    }
+
     public func decodePresence() throws -> CodecPresence {
         if let _ = entry.decode {
             return .required
@@ -42,6 +50,14 @@ public struct TypeMapConverter: TypeConverter {
 
     public func decodeDecl() throws -> TSFunctionDecl? {
         return nil
+    }
+
+    public func hasEncode() throws -> Bool {
+        switch try encodePresence() {
+        case .identity: return false
+        case .conditional: throw MessageError("unexpected case")
+        case .required: return true
+        }
     }
 
     public func encodePresence() throws -> CodecPresence {

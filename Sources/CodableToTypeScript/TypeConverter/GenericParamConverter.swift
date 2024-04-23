@@ -20,7 +20,7 @@ public struct GenericParamConverter: TypeConverter {
     }
 
     public func decodePresence() throws -> CodecPresence {
-        return .conditional
+        return .required
     }
 
     public func decodeDecl() throws -> TSFunctionDecl? {
@@ -32,7 +32,7 @@ public struct GenericParamConverter: TypeConverter {
     }
 
     public func encodePresence() throws -> CodecPresence {
-        return .conditional
+        return .required
     }
 
     public func encodeDecl() throws -> TSFunctionDecl? {

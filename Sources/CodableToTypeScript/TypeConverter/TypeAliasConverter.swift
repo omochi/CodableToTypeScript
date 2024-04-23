@@ -31,6 +31,10 @@ public struct TypeAliasConverter: TypeConverter {
         )
     }
 
+    public func hasDecode() throws -> Bool {
+        return try underlying().hasDecode()
+    }
+
     public func decodePresence() throws -> CodecPresence {
         return try underlying().decodePresence()
     }
@@ -44,6 +48,10 @@ public struct TypeAliasConverter: TypeConverter {
         )
 
         return decl
+    }
+
+    public func hasEncode() throws -> Bool {
+        return try underlying().hasEncode()
     }
 
     public func encodePresence() throws -> CodecPresence {

@@ -61,10 +61,6 @@ extension TypeConverter {
         return try `default`.fieldToValue(field: field, for: target)
     }
 
-    public func hasDecode() throws -> Bool {
-        return try `default`.hasDecode()
-    }
-
     public func decodeName() throws -> String {
         return try `default`.decodeName()
     }
@@ -83,10 +79,6 @@ extension TypeConverter {
 
     public func decodeSignature() throws -> TSFunctionDecl? {
         return try `default`.decodeSignature()
-    }
-
-    public func hasEncode() throws -> Bool {
-        return try `default`.hasEncode()
     }
 
     public func encodeName() throws -> String {

@@ -19,8 +19,8 @@ struct A {
         let sType = try XCTUnwrap(source.find(name: "S")?.asStruct?.typedDeclaredInterfaceType)
         let sConverter = try CodeGenerator(context: context)
             .converter(for: sType)
-        XCTAssertEqual(try sConverter.decodePresence(), .conditional)
-        XCTAssertEqual(try sConverter.encodePresence(), .conditional)
+        XCTAssertEqual(try sConverter.decodePresence(), .required)
+        XCTAssertEqual(try sConverter.encodePresence(), .required)
 
         let aDecl = try XCTUnwrap(source.find(name: "A"))
 

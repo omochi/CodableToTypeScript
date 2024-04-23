@@ -59,6 +59,10 @@ public struct RawValueTransferringConverter: TypeConverter {
         }
     }
 
+    public func hasDecode() throws -> Bool {
+        return true
+    }
+
     public func decodePresence() throws -> CodecPresence {
         return .required
     }
@@ -78,6 +82,10 @@ public struct RawValueTransferringConverter: TypeConverter {
         )
 
         return decl
+    }
+
+    public func hasEncode() throws -> Bool {
+        return true
     }
 
     public func encodePresence() throws -> CodecPresence {

@@ -60,6 +60,14 @@ public struct StructConverter: TypeConverter {
             type: type
         )
     }
+    
+    public func hasDecode() throws -> Bool {
+        switch try decodePresence() {
+        case .identity: return false
+        case .conditional: throw MessageError("unexpected case")
+        case .required: return true
+        }
+    }
 
     public func decodePresence() throws -> CodecPresence {
         let map = `struct`.contextSubstitutionMap()
@@ -117,6 +125,14 @@ public struct StructConverter: TypeConverter {
         )
 
         return function
+    }
+
+    public func hasEncode() throws -> Bool {
+        switch try encodePresence() {
+        case .identity: return false
+        case .conditional: throw MessageError("unexpected case")
+        case .required: return true
+        }
     }
 
     public func encodePresence() throws -> CodecPresence {

@@ -181,6 +181,14 @@ public struct EnumConverter: TypeConverter {
         return TSObjectType(outerFields)
     }
 
+    public func hasDecode() throws -> Bool {
+        switch try decodePresence() {
+        case .identity: return false
+        case .conditional: throw MessageError("unexpected case")
+        case .required: return true
+        }
+    }
+
     public func decodePresence() throws -> CodecPresence {
         switch kind {
         case .never: return .identity
@@ -205,6 +213,14 @@ public struct EnumConverter: TypeConverter {
                 converter: self,
                 type: `enum`.decl
             ).generate()
+        }
+    }
+
+    public func hasEncode() throws -> Bool {
+        switch try encodePresence() {
+        case .identity: return false
+        case .conditional: throw MessageError("unexpected case")
+        case .required: return true
         }
     }
 

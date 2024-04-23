@@ -74,18 +74,6 @@ public struct DefaultTypeConverter {
         return field
     }
 
-    public func hasDecode() throws -> Bool {
-        switch try self.converter().decodePresence() {
-        case .identity: return false
-        case .required: return true
-        case .conditional:
-            let args = try swiftType.genericArgs.map {
-                try self.generator.converter(for: $0)
-            }
-            return try args.contains { try $0.hasDecode() }
-        }
-    }
-
     public func decodeName() throws -> String {
         let converter = try self.converter()
         guard try converter.hasDecode() else {
@@ -218,18 +206,6 @@ public struct DefaultTypeConverter {
             result: result,
             body: TSBlockStmt()
         )
-    }
-
-    public func hasEncode() throws -> Bool {
-        switch try self.converter().encodePresence() {
-        case .identity: return false
-        case .required: return true
-        case .conditional:
-            let args = try swiftType.genericArgs.map {
-                try self.generator.converter(for: $0)
-            }
-            return try args.contains { try $0.hasEncode() }
-        }
     }
 
     public func encodeName() throws -> String {
