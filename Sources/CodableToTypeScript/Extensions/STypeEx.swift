@@ -82,15 +82,6 @@ extension StructType {
 }
 
 extension SType {
-    internal var typeDecl: (any TypeDecl)? {
-        switch self {
-        case let type as any NominalType: return type.nominalTypeDecl
-        case let type as GenericParamType: return type.decl
-        case let type as TypeAliasType: return type.decl
-        default: return nil
-        }
-    }
-
     internal var genericArgs: [any SType] {
         switch self {
         case let type as any NominalType: return type.genericArgs
