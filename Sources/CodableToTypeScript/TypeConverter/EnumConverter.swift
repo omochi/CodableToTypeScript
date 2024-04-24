@@ -181,12 +181,12 @@ public struct EnumConverter: TypeConverter {
         return TSObjectType(outerFields)
     }
 
-    public func decodePresence() throws -> CodecPresence {
+    public func hasDecode() throws -> Bool {
         switch kind {
-        case .never: return .identity
-        case .string: return .identity
-        case .int: return .required
-        case .normal: return .required
+        case .never: return false
+        case .string: return false
+        case .int: return true
+        case .normal: return true
         }
     }
 
@@ -208,32 +208,32 @@ public struct EnumConverter: TypeConverter {
         }
     }
 
-    public func encodePresence() throws -> CodecPresence {
+    public func hasEncode() throws -> Bool {
         switch kind {
-        case .never: return .identity
-        case .string: return .identity
-        case .int: return .required
+        case .never: return false
+        case .string: return false
+        case .int: return true
         case .normal: break
         }
 
         let map = `enum`.contextSubstitutionMap()
 
-        var result: [CodecPresence] = [.identity]
+        var result = false
 
         try withErrorCollector { collect in
             for caseElement in decl.caseElements {
                 for (i, value) in caseElement.associatedValues.enumerated() {
-                    collect(at: "\(caseElement.name).\(value.interfaceName ?? "_\(i)")") {
+                    result = result || collect(at: "\(caseElement.name).\(value.interfaceName ?? "_\(i)")") {
                         let value = try generator.converter(
                             for: value.interfaceType.subst(map: map)
                         )
-                        result.append(try value.encodePresence())
-                    }
+                        return try value.hasEncode()
+                    } ?? false
                 }
             }
         }
 
-        return result.max()!
+        return result
     }
 
     public func encodeDecl() throws -> TSFunctionDecl? {

@@ -28,8 +28,8 @@ public struct SetConverter: TypeConverter {
         throw MessageError("Unsupported type: \(swiftType)")
     }
 
-    public func decodePresence() throws -> CodecPresence {
-        return .required
+    public func hasDecode() throws -> Bool {
+        return true
     }
 
     public func decodeName() throws -> String? {
@@ -40,8 +40,8 @@ public struct SetConverter: TypeConverter {
         throw MessageError("Unsupported type: \(swiftType)")
     }
 
-    public func encodePresence() throws -> CodecPresence {
-        return .required
+    public func hasEncode() throws -> Bool {
+        return true
     }
 
     public func encodeName() throws -> String {

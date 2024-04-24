@@ -107,6 +107,33 @@ export function S_A_encode<T, T_JSON>(entity: S_A<T>, T_encode: (entity: T) => T
         )
     }
 
+    func testInheritGenericParam() throws {
+        let source = """
+struct E<X> {}
+
+struct S<T> {
+    typealias A = E<T>
+    typealias B = E<Int>
+}
+"""
+
+        try assertGenerate(
+            source: source,
+            typeSelector: .name("A", recursive: true),
+            expecteds: ["""
+export type S_A<T> = E<T>;
+"""]
+        )
+
+        try assertGenerate(
+            source: source,
+            typeSelector: .name("B", recursive: true),
+            expecteds: ["""
+export type S_B<T> = E<number>;
+"""]
+        )
+    }
+
     func testRawRepr() throws {
         try assertGenerate(
             source: """

@@ -6,7 +6,7 @@ public struct ArrayConverter: TypeConverter {
         self.generator = generator
         self.swiftType = swiftType
     }
-    
+
     public var generator: CodeGenerator
     public var swiftType: any SType
 
@@ -14,7 +14,7 @@ public struct ArrayConverter: TypeConverter {
         let (_, element) = swiftType.asArray()!
         return try generator.converter(for: element)
     }
-    
+
     public func type(for target: GenerationTarget) throws -> any TSType {
         return TSArrayType(
             try element().type(for: target)
@@ -25,8 +25,8 @@ public struct ArrayConverter: TypeConverter {
         throw MessageError("Unsupported type: \(swiftType)")
     }
 
-    public func decodePresence() throws -> CodecPresence {
-        return try element().decodePresence()
+    public func hasDecode() throws -> Bool {
+        return try element().hasDecode()
     }
 
     public func decodeName() throws -> String? {
@@ -44,8 +44,8 @@ public struct ArrayConverter: TypeConverter {
         throw MessageError("Unsupported type: \(swiftType)")
     }
 
-    public func encodePresence() throws -> CodecPresence {
-        return try element().encodePresence()
+    public func hasEncode() throws -> Bool {
+        return try element().hasEncode()
     }
 
     public func encodeName() throws -> String {

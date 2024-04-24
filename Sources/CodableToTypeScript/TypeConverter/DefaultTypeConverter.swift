@@ -74,18 +74,6 @@ public struct DefaultTypeConverter {
         return field
     }
 
-    public func hasDecode() throws -> Bool {
-        switch try self.converter().decodePresence() {
-        case .identity: return false
-        case .required: return true
-        case .conditional:
-            let args = try swiftType.genericArgs.map {
-                try self.generator.converter(for: $0)
-            }
-            return try args.contains { try $0.hasDecode() }
-        }
-    }
-
     public func decodeName() throws -> String {
         let converter = try self.converter()
         guard try converter.hasDecode() else {
@@ -122,7 +110,7 @@ public struct DefaultTypeConverter {
             )
         }
 
-        if !swiftType.genericArgs.isEmpty {
+        if !swiftType.tsGenericArgs.isEmpty {
             return try makeClosure()
         }
         return TSIdentExpr(
@@ -131,7 +119,7 @@ public struct DefaultTypeConverter {
     }
 
     public func callDecode(json: any TSExpr) throws -> any TSExpr {
-        return try callDecode(genericArgs: swiftType.genericArgs, json: json)
+        return try callDecode(genericArgs: swiftType.tsGenericArgs, json: json)
     }
 
     public func callDecode(genericArgs: [any SType], json: any TSExpr) throws -> any TSExpr {
@@ -220,18 +208,6 @@ public struct DefaultTypeConverter {
         )
     }
 
-    public func hasEncode() throws -> Bool {
-        switch try self.converter().encodePresence() {
-        case .identity: return false
-        case .required: return true
-        case .conditional:
-            let args = try swiftType.genericArgs.map {
-                try self.generator.converter(for: $0)
-            }
-            return try args.contains { try $0.hasEncode() }
-        }
-    }
-
     public func encodeName() throws -> String {
         let converter = try self.converter()
         guard try converter.hasEncode() else {
@@ -268,7 +244,7 @@ public struct DefaultTypeConverter {
             )
         }
 
-        if !swiftType.genericArgs.isEmpty {
+        if !swiftType.tsGenericArgs.isEmpty {
             return try makeClosure()
         }
         return TSIdentExpr(
@@ -277,7 +253,7 @@ public struct DefaultTypeConverter {
     }
 
     public func callEncode(entity: any TSExpr) throws -> any TSExpr {
-        return try callEncode(genericArgs: swiftType.genericArgs, entity: entity)
+        return try callEncode(genericArgs: swiftType.tsGenericArgs, entity: entity)
     }
 
     public func callEncode(genericArgs: [any SType], entity: any TSExpr) throws -> any TSExpr {

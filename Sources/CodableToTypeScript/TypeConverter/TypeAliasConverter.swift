@@ -31,8 +31,8 @@ public struct TypeAliasConverter: TypeConverter {
         )
     }
 
-    public func decodePresence() throws -> CodecPresence {
-        return try underlying().decodePresence()
+    public func hasDecode() throws -> Bool {
+        return try underlying().hasDecode()
     }
 
     public func decodeDecl() throws -> TSFunctionDecl? {
@@ -46,8 +46,8 @@ public struct TypeAliasConverter: TypeConverter {
         return decl
     }
 
-    public func encodePresence() throws -> CodecPresence {
-        return try underlying().encodePresence()
+    public func hasEncode() throws -> Bool {
+        return try underlying().hasEncode()
     }
 
     public func encodeDecl() throws -> TSFunctionDecl? {

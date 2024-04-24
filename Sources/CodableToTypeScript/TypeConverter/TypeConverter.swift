@@ -12,7 +12,6 @@ public protocol TypeConverter {
     func fieldToValue(field: any TSExpr, for target: GenerationTarget) throws -> any TSExpr
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl?
     func hasDecode() throws -> Bool
-    func decodePresence() throws -> CodecPresence
     func decodeName() throws -> String
     func boundDecode() throws -> any TSExpr
     func callDecode(json: any TSExpr) throws -> any TSExpr
@@ -20,7 +19,6 @@ public protocol TypeConverter {
     func decodeSignature() throws -> TSFunctionDecl?
     func decodeDecl() throws -> TSFunctionDecl?
     func hasEncode() throws -> Bool
-    func encodePresence() throws -> CodecPresence
     func encodeName() throws -> String
     func boundEncode() throws -> any TSExpr
     func callEncode(entity: any TSExpr) throws -> any TSExpr
@@ -61,10 +59,6 @@ extension TypeConverter {
         return try `default`.fieldToValue(field: field, for: target)
     }
 
-    public func hasDecode() throws -> Bool {
-        return try `default`.hasDecode()
-    }
-
     public func decodeName() throws -> String {
         return try `default`.decodeName()
     }
@@ -83,10 +77,6 @@ extension TypeConverter {
 
     public func decodeSignature() throws -> TSFunctionDecl? {
         return try `default`.decodeSignature()
-    }
-
-    public func hasEncode() throws -> Bool {
-        return try `default`.hasEncode()
     }
 
     public func encodeName() throws -> String {
@@ -111,20 +101,31 @@ extension TypeConverter {
 
     // MARK: - extensions
     public func genericArgs() throws -> [any TypeConverter] {
-        return try swiftType.genericArgs.map { (type) in
+        return try swiftType.tsGenericArgs.map { (type) in
             try generator.converter(for: type)
         }
     }
 
     public func genericParams() throws -> [any TypeConverter] {
-        guard let decl = self.swiftType.typeDecl,
+        return try genericParams(stype: self.swiftType)
+    }
+
+    private func genericParams(stype: any SType) throws -> [any TypeConverter] {
+        let parentParams = if let parent = stype.typeDecl?.parentContext,
+            let parentType = parent.selfInterfaceType {
+                try genericParams(stype: parentType)
+            } else {
+                [] as [any TypeConverter]
+            }
+
+        guard let decl = stype.typeDecl,
               let genericContext = decl as? any GenericContext else
         {
-            return []
+            return parentParams
         }
-        return try genericContext.genericParams.items.map { (param) in
+        return parentParams + (try genericContext.genericParams.items.map { (param) in
             try generator.converter(for: param.declaredInterfaceType)
-        }
+        })
     }
 
     public func ownDecls() throws -> TypeOwnDeclarations {
