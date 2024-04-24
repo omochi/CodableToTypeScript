@@ -35,7 +35,7 @@ struct GeneratorProxyConverter: TypeConverter {
         return try impl.hasDecode()
     }
 
-    func decodeName() throws -> String? {
+    func decodeName() throws -> String {
         return try impl.decodeName()
     }
 
