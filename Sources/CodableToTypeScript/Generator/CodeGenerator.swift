@@ -62,6 +62,40 @@ public final class CodeGenerator {
         }
     }
 
+    internal struct HasDecodeRequest: Request {
+        var token: RequestToken
+        @AnyTypeStorage var type: any SType
+
+        func evaluate(on evaluator: RequestEvaluator) throws -> Bool {
+            do {
+                let converter = try token.generator.implConverter(for: type)
+                return try converter.hasDecode()
+            } catch {
+                switch error {
+                case is CycleRequestError: return true
+                default: throw error
+                }
+            }
+        }
+    }
+
+    internal struct HasEncodeRequest: Request {
+        var token: RequestToken
+        @AnyTypeStorage var type: any SType
+
+        func evaluate(on evaluator: RequestEvaluator) throws -> Bool {
+            do {
+                let converter = try token.generator.implConverter(for: type)
+                return try converter.hasEncode()
+            } catch {
+                switch error {
+                case is CycleRequestError: return true
+                default: throw error
+                }
+            }
+        }
+    }
+
     func helperLibrary() -> HelperLibraryGenerator {
         return HelperLibraryGenerator(generator: self)
     }
