@@ -43,8 +43,8 @@ final class GenerateErrorTests: GenerateTestCaseBase {
         )
         XCTAssertThrowsError(try generator.generate(modules: [module])) { (error) in
             XCTAssertEqual("\(error)", """
-            S.t.b: Error type can't be evaluated: B
-            T.b: Error type can't be evaluated: B
+            B.swift.T.b: Error type can't be evaluated: B
+            A.swift.S.t.b: Error type can't be evaluated: B
             """)
         }
     }
