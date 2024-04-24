@@ -33,7 +33,7 @@ public struct DictionaryConverter: TypeConverter {
         return true
     }
 
-    public func decodeName() throws -> String? {
+    public func decodeName() throws -> String {
         return generator.helperLibrary().name(.dictionaryDecode)
     }
 
