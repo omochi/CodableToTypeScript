@@ -32,7 +32,7 @@ public struct SetConverter: TypeConverter {
         return true
     }
 
-    public func decodeName() throws -> String? {
+    public func decodeName() throws -> String {
         return generator.helperLibrary().name(.setDecode)
     }
 

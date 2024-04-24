@@ -29,7 +29,7 @@ public struct ArrayConverter: TypeConverter {
         return try element().hasDecode()
     }
 
-    public func decodeName() throws -> String? {
+    public func decodeName() throws -> String {
         return generator.helperLibrary().name(.arrayDecode)
     }
 

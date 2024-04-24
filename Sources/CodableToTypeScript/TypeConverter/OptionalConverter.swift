@@ -45,7 +45,7 @@ public struct OptionalConverter: TypeConverter {
         return try wrapped(limit: nil).hasDecode()
     }
 
-    public func decodeName() throws -> String? {
+    public func decodeName() throws -> String {
         return generator.helperLibrary().name(.optionalDecode)
     }
 
