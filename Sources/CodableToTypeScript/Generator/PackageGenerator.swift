@@ -47,56 +47,81 @@ public final class PackageGenerator {
     }
 
     public func generate(modules: [Module]) throws -> GenerateResult {
-        var entries: [PackageEntry] = [
-            PackageEntry(
-                file: self.path("common.\(typeScriptExtension)"),
-                source: codeGenerator.generateHelperLibrary()
+        let helperEntry = PackageEntry(
+            file: self.path("common.\(typeScriptExtension)"),
+            source: codeGenerator.generateHelperLibrary()
+        )
+
+        var symbolToSource: [String: SourceFile] = [:]
+
+        // collect symbols included in for each swift source file
+        for module in context.modules.filter({ $0 !== context.swiftModule }) {
+            for source in module.sources {
+                for type in source.types {
+                    guard
+                        let typeConverter = try? codeGenerator.converter(for: type.declaredInterfaceType),
+                        let declaredNames = try? typeConverter.decls().compactMap(\.declaredName)
+                    else {
+                        continue
+                    }
+                    for declaredName in declaredNames {
+                        symbolToSource[declaredName] = source
+                    }
+                }
+            }
+        }
+
+        // convert collected symbols to SymbolTable for use of buildAutoImportDecls
+        var allSymbols = self.symbols
+        allSymbols.add(source: helperEntry.source, file: helperEntry.file)
+        for (symbol, source) in symbolToSource {
+            allSymbols.add(
+                symbol: symbol,
+                file: .file(try tsPath(module: source.module, file: source.file))
             )
-        ]
+        }
+
+        var targetSources: [SourceFile] = modules.flatMap(\.sources)
+        var generatedSources: Set<SourceFile> = []
+        var generatedEntries: [PackageEntry] = [helperEntry]
 
         try withErrorCollector { collect in
-            for module in modules {
-                for source in module.sources {
-                    collect {
-                        let tsSource = try codeGenerator.convert(source: source)
+            while let source = targetSources.popLast() {
+                generatedSources.insert(source)
+                collect(at: source.file.lastPathComponent) {
+                    let tsSource = try codeGenerator.convert(source: source)
 
-                        let entry = PackageEntry(
-                            file: try tsPath(module: module, file: source.file),
-                            source: tsSource
+                    let entry = PackageEntry(
+                        file: try tsPath(module: source.module, file: source.file),
+                        source: tsSource
+                    )
+                    try didConvertSource?(source, entry)
+
+                    if !entry.source.elements.isEmpty {
+                        generatedEntries.append(.init(
+                            file: entry.file,
+                            source: entry.source
+                        ))
+
+                        let imports = try tsSource.buildAutoImportDecls(
+                            from: entry.file,
+                            symbolTable: allSymbols,
+                            fileExtension: importFileExtension
                         )
-                        try didConvertSource?(source, entry)
-
-                        if !entry.source.elements.isEmpty {
-                            entries.append(entry)
+                        tsSource.replaceImportDecls(imports)
+                        for importedDecl in imports.flatMap(\.names) {
+                            if let source = symbolToSource[importedDecl], !generatedSources.contains(source) {
+                                targetSources.append(source)
+                            }
                         }
                     }
                 }
             }
         }
 
-        var symbols = self.symbols
-
-        for entry in entries {
-            symbols.add(source: entry.source, file: entry.file)
-        }
-
-        try withErrorCollector { collect in
-            for entry in entries {
-                collect(at: "\(entry.file.relativePath)") {
-                    let source = entry.source
-                    let imports = try source.buildAutoImportDecls(
-                        from: entry.file,
-                        symbolTable: symbols,
-                        fileExtension: importFileExtension
-                    )
-                    source.replaceImportDecls(imports)
-                }
-            }
-        }
-
         return GenerateResult(
-            entries: entries,
-            symbols: symbols
+            entries: generatedEntries,
+            symbols: allSymbols
         )
     }
 
