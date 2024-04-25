@@ -69,12 +69,12 @@ struct S {
 """,
             typeConverterProvider: typeConverterProvider,
             externalReference: ExternalReference(
-                symbols: ["Custom", "Custom_JSON", "Custom_decode", "Custom_encode"],
+                symbols: ["Custom", "Custom$JSON", "Custom_decode", "Custom_encode"],
                 code: """
                 export type Custom = {};
-                export type Custom_JSON = string;
-                export function Custom_decode(json: Custom_JSON): Custom { throw 0; }
-                export function Custom_encode(entity: Custom): Custom_JSON { throw 0; }
+                export type Custom$JSON = string;
+                export function Custom_decode(json: Custom$JSON): Custom { throw 0; }
+                export function Custom_encode(entity: Custom): Custom$JSON { throw 0; }
                 """
             ),
             expecteds: ["""
@@ -84,17 +84,17 @@ export type S = {
     c: Custom[][];
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
-    a: Custom_JSON;
-    b: Custom_JSON[];
-    c: Custom_JSON[][];
+export type S$JSON = {
+    a: Custom$JSON;
+    b: Custom$JSON[];
+    c: Custom$JSON[][];
 };
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     const a = Custom_decode(json.a);
-    const b = Array_decode<Custom, Custom_JSON>(json.b, Custom_decode);
-    const c = Array_decode<Custom[], Custom_JSON[]>(json.c, (json: Custom_JSON[]): Custom[] => {
-        return Array_decode<Custom, Custom_JSON>(json, Custom_decode);
+    const b = Array_decode<Custom, Custom$JSON>(json.b, Custom_decode);
+    const c = Array_decode<Custom[], Custom$JSON[]>(json.c, (json: Custom$JSON[]): Custom[] => {
+        return Array_decode<Custom, Custom$JSON>(json, Custom_decode);
     });
     return {
         a: a,
@@ -103,11 +103,11 @@ export function S_decode(json: S_JSON): S {
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     const a = Custom_encode(entity.a);
-    const b = Array_encode<Custom, Custom_JSON>(entity.b, Custom_encode);
-    const c = Array_encode<Custom[], Custom_JSON[]>(entity.c, (entity: Custom[]): Custom_JSON[] => {
-        return Array_encode<Custom, Custom_JSON>(entity, Custom_encode);
+    const b = Array_encode<Custom, Custom$JSON>(entity.b, Custom_encode);
+    const c = Array_encode<Custom[], Custom$JSON[]>(entity.c, (entity: Custom[]): Custom$JSON[] => {
+        return Array_encode<Custom, Custom$JSON>(entity, Custom_encode);
     });
     return {
         a: a,

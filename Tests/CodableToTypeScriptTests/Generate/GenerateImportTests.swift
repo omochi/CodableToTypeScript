@@ -83,10 +83,10 @@ enum X {
             expecteds: ["""
 import {
     E,
-    E_JSON,
+    E$JSON,
     E_decode,
     S,
-    S_JSON,
+    S$JSON,
     S_decode,
     TagRecord
 }

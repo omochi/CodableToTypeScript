@@ -23,7 +23,7 @@ export type E = ({
     };
 }) & TagRecord<"E">;
 """, """
-export type E_JSON = {
+export type E$JSON = {
     a: {};
 } | {
     b: {
@@ -31,7 +31,7 @@ export type E_JSON = {
     };
 };
 """, """
-export function E_encode(entity: E): E_JSON {
+export function E_encode(entity: E): E$JSON {
     switch (entity.kind) {
     case "a":
         {
@@ -78,14 +78,14 @@ export type S = {
     d: Date[];
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
+export type S$JSON = {
     a: string;
     b?: string;
     c?: string | null;
     d: string[];
 };
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     const a = Date_encode(entity.a);
     const b = OptionalField_encode<Date, string>(entity.b, Date_encode);
     const c = OptionalField_encode<Date | null, string | null>(entity.c, (entity: Date | null): string | null => {
@@ -118,8 +118,8 @@ struct S {
             typeMap: dateTypeMap(),
             externalReference: dateTypeExternal(),
             expecteds: ["""
-export function S_encode(entity: S): S_JSON {
-    const a = entity.a as E_JSON;
+export function S_encode(entity: S): S$JSON {
+    const a = entity.a as E$JSON;
     const b = Date_encode(entity.b);
     return {
         a: a,
@@ -139,14 +139,14 @@ struct S<T> {
 }
 """,
             expecteds: ["""
-export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S<T> {
+export function S_decode<T, T$JSON>(json: S$JSON<T$JSON>, T_decode: (json: T$JSON) => T): S<T> {
     const _class = T_decode(json.class);
     return {
         class: _class
     };
 }
 """, """
-export function S_encode<T, T_JSON>(entity: S<T>, T_encode: (entity: T) => T_JSON): S_JSON<T_JSON> {
+export function S_encode<T, T$JSON>(entity: S<T>, T_encode: (entity: T) => T$JSON): S$JSON<T$JSON> {
     const _class = T_encode(entity.class);
     return {
         class: _class
@@ -162,7 +162,7 @@ enum E<T> {
 }
 """,
                 expecteds: ["""
-export function E_decode<T, T_JSON>(json: E_JSON<T_JSON>, T_decode: (json: T_JSON) => T): E<T> {
+export function E_decode<T, T$JSON>(json: E$JSON<T$JSON>, T_decode: (json: T$JSON) => T): E<T> {
     if ("class" in json) {
         const j = json.class;
         const _break = T_decode(j.break);
@@ -177,7 +177,7 @@ export function E_decode<T, T_JSON>(json: E_JSON<T_JSON>, T_decode: (json: T_JSO
     }
 }
 """, """
-export function E_encode<T, T_JSON>(entity: E<T>, T_encode: (entity: T) => T_JSON): E_JSON<T_JSON> {
+export function E_encode<T, T$JSON>(entity: E<T>, T_encode: (entity: T) => T$JSON): E$JSON<T$JSON> {
     const e = entity.class;
     const _break = T_encode(e.break);
     return {

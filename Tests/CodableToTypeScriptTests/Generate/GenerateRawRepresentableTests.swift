@@ -15,15 +15,15 @@ export type S = {
     rawValue: string;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = string;
+export type S$JSON = string;
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
         rawValue: json
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     return entity.rawValue;
 }
 """
@@ -47,18 +47,18 @@ export type K = {
     a: S;
 }
 """, """
-export type K_JSON = {
-    a: S_JSON;
+export type K$JSON = {
+    a: S$JSON;
 };
 """, """
-export function K_decode(json: K_JSON): K {
+export function K_decode(json: K$JSON): K {
     const a = S_decode(json.a);
     return {
         a: a
     };
 }
 """, """
-export function K_encode(entity: K): K_JSON {
+export function K_encode(entity: K): K$JSON {
     const a = S_encode(entity.a);
     return {
         a: a
@@ -81,15 +81,15 @@ export type S = {
     rawValue: string;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = string;
+export type S$JSON = string;
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
         rawValue: json
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     return entity.rawValue;
 }
 """
@@ -137,16 +137,16 @@ export type S = {
     rawValue?: K;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = K_JSON | null;
+export type S$JSON = K$JSON | null;
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
-        rawValue: Optional_decode<K, K_JSON>(json, K_decode) ?? undefined
+        rawValue: Optional_decode<K, K$JSON>(json, K_decode) ?? undefined
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
-    return OptionalField_encode<K, K_JSON>(entity.rawValue, K_encode) ?? null;
+export function S_encode(entity: S): S$JSON {
+    return OptionalField_encode<K, K$JSON>(entity.rawValue, K_encode) ?? null;
 }
 """
        ])
@@ -165,15 +165,15 @@ export type S = {
     rawValue?: number | null;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = number | null;
+export type S$JSON = number | null;
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
         rawValue: json as number | null ?? undefined
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     return entity.rawValue ?? null;
 }
 """
@@ -197,17 +197,17 @@ export type S = {
     rawValue?: K | null;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = K_JSON | null;
+export type S$JSON = K$JSON | null;
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
-        rawValue: Optional_decode<K, K_JSON>(json, K_decode) ?? undefined
+        rawValue: Optional_decode<K, K$JSON>(json, K_decode) ?? undefined
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
-    return OptionalField_encode<K | null, K_JSON | null>(entity.rawValue, (entity: K | null): K_JSON | null => {
-        return Optional_encode<K, K_JSON>(entity, K_encode);
+export function S_encode(entity: S): S$JSON {
+    return OptionalField_encode<K | null, K$JSON | null>(entity.rawValue, (entity: K | null): K$JSON | null => {
+        return Optional_encode<K, K$JSON>(entity, K_encode);
     }) ?? null;
 }
 """
@@ -227,15 +227,15 @@ export type S = {
     rawValue: string[];
 } & TagRecord<"S">;
 """, """
-export type S_JSON = string[];
+export type S$JSON = string[];
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
         rawValue: json as string[]
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     return entity.rawValue as string[];
 }
 """]
@@ -259,15 +259,15 @@ export type S = {
     rawValue: K;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = K;
+export type S$JSON = K;
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
         rawValue: json
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     return entity.rawValue;
 }
 """]
@@ -291,16 +291,16 @@ export type S = {
     rawValue: E;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = E_JSON;
+export type S$JSON = E$JSON;
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
         rawValue: E_decode(json)
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
-    return entity.rawValue as E_JSON;
+export function S_encode(entity: S): S$JSON {
+    return entity.rawValue as E$JSON;
 }
 """
                        ]
@@ -325,15 +325,15 @@ export type S = {
     rawValue: K;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = K_JSON;
+export type S$JSON = K$JSON;
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
         rawValue: K_decode(json)
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     return K_encode(entity.rawValue);
 }
 """
@@ -355,15 +355,15 @@ export type S = {
     rawValue: Date;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = string;
+export type S$JSON = string;
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
         rawValue: Date_decode(json)
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     return Date_encode(entity.rawValue);
 }
 """
@@ -389,15 +389,15 @@ export type S = {
     rawValue: K<Date>;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = K_JSON<string>;
+export type S$JSON = K$JSON<string>;
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
         rawValue: K_decode<Date, string>(json, Date_decode)
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     return K_encode<Date, string>(entity.rawValue, Date_encode);
 }
 """
@@ -424,16 +424,16 @@ export type S = {
     rawValue: K<E>;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = K_JSON<E_JSON>;
+export type S$JSON = K$JSON<E$JSON>;
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
-        rawValue: K_decode<E, E_JSON>(json, E_decode)
+        rawValue: K_decode<E, E$JSON>(json, E_decode)
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
-    return entity.rawValue as K_JSON<E_JSON>;
+export function S_encode(entity: S): S$JSON {
+    return entity.rawValue as K$JSON<E$JSON>;
 }
 """
                        ]
@@ -457,15 +457,15 @@ export type S = {
     rawValue: K<number>;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = K<number>;
+export type S$JSON = K<number>;
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
         rawValue: json as K<number>
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     return entity.rawValue as K<number>;
 }
 """
@@ -490,16 +490,16 @@ export type S<U> = {
     rawValue: K<U>;
 } & TagRecord<"S", [U]>;
 """, """
-export type S_JSON<U_JSON> = K_JSON<U_JSON>;
+export type S$JSON<U$JSON> = K$JSON<U$JSON>;
 """, """
-export function S_decode<U, U_JSON>(json: S_JSON<U_JSON>, U_decode: (json: U_JSON) => U): S<U> {
+export function S_decode<U, U$JSON>(json: S$JSON<U$JSON>, U_decode: (json: U$JSON) => U): S<U> {
     return {
-        rawValue: K_decode<U, U_JSON>(json, U_decode)
+        rawValue: K_decode<U, U$JSON>(json, U_decode)
     };
 }
 """, """
-export function S_encode<U, U_JSON>(entity: S<U>, U_encode: (entity: U) => U_JSON): S_JSON<U_JSON> {
-    return K_encode<U, U_JSON>(entity.rawValue, U_encode);
+export function S_encode<U, U$JSON>(entity: S<U>, U_encode: (entity: U) => U$JSON): S$JSON<U$JSON> {
+    return K_encode<U, U$JSON>(entity.rawValue, U_encode);
 }
 """
                        ]
@@ -519,18 +519,18 @@ export type S<T> = {
     rawValue: T;
 } & TagRecord<"S", [T]>;
 """, """
-export type S_JSON<T_JSON> = {
-    rawValue: T_JSON;
+export type S$JSON<T$JSON> = {
+    rawValue: T$JSON;
 };
 """, """
-export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S<T> {
+export function S_decode<T, T$JSON>(json: S$JSON<T$JSON>, T_decode: (json: T$JSON) => T): S<T> {
     const rawValue = T_decode(json.rawValue);
     return {
         rawValue: rawValue
     };
 }
 """, """
-export function S_encode<T, T_JSON>(entity: S<T>, T_encode: (entity: T) => T_JSON): S_JSON<T_JSON> {
+export function S_encode<T, T$JSON>(entity: S<T>, T_encode: (entity: T) => T$JSON): S$JSON<T$JSON> {
     const rawValue = T_encode(entity.rawValue);
     return {
         rawValue: rawValue
@@ -580,15 +580,15 @@ export type User_ID = {
     rawValue: string;
 } & TagRecord<"User_ID">;
 """, """
-export type User_ID_JSON = string;
+export type User_ID$JSON = string;
 """, """
-export function User_ID_decode(json: User_ID_JSON): User_ID {
+export function User_ID_decode(json: User_ID$JSON): User_ID {
     return {
         rawValue: json
     };
 }
 """, """
-export function User_ID_encode(entity: User_ID): User_ID_JSON {
+export function User_ID_encode(entity: User_ID): User_ID$JSON {
     return entity.rawValue;
 }
 """, """
@@ -597,12 +597,12 @@ export type User = {
     date: Date;
 } & TagRecord<"User">;
 """, """
-export type User_JSON = {
-    id: User_ID_JSON;
+export type User$JSON = {
+    id: User_ID$JSON;
     date: string;
 };
 """, """
-export function User_decode(json: User_JSON): User {
+export function User_decode(json: User$JSON): User {
     const id = User_ID_decode(json.id);
     const date = Date_decode(json.date);
     return {
@@ -611,7 +611,7 @@ export function User_decode(json: User_JSON): User {
     };
 }
 """, """
-export function User_encode(entity: User): User_JSON {
+export function User_encode(entity: User): User$JSON {
     const id = User_ID_encode(entity.id);
     const date = Date_encode(entity.date);
     return {
@@ -636,7 +636,7 @@ export type ID<G> = {
     rawValue: string;
 } & TagRecord<"ID", [G]>;
 """, """
-export type ID_JSON<G_JSON> = string;
+export type ID$JSON<G$JSON> = string;
 """]
         )
     }
@@ -656,15 +656,15 @@ export type S = {
     rawValue: number;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = number;
+export type S$JSON = number;
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     return {
         rawValue: json
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     return entity.rawValue;
 }
 """

@@ -56,12 +56,12 @@ export type S = {
     b: E;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
+export type S$JSON = {
     a: number;
-    b: E_JSON;
+    b: E$JSON;
 };
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     const a = json.a;
     const b = E_decode(json.b);
     return {
@@ -92,19 +92,19 @@ export type S = {
     e3?: E | null;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
-    e1?: E_JSON;
-    e2?: E_JSON | null;
-    e3?: E_JSON | null;
+export type S$JSON = {
+    e1?: E$JSON;
+    e2?: E$JSON | null;
+    e3?: E$JSON | null;
 };
 """, """
-export function S_decode(json: S_JSON): S {
-    const e1 = OptionalField_decode<E, E_JSON>(json.e1, E_decode);
-    const e2 = OptionalField_decode<E | null, E_JSON | null>(json.e2, (json: E_JSON | null): E | null => {
-        return Optional_decode<E, E_JSON>(json, E_decode);
+export function S_decode(json: S$JSON): S {
+    const e1 = OptionalField_decode<E, E$JSON>(json.e1, E_decode);
+    const e2 = OptionalField_decode<E | null, E$JSON | null>(json.e2, (json: E$JSON | null): E | null => {
+        return Optional_decode<E, E$JSON>(json, E_decode);
     });
-    const e3 = OptionalField_decode<E | null, E_JSON | null>(json.e3, (json: E_JSON | null): E | null => {
-        return Optional_decode<E, E_JSON>(json, E_decode);
+    const e3 = OptionalField_decode<E | null, E$JSON | null>(json.e3, (json: E$JSON | null): E | null => {
+        return Optional_decode<E, E$JSON>(json, E_decode);
     });
     return {
         e1: e1,
@@ -148,14 +148,14 @@ struct S {
             ,
             typeSelector: .name("S"),
             expecteds: ["""
-export function S_decode(json: S_JSON): S {
-    const e1 = Array_decode<E, E_JSON>(json.e1, E_decode);
-    const e2 = Array_decode<E[], E_JSON[]>(json.e2, (json: E_JSON[]): E[] => {
-        return Array_decode<E, E_JSON>(json, E_decode);
+export function S_decode(json: S$JSON): S {
+    const e1 = Array_decode<E, E$JSON>(json.e1, E_decode);
+    const e2 = Array_decode<E[], E$JSON[]>(json.e2, (json: E$JSON[]): E[] => {
+        return Array_decode<E, E$JSON>(json, E_decode);
     });
-    const e3 = Array_decode<E[][], E_JSON[][]>(json.e3, (json: E_JSON[][]): E[][] => {
-        return Array_decode<E[], E_JSON[]>(json, (json: E_JSON[]): E[] => {
-            return Array_decode<E, E_JSON>(json, E_decode);
+    const e3 = Array_decode<E[][], E$JSON[][]>(json.e3, (json: E$JSON[][]): E[][] => {
+        return Array_decode<E[], E$JSON[]>(json, (json: E$JSON[]): E[] => {
+            return Array_decode<E, E$JSON>(json, E_decode);
         });
     });
     return {
@@ -199,19 +199,19 @@ struct S {
 """,
             typeSelector: .name("S"),
             expecteds: ["""
-export function S_decode(json: S_JSON): S {
-    const e1 = OptionalField_decode<E[], E_JSON[]>(json.e1, (json: E_JSON[]): E[] => {
-        return Array_decode<E, E_JSON>(json, E_decode);
+export function S_decode(json: S$JSON): S {
+    const e1 = OptionalField_decode<E[], E$JSON[]>(json.e1, (json: E$JSON[]): E[] => {
+        return Array_decode<E, E$JSON>(json, E_decode);
     });
-    const e2 = Array_decode<E | null, E_JSON | null>(json.e2, (json: E_JSON | null): E | null => {
-        return Optional_decode<E, E_JSON>(json, E_decode);
+    const e2 = Array_decode<E | null, E$JSON | null>(json.e2, (json: E$JSON | null): E | null => {
+        return Optional_decode<E, E$JSON>(json, E_decode);
     });
-    const e3 = OptionalField_decode<E[], E_JSON[]>(json.e3, (json: E_JSON[]): E[] => {
-        return Array_decode<E, E_JSON>(json, E_decode);
+    const e3 = OptionalField_decode<E[], E$JSON[]>(json.e3, (json: E$JSON[]): E[] => {
+        return Array_decode<E, E$JSON>(json, E_decode);
     });
-    const e4 = OptionalField_decode<(E | null)[], (E_JSON | null)[]>(json.e4, (json: (E_JSON | null)[]): (E | null)[] => {
-        return Array_decode<E | null, E_JSON | null>(json, (json: E_JSON | null): E | null => {
-            return Optional_decode<E, E_JSON>(json, E_decode);
+    const e4 = OptionalField_decode<(E | null)[], (E$JSON | null)[]>(json.e4, (json: (E$JSON | null)[]): (E | null)[] => {
+        return Array_decode<E | null, E$JSON | null>(json, (json: E$JSON | null): E | null => {
+            return Optional_decode<E, E$JSON>(json, E_decode);
         });
     });
     return {
@@ -240,19 +240,19 @@ export type S = {
     e1: Set<E>;
 } & TagRecord<"S">;
 
-export type S_JSON = {
-    e1: E_JSON[];
+export type S$JSON = {
+    e1: E$JSON[];
 };
 
-export function S_decode(json: S_JSON): S {
-    const e1 = Set_decode<E, E_JSON>(json.e1, E_decode);
+export function S_decode(json: S$JSON): S {
+    const e1 = Set_decode<E, E$JSON>(json.e1, E_decode);
     return {
         e1: e1
     };
 }
 
-export function S_encode(entity: S): S_JSON {
-    const e1 = Set_encode<E, E_JSON>(entity.e1, identity);
+export function S_encode(entity: S): S$JSON {
+    const e1 = Set_encode<E, E$JSON>(entity.e1, identity);
     return {
         e1: e1
     };
@@ -279,23 +279,23 @@ export type S = {
     e3: Map<string, number>;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
+export type S$JSON = {
     e1: {
-        [key: string]: E_JSON;
+        [key: string]: E$JSON;
     };
     e2: {
-        [key: string]: (E_JSON | null)[];
+        [key: string]: (E$JSON | null)[];
     };
     e3: {
         [key: string]: number;
     };
 };
 """, """
-export function S_decode(json: S_JSON): S {
-    const e1 = Dictionary_decode<E, E_JSON>(json.e1, E_decode);
-    const e2 = Dictionary_decode<(E | null)[], (E_JSON | null)[]>(json.e2, (json: (E_JSON | null)[]): (E | null)[] => {
-        return Array_decode<E | null, E_JSON | null>(json, (json: E_JSON | null): E | null => {
-            return Optional_decode<E, E_JSON>(json, E_decode);
+export function S_decode(json: S$JSON): S {
+    const e1 = Dictionary_decode<E, E$JSON>(json.e1, E_decode);
+    const e2 = Dictionary_decode<(E | null)[], (E$JSON | null)[]>(json.e2, (json: (E$JSON | null)[]): (E | null)[] => {
+        return Array_decode<E | null, E$JSON | null>(json, (json: E$JSON | null): E | null => {
+            return Optional_decode<E, E$JSON>(json, E_decode);
         });
     });
     const e3 = Dictionary_decode<number, number>(json.e3, identity);
@@ -306,9 +306,9 @@ export function S_decode(json: S_JSON): S {
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
-    const e1 = Dictionary_encode<E, E_JSON>(entity.e1, identity);
-    const e2 = Dictionary_encode<(E | null)[], (E_JSON | null)[]>(entity.e2, identity);
+export function S_encode(entity: S): S$JSON {
+    const e1 = Dictionary_encode<E, E$JSON>(entity.e1, identity);
+    const e2 = Dictionary_encode<(E | null)[], (E$JSON | null)[]>(entity.e2, identity);
     const e3 = Dictionary_encode<number, number>(entity.e3, identity);
     return {
         e1: e1,
@@ -332,7 +332,7 @@ export type S = {
     a: Map<string, Map<string, number>>;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
+export type S$JSON = {
     a: {
         [key: string]: {
             [key: string]: number;
@@ -340,7 +340,7 @@ export type S_JSON = {
     };
 };
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     const a = Dictionary_decode<Map<string, number>, {
         [key: string]: number;
     }>(json.a, (json: {
@@ -353,7 +353,7 @@ export function S_decode(json: S_JSON): S {
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     const a = Dictionary_encode<Map<string, number>, {
         [key: string]: number;
     }>(entity.a, (entity: Map<string, number>): {

@@ -84,9 +84,9 @@ export type A
 """, """
 export type A_B
 """, """
-export type A_B_JSON
+export type A_B$JSON
 """, """
-export function A_B_decode(json: A_B_JSON): A_B
+export function A_B_decode(json: A_B$JSON): A_B
 """
             ]
         )

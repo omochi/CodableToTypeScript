@@ -53,11 +53,11 @@ export type S = {
     a: Date;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
+export type S$JSON = {
     a: string;
 };
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     const a = Date_decode(json.a);
     return {
         a: a
@@ -100,13 +100,13 @@ export type S = {
     c: Date[][];
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
+export type S$JSON = {
     a: string;
     b: string[];
     c: string[][];
 };
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     const a = Date_decode(json.a);
     const b = Array_decode<Date, string>(json.b, Date_decode);
     const c = Array_decode<Date[], string[]>(json.c, (json: string[]): Date[] => {
@@ -148,11 +148,11 @@ export type S = {
     a: Date;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
+export type S$JSON = {
     a: string;
 };
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     const a = Date_encode(entity.a);
     return {
         a: a
@@ -194,18 +194,18 @@ export type S = {
     a: Date;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
+export type S$JSON = {
     a: string;
 };
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     const a = Date_decode(json.a);
     return {
         a: a
     };
 }
 """, """
-export function S_encode(entity: S): S_JSON {
+export function S_encode(entity: S): S$JSON {
     const a = Date_encode(entity.a);
     return {
         a: a
@@ -223,7 +223,7 @@ export function S_encode(entity: S): S_JSON {
             decode: "Date_decode", encode: "Date_encode"
         )
         typeMap.table["Vector2"] = .coding(
-            entityType: "Vector2", jsonType: "Vector2_JSON",
+            entityType: "Vector2", jsonType: "Vector2$JSON",
             decode: "Vector2_decode", encode: "Vector2_encode"
         )
 
@@ -239,16 +239,16 @@ struct S {
             externalReference: ExternalReference(
                 symbols: [
                     "Date_decode", "Date_encode",
-                    "Vector2", "Vector2_JSON",
+                    "Vector2", "Vector2$JSON",
                     "Vector2_decode", "Vector2_encode"
                 ],
                 code: """
                 export function Date_decode(json: string): Date { throw 0; }
                 export function Date_encode(date: Date): string { throw 0; }
                 export type Vector2<T> = {};
-                export type Vector2_JSON<T> = string;
-                export function Vector2_decode<T, TJ>(json: Vector2_JSON<TJ>, t: (j: TJ) => T): Vector2<T> { throw 0; }
-                export function Vector2_encode<T, TJ>(date: Vector2<T>, t: (e: T) => TJ): Vector2_JSON<TJ> { throw 0; }
+                export type Vector2$JSON<T> = string;
+                export function Vector2_decode<T, TJ>(json: Vector2$JSON<TJ>, t: (j: TJ) => T): Vector2<T> { throw 0; }
+                export function Vector2_encode<T, TJ>(date: Vector2<T>, t: (e: T) => TJ): Vector2$JSON<TJ> { throw 0; }
                 """
             ),
             expecteds: ["""
@@ -258,17 +258,17 @@ export type S = {
     c: Vector2<Vector2<number>>[];
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
-    a: Vector2_JSON<number>;
-    b: Vector2_JSON<string>;
-    c: Vector2_JSON<Vector2_JSON<number>>[];
+export type S$JSON = {
+    a: Vector2$JSON<number>;
+    b: Vector2$JSON<string>;
+    c: Vector2$JSON<Vector2$JSON<number>>[];
 };
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     const a = Vector2_decode<number, number>(json.a, identity);
     const b = Vector2_decode<Date, string>(json.b, Date_decode);
-    const c = Array_decode<Vector2<Vector2<number>>, Vector2_JSON<Vector2_JSON<number>>>(json.c, (json: Vector2_JSON<Vector2_JSON<number>>): Vector2<Vector2<number>> => {
-        return Vector2_decode<Vector2<number>, Vector2_JSON<number>>(json, (json: Vector2_JSON<number>): Vector2<number> => {
+    const c = Array_decode<Vector2<Vector2<number>>, Vector2$JSON<Vector2$JSON<number>>>(json.c, (json: Vector2$JSON<Vector2$JSON<number>>): Vector2<Vector2<number>> => {
+        return Vector2_decode<Vector2<number>, Vector2$JSON<number>>(json, (json: Vector2$JSON<number>): Vector2<number> => {
             return Vector2_decode<number, number>(json, identity);
         });
     });
@@ -335,7 +335,7 @@ export type S
     func testMapUserTypeCodec() throws {
         var typeMap = TypeMap()
         typeMap.table["S"] = .coding(
-            entityType: "V", jsonType: "V_JSON",
+            entityType: "V", jsonType: "V$JSON",
             decode: "V_decode", encode: "V_encode"
         )
         try assertGenerate(
