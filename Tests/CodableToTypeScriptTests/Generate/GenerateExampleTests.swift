@@ -50,7 +50,7 @@ export type E = ({
     };
 }) & TagRecord<"E">;
 """, """
-export type E_JSON = {
+export type E$JSON = {
     a: {
         x: number;
         y: number;
@@ -61,7 +61,7 @@ export type E_JSON = {
     };
 };
 """, """
-export function E_decode(json: E_JSON): E {
+export function E_decode(json: E$JSON): E {
     if ("a" in json) {
         const j = json.a;
         const x = j.x;
@@ -108,7 +108,7 @@ struct S {
             expecteds: ["""
 import {
     E1,
-    E1_JSON,
+    E1$JSON,
     E1_decode,
     E2,
     TagRecord
@@ -119,12 +119,12 @@ export type S = {
     y: E2;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
-    x: E1_JSON;
+export type S$JSON = {
+    x: E1$JSON;
     y: E2;
 };
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     const x = E1_decode(json.x);
     const y = json.y;
     return {
@@ -152,7 +152,7 @@ enum R<T> {
         expecteds: ["""
 import {
     E,
-    E_JSON,
+    E$JSON,
     E_decode,
     TagRecord
 } from "..";
@@ -169,17 +169,17 @@ export type R<T> = ({
     };
 }) & TagRecord<"R", [T]>;
 """, """
-export type R_JSON<T_JSON> = {
+export type R$JSON<T$JSON> = {
     s: {
-        _0: T_JSON;
+        _0: T$JSON;
     };
 } | {
     f: {
-        _0: E_JSON;
+        _0: E$JSON;
     };
 };
 """, """
-export function R_decode<T, T_JSON>(json: R_JSON<T_JSON>, T_decode: (json: T_JSON) => T): R<T> {
+export function R_decode<T, T$JSON>(json: R$JSON<T$JSON>, T_decode: (json: T$JSON) => T): R<T> {
     if ("s" in json) {
         const j = json.s;
         const _0 = T_decode(j._0);
@@ -237,12 +237,12 @@ export type S = {
     b: S_K;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
+export type S$JSON = {
     a: string;
-    b: S_K_JSON;
+    b: S_K$JSON;
 };
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     const a = json.a;
     const b = S_K_decode(json.b);
     return {
@@ -255,11 +255,11 @@ export type S_K = {
     a: E;
 } & TagRecord<"S_K">;
 """, """
-export type S_K_JSON = {
-    a: E_JSON;
+export type S_K$JSON = {
+    a: E$JSON;
 };
 """, """
-export function S_K_decode(json: S_K_JSON): S_K {
+export function S_K_decode(json: S_K$JSON): S_K {
     const a = E_decode(json.a);
     return {
         a: a

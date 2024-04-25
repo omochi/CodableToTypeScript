@@ -21,7 +21,7 @@ export type E = ({
     };
 }) & TagRecord<"E">;
 ""","""
-export type E_JSON = {
+export type E$JSON = {
     a: {};
 } | {
     b: {
@@ -29,7 +29,7 @@ export type E_JSON = {
     };
 };
 ""","""
-export function E_decode(json: E_JSON): E {
+export function E_decode(json: E$JSON): E {
     if ("a" in json) {
         return {
             kind: "a",
@@ -75,7 +75,7 @@ export type E = ({
     };
 }) & TagRecord<"E">;
 """, """
-export type E_JSON = {
+export type E$JSON = {
     a: {
         x: number;
     };
@@ -123,7 +123,7 @@ export type E = {
     };
 } & TagRecord<"E">;
 """, """
-export type E_JSON = {
+export type E$JSON = {
     a: {
         _0: number;
         _1?: number;
@@ -132,7 +132,7 @@ export type E_JSON = {
     };
 };
 """, """
-export function E_decode(json: E_JSON): E {
+export function E_decode(json: E$JSON): E {
     if ("a" in json) {
         const j = json.a;
         const _0 = j._0;
@@ -255,9 +255,9 @@ enum E: Int, Codable, Sendable {
             expecteds: ["""
 export type E = "a" | "b" | "c";
 """, """
-export type E_JSON = 0 | -100 | -99;
+export type E$JSON = 0 | -100 | -99;
 """, """
-export function E_decode(json: E_JSON): E {
+export function E_decode(json: E$JSON): E {
     switch (json) {
     case 0:
         return "a";
@@ -268,7 +268,7 @@ export function E_decode(json: E_JSON): E {
     }
 }
 """, """
-export function E_encode(entity: E): E_JSON {
+export function E_encode(entity: E): E$JSON {
     switch (entity) {
     case "a":
         return 0;
@@ -303,7 +303,7 @@ enum E {
 """,
             typeSelector: .name("E"),
             expecteds: ["""
-export function E_decode(json: E_JSON): E {
+export function E_decode(json: E$JSON): E {
     if ("k" in json) {
         const j = json.k;
         const _0 = K_decode(j._0);

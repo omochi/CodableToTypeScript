@@ -38,7 +38,7 @@ public struct DefaultTypeConverter {
     }
 
     public static func jsonName(entityName: String) -> String {
-        return "\(entityName)_JSON"
+        return "\(entityName)$JSON"
     }
 
     public func hasJSONType() throws -> Bool {

@@ -86,9 +86,9 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.optionalFieldDecode),
-            genericParams: [.init("T"), .init("T_JSON")],
+            genericParams: [.init("T"), .init("T$JSON")],
             params: [
-                .init(name: "json", type: TSUnionType(TSIdentType("T_JSON"), TSIdentType.undefined)),
+                .init(name: "json", type: TSUnionType(TSIdentType("T$JSON"), TSIdentType.undefined)),
                 tDecodeParameter()
             ],
             result: TSUnionType(TSIdentType("T"), TSIdentType.undefined),
@@ -108,12 +108,12 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.optionalFieldEncode),
-            genericParams: [.init("T"), .init("T_JSON")],
+            genericParams: [.init("T"), .init("T$JSON")],
             params: [
                 .init(name: "entity", type: TSUnionType(TSIdentType("T"), TSIdentType.undefined)),
                 tEncodeParameter()
             ],
-            result: TSUnionType(TSIdentType("T_JSON"), TSIdentType.undefined),
+            result: TSUnionType(TSIdentType("T$JSON"), TSIdentType.undefined),
             body: TSBlockStmt([
                 TSIfStmt(
                     condition: TSInfixOperatorExpr(
@@ -130,9 +130,9 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.optionalDecode),
-            genericParams: [.init("T"), .init("T_JSON")],
+            genericParams: [.init("T"), .init("T$JSON")],
             params: [
-                .init(name: "json", type: TSUnionType(TSIdentType("T_JSON"), TSIdentType.null)),
+                .init(name: "json", type: TSUnionType(TSIdentType("T$JSON"), TSIdentType.null)),
                 tDecodeParameter()
             ],
             result: TSUnionType(TSIdentType("T"), TSIdentType.null),
@@ -152,12 +152,12 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.optionalEncode),
-            genericParams: [.init("T"), .init("T_JSON")],
+            genericParams: [.init("T"), .init("T$JSON")],
             params: [
                 .init(name: "entity", type: TSUnionType(TSIdentType("T"), TSIdentType.null)),
                 tEncodeParameter()
             ],
-            result: TSUnionType(TSIdentType("T_JSON"), TSIdentType.null),
+            result: TSUnionType(TSIdentType("T$JSON"), TSIdentType.null),
             body: TSBlockStmt([
                 TSIfStmt(
                     condition: TSInfixOperatorExpr(
@@ -174,9 +174,9 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.arrayDecode),
-            genericParams: [.init("T"), .init("T_JSON")],
+            genericParams: [.init("T"), .init("T$JSON")],
             params: [
-                .init(name: "json", type: TSArrayType(TSIdentType("T_JSON"))),
+                .init(name: "json", type: TSArrayType(TSIdentType("T$JSON"))),
                 tDecodeParameter()
             ],
             result: TSArrayType(TSIdentType("T")),
@@ -197,12 +197,12 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.arrayEncode),
-            genericParams: [.init("T"), .init("T_JSON")],
+            genericParams: [.init("T"), .init("T$JSON")],
             params: [
                 .init(name: "entity", type: TSArrayType(TSIdentType("T"))),
                 tEncodeParameter()
             ],
-            result: TSArrayType(TSIdentType("T_JSON")),
+            result: TSArrayType(TSIdentType("T$JSON")),
             body: TSBlockStmt([
                 TSReturnStmt(
                     TSCallExpr(
@@ -220,9 +220,9 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.setDecode),
-            genericParams: [.init("T"), .init("T_JSON")],
+            genericParams: [.init("T"), .init("T$JSON")],
             params: [
-                .init(name: "json", type: TSArrayType(TSIdentType("T_JSON"))),
+                .init(name: "json", type: TSArrayType(TSIdentType("T$JSON"))),
                 tDecodeParameter()
             ],
             result: TSIdentType("Set", genericArgs: [TSIdentType("T")]),
@@ -246,12 +246,12 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.setEncode),
-            genericParams: [.init("T"), .init("T_JSON")],
+            genericParams: [.init("T"), .init("T$JSON")],
             params: [
                 .init(name: "entity", type: TSIdentType("Set", genericArgs: [TSIdentType("T")])),
                 tEncodeParameter()
             ],
-            result: TSArrayType(TSIdentType("T_JSON")),
+            result: TSArrayType(TSIdentType("T$JSON")),
             body: TSBlockStmt([
                 TSReturnStmt(
                     TSCallExpr(
@@ -272,9 +272,9 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.dictionaryDecode),
-            genericParams: [.init("T"), .init("T_JSON")],
+            genericParams: [.init("T"), .init("T$JSON")],
             params: [
-                .init(name: "json", type: TSObjectType.dictionary(TSIdentType("T_JSON"))),
+                .init(name: "json", type: TSObjectType.dictionary(TSIdentType("T$JSON"))),
                 tDecodeParameter()
             ],
             result: TSIdentType.map(TSIdentType.string, TSIdentType("T")),
@@ -322,15 +322,15 @@ struct HelperLibraryGenerator {
         return TSFunctionDecl(
             modifiers: [.export],
             name: name(.dictionaryEncode),
-            genericParams: [.init("T"), .init("T_JSON")],
+            genericParams: [.init("T"), .init("T$JSON")],
             params: [
                 .init(name: "entity", type: TSIdentType.map(TSIdentType.string, TSIdentType("T"))),
                 tEncodeParameter()
             ],
-            result: TSObjectType.dictionary(TSIdentType("T_JSON")),
+            result: TSObjectType.dictionary(TSIdentType("T$JSON")),
             body: TSBlockStmt([
                 TSVarDecl(
-                    kind: .const, name: "json", type: TSObjectType.dictionary(TSIdentType("T_JSON")),
+                    kind: .const, name: "json", type: TSObjectType.dictionary(TSIdentType("T$JSON")),
                     initializer: TSObjectExpr([])
                 ),
                 TSForInStmt(
@@ -439,7 +439,7 @@ struct HelperLibraryGenerator {
         return TSFunctionType.Param(
             name: tDecode().name,
             type: TSFunctionType(
-                params: [.init(name: "json", type: TSIdentType("T_JSON"))],
+                params: [.init(name: "json", type: TSIdentType("T$JSON"))],
                 result: TSIdentType("T")
             )
         )
@@ -463,7 +463,7 @@ struct HelperLibraryGenerator {
             name: tEncode().name,
             type: TSFunctionType(
                 params: [.init(name: "entity", type: TSIdentType("T"))],
-                result: TSIdentType("T_JSON")
+                result: TSIdentType("T$JSON")
             )
         )
     }

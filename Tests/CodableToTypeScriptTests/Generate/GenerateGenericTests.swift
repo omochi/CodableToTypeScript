@@ -14,11 +14,11 @@ export type S<T> = {
     a: T;
 } & TagRecord<"S", [T]>;
 """, """
-export type S_JSON<T_JSON> = {
-    a: T_JSON;
+export type S$JSON<T$JSON> = {
+    a: T$JSON;
 };
 """, """
-export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S<T> {
+export function S_decode<T, T$JSON>(json: S$JSON<T$JSON>, T_decode: (json: T$JSON) => T): S<T> {
     const a = T_decode(json.a);
     return {
         a: a
@@ -39,9 +39,9 @@ export type S<T> = {
 } & TagRecord<"S", [T]>;
 """],
             unexpecteds: ["""
-export type S_JSON<T_JSON>
+export type S$JSON<T$JSON>
 """, """
-export function S_decode<T, T_JSON>
+export function S_decode<T, T$JSON>
 """]
         )
     }
@@ -64,7 +64,7 @@ export type S = {
 """
             ],
             unexpecteds: ["""
-export type S_JSON
+export type S$JSON
 """, """
 export function S_decode
 """, """
@@ -92,12 +92,12 @@ export type S = {
     a: K<E>;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
-    a: K_JSON<E_JSON>;
+export type S$JSON = {
+    a: K$JSON<E$JSON>;
 };
 """, """
-export function S_decode(json: S_JSON): S {
-    const a = K_decode<E, E_JSON>(json.a, E_decode);
+export function S_decode(json: S$JSON): S {
+    const a = K_decode<E, E$JSON>(json.a, E_decode);
     return {
         a: a
     };
@@ -121,17 +121,17 @@ export type S<A, B> = {
     b: B;
 } & TagRecord<"S", [A, B]>;
 """, """
-export type S_JSON<A_JSON, B_JSON> = {
-    a: A_JSON;
-    b: B_JSON;
+export type S$JSON<A$JSON, B$JSON> = {
+    a: A$JSON;
+    b: B$JSON;
 };
 """, """
 export function S_decode<
     A,
-    A_JSON,
+    A$JSON,
     B,
-    B_JSON
->(json: S_JSON<A_JSON, B_JSON>, A_decode: (json: A_JSON) => A, B_decode: (json: B_JSON) => B): S<A, B> {
+    B$JSON
+>(json: S$JSON<A$JSON, B$JSON>, A_decode: (json: A$JSON) => A, B_decode: (json: B$JSON) => B): S<A, B> {
     const a = A_decode(json.a);
     const b = B_decode(json.b);
     return {
@@ -159,24 +159,24 @@ export type S<A, B, C> = {
     c: C;
 } & TagRecord<"S", [A, B, C]>;
 """, """
-export type S_JSON<A_JSON, B_JSON, C_JSON> = {
-    a: A_JSON;
-    b: B_JSON;
-    c: C_JSON;
+export type S$JSON<A$JSON, B$JSON, C$JSON> = {
+    a: A$JSON;
+    b: B$JSON;
+    c: C$JSON;
 };
 """, """
 export function S_decode<
     A,
-    A_JSON,
+    A$JSON,
     B,
-    B_JSON,
+    B$JSON,
     C,
-    C_JSON
+    C$JSON
 >(
-    json: S_JSON<A_JSON, B_JSON, C_JSON>,
-    A_decode: (json: A_JSON) => A,
-    B_decode: (json: B_JSON) => B,
-    C_decode: (json: C_JSON) => C
+    json: S$JSON<A$JSON, B$JSON, C$JSON>,
+    A_decode: (json: A$JSON) => A,
+    B_decode: (json: B$JSON) => B,
+    C_decode: (json: C$JSON) => C
 ): S<A, B, C> {
     const a = A_decode(json.a);
     const b = B_decode(json.b);
@@ -215,15 +215,15 @@ export type S<T> = {
     c: X<T>;
 } & TagRecord<"S", [T]>;
 """, """
-export type S_JSON<T_JSON> = {
-    a: K_JSON<T_JSON>;
-    b: L_JSON<T_JSON>;
-    c: X<T_JSON>;
+export type S$JSON<T$JSON> = {
+    a: K$JSON<T$JSON>;
+    b: L$JSON<T$JSON>;
+    c: X<T$JSON>;
 };
 """, """
-export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S<T> {
-    const a = K_decode<T, T_JSON>(json.a, T_decode);
-    const b = L_decode<T, T_JSON>(json.b, T_decode);
+export function S_decode<T, T$JSON>(json: S$JSON<T$JSON>, T_decode: (json: T$JSON) => T): S<T> {
+    const a = K_decode<T, T$JSON>(json.a, T_decode);
+    const b = L_decode<T, T$JSON>(json.b, T_decode);
     const c = json.c as X<T>;
     return {
         a: a,
@@ -262,32 +262,32 @@ export type S<T, U> = {
     d: L<T, U>;
 } & TagRecord<"S", [T, U]>;
 """, """
-export type S_JSON<T_JSON, U_JSON> = {
-    a: K_JSON<T_JSON>;
-    b: K_JSON<U_JSON>;
-    c: L_JSON<T_JSON, T_JSON>;
-    d: L_JSON<T_JSON, U_JSON>;
+export type S$JSON<T$JSON, U$JSON> = {
+    a: K$JSON<T$JSON>;
+    b: K$JSON<U$JSON>;
+    c: L$JSON<T$JSON, T$JSON>;
+    d: L$JSON<T$JSON, U$JSON>;
 };
 """, """
 export function S_decode<
     T,
-    T_JSON,
+    T$JSON,
     U,
-    U_JSON
->(json: S_JSON<T_JSON, U_JSON>, T_decode: (json: T_JSON) => T, U_decode: (json: U_JSON) => U): S<T, U> {
-    const a = K_decode<T, T_JSON>(json.a, T_decode);
-    const b = K_decode<U, U_JSON>(json.b, U_decode);
+    U$JSON
+>(json: S$JSON<T$JSON, U$JSON>, T_decode: (json: T$JSON) => T, U_decode: (json: U$JSON) => U): S<T, U> {
+    const a = K_decode<T, T$JSON>(json.a, T_decode);
+    const b = K_decode<U, U$JSON>(json.b, U_decode);
     const c = L_decode<
         T,
-        T_JSON,
+        T$JSON,
         T,
-        T_JSON
+        T$JSON
     >(json.c, T_decode, T_decode);
     const d = L_decode<
         T,
-        T_JSON,
+        T$JSON,
         U,
-        U_JSON
+        U$JSON
     >(json.d, T_decode, U_decode);
     return {
         a: a,
@@ -331,17 +331,17 @@ export type S = {
     c: K<C>;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
+export type S$JSON = {
     i: K<number>;
     a: K<A>;
-    b: K_JSON<B_JSON>;
+    b: K$JSON<B$JSON>;
     c: K<C>;
 };
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     const i = json.i as K<number>;
     const a = json.a as K<A>;
-    const b = K_decode<B, B_JSON>(json.b, B_decode);
+    const b = K_decode<B, B$JSON>(json.b, B_decode);
     const c = json.c as K<C>;
     return {
         i: i,
@@ -379,21 +379,21 @@ export type S = {
     d: K<E[]>;
 } & TagRecord<"S">;
 """, """
-export type S_JSON = {
+export type S$JSON = {
     a: K<number | null>;
     b: K<number[]>;
-    c: K_JSON<E_JSON | null>;
-    d: K_JSON<E_JSON[]>;
+    c: K$JSON<E$JSON | null>;
+    d: K$JSON<E$JSON[]>;
 };
 """, """
-export function S_decode(json: S_JSON): S {
+export function S_decode(json: S$JSON): S {
     const a = json.a as K<number | null>;
     const b = json.b as K<number[]>;
-    const c = K_decode<E | null, E_JSON | null>(json.c, (json: E_JSON | null): E | null => {
-        return Optional_decode<E, E_JSON>(json, E_decode);
+    const c = K_decode<E | null, E$JSON | null>(json.c, (json: E$JSON | null): E | null => {
+        return Optional_decode<E, E$JSON>(json, E_decode);
     });
-    const d = K_decode<E[], E_JSON[]>(json.d, (json: E_JSON[]): E[] => {
-        return Array_decode<E, E_JSON>(json, E_decode);
+    const d = K_decode<E[], E$JSON[]>(json.d, (json: E$JSON[]): E[] => {
+        return Array_decode<E, E$JSON>(json, E_decode);
     });
     return {
         a: a,
@@ -424,17 +424,17 @@ export type S<T> = {
     b: K<T[]>;
 } & TagRecord<"S", [T]>;
 """, """
-export type S_JSON<T_JSON> = {
-    a: K_JSON<T_JSON | null>;
-    b: K_JSON<T_JSON[]>;
+export type S$JSON<T$JSON> = {
+    a: K$JSON<T$JSON | null>;
+    b: K$JSON<T$JSON[]>;
 };
 """, """
-export function S_decode<T, T_JSON>(json: S_JSON<T_JSON>, T_decode: (json: T_JSON) => T): S<T> {
-    const a = K_decode<T | null, T_JSON | null>(json.a, (json: T_JSON | null): T | null => {
-        return Optional_decode<T, T_JSON>(json, T_decode);
+export function S_decode<T, T$JSON>(json: S$JSON<T$JSON>, T_decode: (json: T$JSON) => T): S<T> {
+    const a = K_decode<T | null, T$JSON | null>(json.a, (json: T$JSON | null): T | null => {
+        return Optional_decode<T, T$JSON>(json, T_decode);
     });
-    const b = K_decode<T[], T_JSON[]>(json.b, (json: T_JSON[]): T[] => {
-        return Array_decode<T, T_JSON>(json, T_decode);
+    const b = K_decode<T[], T$JSON[]>(json.b, (json: T$JSON[]): T[] => {
+        return Array_decode<T, T$JSON>(json, T_decode);
     });
     return {
         a: a,
@@ -460,13 +460,13 @@ export type E<T> = {
     };
 } & TagRecord<"E", [T]>;
 ""","""
-export type E_JSON<T_JSON> = {
+export type E$JSON<T$JSON> = {
     a: {
-        _0: T_JSON;
+        _0: T$JSON;
     };
 };
 ""","""
-export function E_decode<T, T_JSON>(json: E_JSON<T_JSON>, T_decode: (json: T_JSON) => T): E<T> {
+export function E_decode<T, T$JSON>(json: E$JSON<T$JSON>, T_decode: (json: T$JSON) => T): E<T> {
     if ("a" in json) {
         const j = json.a;
         const _0 = T_decode(j._0);
@@ -514,8 +514,8 @@ export type S_K<X> = {
     x: X;
 } & TagRecord<"S_K", [X]>;
 """, """
-export type S_K_JSON<X_JSON> = {
-    x: X_JSON;
+export type S_K$JSON<X$JSON> = {
+    x: X$JSON;
 };
 """])
     }
@@ -546,15 +546,15 @@ export type U = {
     k3: S_K<number>;
 } & TagRecord<"U">;
 """, """
-export type U_JSON = {
-    k: S_K_JSON<E_JSON>;
-    k2: S_K2_JSON<E_JSON>;
+export type U$JSON = {
+    k: S_K$JSON<E$JSON>;
+    k2: S_K2$JSON<E$JSON>;
     k3: S_K<number>;
 };
 """, """
-export function U_decode(json: U_JSON): U {
-    const k = S_K_decode<E, E_JSON>(json.k, E_decode);
-    const k2 = S_K2_decode<E, E_JSON>(json.k2, E_decode);
+export function U_decode(json: U$JSON): U {
+    const k = S_K_decode<E, E$JSON>(json.k, E_decode);
+    const k2 = S_K2_decode<E, E$JSON>(json.k2, E_decode);
     const k3 = json.k3 as S_K<number>;
     return {
         k: k,
@@ -623,28 +623,28 @@ export type K<T> = {
     k: S_G<E, T>;
 } & TagRecord<"K", [T]>;
 """, """
-export type K_JSON<T_JSON> = {
-    k: S_G_JSON<E_JSON, T_JSON>;
+export type K$JSON<T$JSON> = {
+    k: S_G$JSON<E$JSON, T$JSON>;
 };
 """, """
-export function K_decode<T, T_JSON>(json: K_JSON<T_JSON>, T_decode: (json: T_JSON) => T): K<T> {
+export function K_decode<T, T$JSON>(json: K$JSON<T$JSON>, T_decode: (json: T$JSON) => T): K<T> {
     const k = S_G_decode<
         E,
-        E_JSON,
+        E$JSON,
         T,
-        T_JSON
+        T$JSON
     >(json.k, E_decode, T_decode);
     return {
         k: k
     };
 }
 """, """
-export function K_encode<T, T_JSON>(entity: K<T>, T_encode: (entity: T) => T_JSON): K_JSON<T_JSON> {
+export function K_encode<T, T$JSON>(entity: K<T>, T_encode: (entity: T) => T$JSON): K$JSON<T$JSON> {
     const k = S_G_encode<
         E,
-        E_JSON,
+        E$JSON,
         T,
-        T_JSON
+        T$JSON
     >(entity.k, identity, T_encode);
     return {
         k: k
