@@ -57,16 +57,11 @@ public final class PackageGenerator {
         // collect symbols included in for each swift source file
         for module in context.modules.filter({ $0 !== context.swiftModule }) {
             for source in module.sources {
-                for type in source.types {
-                    guard
-                        let typeConverter = try? codeGenerator.converter(for: type.declaredInterfaceType),
-                        let declaredNames = try? typeConverter.decls().compactMap(\.declaredName)
-                    else {
-                        continue
-                    }
-                    for declaredName in declaredNames {
-                        symbolToSource[declaredName] = source
-                    }
+                guard let tsSource = try? codeGenerator.convert(source: source) else {
+                    continue
+                }
+                for declaredName in tsSource.memberDeclaredNames {
+                    symbolToSource[declaredName] = source
                 }
             }
         }

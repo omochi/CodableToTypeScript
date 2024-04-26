@@ -106,4 +106,46 @@ final class PackageGeneratorTests: XCTestCase {
             return element.asDecl?.asType?.name == "D"
         }))
     }
+
+    func testCustomMappedTypeIngored() throws {
+        let context = Context()
+        let module = Reader(context: context).read(source: """
+        struct AbsoluteURL: Codable, RawRepresentable {
+            var rawValue: String
+
+            func encode(to encoder: any Encoder) throws {
+                var c = encoder.singleValueContainer()
+                try c.encode(rawValue)
+            }
+
+            init(from decoder: any Decoder) throws {
+                let c = try decoder.singleValueContainer()
+                self.rawValue = try c.decode(RawValue.self)
+            }
+        }
+        """, file: URL(fileURLWithPath: "A.swift")).module
+
+        let typeMap = TypeMap(mapFunction: { stype in
+            if stype.description == "AbsoluteURL" {
+                return .identity(name: "string")
+            }
+            return nil
+        })
+
+        let generator = PackageGenerator(
+            context: context,
+            typeConverterProvider: TypeConverterProvider(typeMap: typeMap),
+            symbols: SymbolTable(),
+            importFileExtension: .js,
+            outputDirectory: URL(fileURLWithPath: "/dev/null", isDirectory: true)
+        )
+        let result = try generator.generate(modules: [module])
+        XCTAssertEqual(result.entries.count, 1) // helper library only
+        let hasTSAbsoluteURL = result.entries.contains(where: { entry in
+            entry.source.memberDeclaredNames.contains(where: { name in
+                return name == "AbsoluteURL"
+            })
+        })
+        XCTAssertFalse(hasTSAbsoluteURL)
+    }
 }
