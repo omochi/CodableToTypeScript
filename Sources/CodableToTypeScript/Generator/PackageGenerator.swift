@@ -53,6 +53,7 @@ public final class PackageGenerator {
         )
 
         var symbolToSource: [String: SourceFile] = [:]
+        var convertedSources: [SourceFile: TSSourceFile] = [:]
 
         // collect symbols included in for each swift source file
         for module in context.modules.filter({ $0 !== context.swiftModule }) {
@@ -60,6 +61,7 @@ public final class PackageGenerator {
                 guard let tsSource = try? codeGenerator.convert(source: source) else {
                     continue
                 }
+                convertedSources[source] = tsSource
                 for declaredName in tsSource.memberDeclaredNames {
                     symbolToSource[declaredName] = source
                 }
@@ -84,7 +86,7 @@ public final class PackageGenerator {
             while let source = targetSources.popLast() {
                 generatedSources.insert(source)
                 collect(at: source.file.lastPathComponent) {
-                    let tsSource = try codeGenerator.convert(source: source)
+                    let tsSource = try convertedSources[source] ?? (codeGenerator.convert(source: source))
 
                     let entry = PackageEntry(
                         file: try tsPath(module: source.module, file: source.file),
