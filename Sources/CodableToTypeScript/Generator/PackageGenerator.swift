@@ -21,7 +21,10 @@ public final class PackageGenerator {
         )
         self.symbols = symbols
         self.importFileExtension = importFileExtension
-        self.outputDirectory = outputDirectory
+        self.outputDirectory = URL(
+            fileURLWithPath: outputDirectory.path,
+            isDirectory: true, relativeTo: outputDirectory.baseURL
+        )
         self.typeScriptExtension = typeScriptExtension
     }
 
@@ -134,7 +137,7 @@ public final class PackageGenerator {
     }
 
     private func path(_ name: String) -> URL {
-        return URL(fileURLWithPath: name, relativeTo: outputDirectory.appendingPathComponent("/"))
+        return URL(fileURLWithPath: name, relativeTo: outputDirectory)
     }
 
     public func write(
