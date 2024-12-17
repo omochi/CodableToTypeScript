@@ -148,4 +148,44 @@ final class PackageGeneratorTests: XCTestCase {
         })
         XCTAssertFalse(hasTSAbsoluteURL)
     }
+
+    func testGenerationsNotDuplicates() throws {
+        let context = Context()
+
+        let aModule = Reader(
+            context: context,
+            module: context.getOrCreateModule(name: "A")
+        ).read(source: """
+        struct A: Codable {}
+        """, file: URL(fileURLWithPath: "A.swift")).module
+
+        let bModule = Reader(
+            context: context,
+            module: context.getOrCreateModule(name: "B")
+        ).read(source: """
+        import A
+        
+        struct B: Codable {
+            var a: A
+        }
+        """, file: URL(fileURLWithPath: "B.swift")).module
+
+        let generator = PackageGenerator(
+            context: context,
+            symbols: SymbolTable(),
+            importFileExtension: .js,
+            outputDirectory: URL(fileURLWithPath: "/dev/null", isDirectory: true)
+        )
+
+        var convertedEntries: [PackageEntry] = []
+        generator.didConvertSource = { (source, entry) in
+            convertedEntries.append(entry)
+        }
+        _ = try generator.generate(modules: [aModule, bModule]) // the order is important!
+
+        XCTAssertEqual(convertedEntries.map(\.file.lastPathComponent), [
+            "B.ts",
+            "A.ts",
+        ])
+    }
 }

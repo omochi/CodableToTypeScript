@@ -87,7 +87,10 @@ public final class PackageGenerator {
 
         try withErrorCollector { collect in
             while let source = targetSources.popLast() {
-                generatedSources.insert(source)
+                guard generatedSources.insert(source).inserted else {
+                    continue
+                }
+
                 collect(at: source.file.lastPathComponent) {
                     let tsSource = try convertedSources[source] ?? (codeGenerator.convert(source: source))
 
@@ -96,23 +99,25 @@ public final class PackageGenerator {
                         source: tsSource
                     )
                     try didConvertSource?(source, entry)
+                    if entry.isEmpty {
+                        return
+                    }
 
-                    if !entry.source.elements.isEmpty {
-                        generatedEntries.append(.init(
-                            file: entry.file,
-                            source: entry.source
-                        ))
+                    generatedEntries.append(.init(
+                        file: entry.file,
+                        source: entry.source
+                    ))
 
-                        let imports = try tsSource.buildAutoImportDecls(
-                            from: entry.file,
-                            symbolTable: allSymbols,
-                            fileExtension: importFileExtension
-                        )
-                        tsSource.replaceImportDecls(imports)
-                        for importedDecl in imports.flatMap(\.names) {
-                            if let source = symbolToSource[importedDecl], !generatedSources.contains(source) {
-                                targetSources.append(source)
-                            }
+                    let imports = try tsSource.buildAutoImportDecls(
+                        from: entry.file,
+                        symbolTable: allSymbols,
+                        fileExtension: importFileExtension
+                    )
+                    tsSource.replaceImportDecls(imports)
+                    for importedSymbolName in imports.flatMap(\.names) {
+                        // Add a file that is used but not included in the generation target
+                        if let source = symbolToSource[importedSymbolName], !generatedSources.contains(source) {
+                            targetSources.append(source)
                         }
                     }
                 }
@@ -166,3 +171,9 @@ public final class PackageGenerator {
     }
 }
 #endif
+
+extension PackageEntry {
+    fileprivate var isEmpty: Bool {
+        source.elements.isEmpty
+    }
+}
