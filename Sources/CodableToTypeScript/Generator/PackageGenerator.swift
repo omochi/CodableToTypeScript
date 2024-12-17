@@ -82,10 +82,15 @@ public final class PackageGenerator {
         }
 
         var targetSources: [SourceFile] = modules.flatMap(\.sources)
+        var generatedSources: Set<SourceFile> = []
         var generatedEntries: [PackageEntry] = [helperEntry]
 
         try withErrorCollector { collect in
             while let source = targetSources.popLast() {
+                guard generatedSources.insert(source).inserted else {
+                    continue
+                }
+
                 collect(at: source.file.lastPathComponent) {
                     let tsSource = try convertedSources[source] ?? (codeGenerator.convert(source: source))
 
@@ -111,7 +116,7 @@ public final class PackageGenerator {
                     tsSource.replaceImportDecls(imports)
                     for importedSymbolName in imports.flatMap(\.names) {
                         // Add a file that is used but not included in the generation target
-                        if let source = symbolToSource[importedSymbolName], !targetSources.contains(source) {
+                        if let source = symbolToSource[importedSymbolName], !generatedSources.contains(source) {
                             targetSources.append(source)
                         }
                     }
