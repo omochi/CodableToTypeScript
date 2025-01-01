@@ -1,7 +1,7 @@
 import SwiftTypeReader
 
 public struct TypeConverterProvider {
-    public typealias CustomProvider = (CodeGenerator, any SType) -> (any TypeConverter)?
+    public typealias CustomProvider = (CodeGenerator, any SType) throws -> (any TypeConverter)?
 
     public init(
         typeMap: TypeMap = .default,
@@ -19,12 +19,26 @@ public struct TypeConverterProvider {
         type: any SType
     ) throws -> any TypeConverter {
         if let customProvider,
-           let converter = customProvider(generator, type)
+           let converter = try customProvider(generator, type)
         {
             return converter
         } else if let entry = typeMap.map(type: type) {
             return TypeMapConverter(generator: generator, type: type, entry: entry)
-        } else if type.isStandardLibraryType("Optional") {
+        } else if let converter = try Self.defaultConverter(
+            generator: generator,
+            type: type
+        ) {
+            return converter
+        } else {
+            throw MessageError("Unsupported type: \(type)")
+        }
+    }
+
+    public static func defaultConverter(
+        generator: CodeGenerator,
+        type: any SType
+    ) throws -> (any TypeConverter)? {
+        if type.isStandardLibraryType("Optional") {
             return OptionalConverter(generator: generator, swiftType: type)
         } else if type.isStandardLibraryType("Array") {
             return ArrayConverter(generator: generator, swiftType: type)
@@ -42,7 +56,6 @@ public struct TypeConverterProvider {
                     rawValueType: raw
                 )
             }
-
             return StructConverter(generator: generator, struct: type)
         } else if let type = type.asGenericParam {
             return GenericParamConverter(generator: generator, param: type)
@@ -51,7 +64,7 @@ public struct TypeConverterProvider {
         } else if let type = type.asError {
             return ErrorTypeConverter(generator: generator, swiftType: type)
         } else {
-            throw MessageError("Unsupported type: \(type)")
+            return nil
         }
     }
 }

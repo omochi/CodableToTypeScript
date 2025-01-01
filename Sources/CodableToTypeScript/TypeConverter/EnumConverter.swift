@@ -2,14 +2,30 @@ import SwiftTypeReader
 import TypeScriptAST
 
 public struct EnumConverter: TypeConverter {
-    public init(generator: CodeGenerator, `enum`: EnumType) {
+    public enum EmptyEnumStrategy {
+        case never
+        case void
+
+        func toKind() -> Kind {
+            switch self {
+            case .never: return .never
+            case .void: return .void
+            }
+        }
+    }
+
+    public init(
+        generator: CodeGenerator,
+        `enum`: EnumType,
+        emptyEnumStrategy: EmptyEnumStrategy = .never
+    ) {
         self.generator = generator
         self.`enum` = `enum`
 
         let decl = `enum`.decl
 
         if decl.caseElements.isEmpty {
-            self.kind = .never
+            self.kind = emptyEnumStrategy.toKind()
             return
         }
 
@@ -37,6 +53,7 @@ public struct EnumConverter: TypeConverter {
 
     enum Kind {
         case never
+        case void
         case string
         case int
         case normal
@@ -60,6 +77,13 @@ public struct EnumConverter: TypeConverter {
                 name: try name(for: target),
                 genericParams: genericParams,
                 type: TSIdentType.never
+            )
+        case .void:
+            return TSTypeDecl(
+                modifiers: [.export],
+                name: try name(for: target),
+                genericParams: genericParams,
+                type: try attachTag(to: TSIdentType.void)
             )
         case .string:
             let items: [any TSType] = decl.caseElements.map { (ce) in
@@ -117,13 +141,7 @@ public struct EnumConverter: TypeConverter {
 
         switch target {
         case .entity:
-            let tag = try generator.tagRecord(
-                name: name,
-                genericArgs: try self.genericParams().map {
-                    try TSIdentType($0.name(for: .entity))
-                }
-            )
-            type = TSIntersectionType(type, tag)
+            type = try attachTag(to: type)
         case .json: break
         }
 
@@ -133,6 +151,18 @@ public struct EnumConverter: TypeConverter {
             genericParams: genericParams,
             type: type
         )
+    }
+
+    private func attachTag(to type: any TSType) throws -> any TSType {
+        let target = GenerationTarget.entity
+        let name = try self.name(for: target)
+        let tag = try generator.tagRecord(
+            name: name,
+            genericArgs: try self.genericParams().map {
+                try TSIdentType($0.name(for: target))
+            }
+        )
+        return TSIntersectionType(type, tag)
     }
 
     private func transpile(
@@ -184,6 +214,7 @@ public struct EnumConverter: TypeConverter {
     public func hasDecode() throws -> Bool {
         switch kind {
         case .never: return false
+        case .void: return false
         case .string: return false
         case .int: return true
         case .normal: return true
@@ -192,7 +223,7 @@ public struct EnumConverter: TypeConverter {
 
     public func decodeDecl() throws -> TSFunctionDecl? {
         switch kind {
-        case .never, .string:
+        case .never, .void, .string:
             return nil
         case .int:
             return try DecodeIntFuncGen(
@@ -211,6 +242,7 @@ public struct EnumConverter: TypeConverter {
     public func hasEncode() throws -> Bool {
         switch kind {
         case .never: return false
+        case .void: return false
         case .string: return false
         case .int: return true
         case .normal: break
@@ -238,7 +270,7 @@ public struct EnumConverter: TypeConverter {
 
     public func encodeDecl() throws -> TSFunctionDecl? {
         switch kind {
-        case .never, .string:
+        case .never, .void, .string:
             return nil
         case .int:
             return try EncodeIntFuncGen(

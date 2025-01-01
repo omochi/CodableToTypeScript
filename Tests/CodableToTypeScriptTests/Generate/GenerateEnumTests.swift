@@ -375,4 +375,43 @@ e: e2
             unexpecteds: []
         )
     }
+
+    func testEmptyEnumNever() throws {
+        try assertGenerate(
+            source: """
+enum E {}
+""",
+            expecteds: [
+"""
+export type E = never;
+"""
+            ]
+        )
+    }
+
+    func testEmptyEnumVoid() throws {
+        let typeConverterProvider = TypeConverterProvider { (gen, ty) in
+            guard let cnv = try TypeConverterProvider.defaultConverter(generator: gen, type: ty) else {
+                return nil
+            }
+
+            if let cnv = cnv as? EnumConverter {
+                return EnumConverter(generator: gen, enum: cnv.enum, emptyEnumStrategy: .void)
+            }
+
+            return nil
+        }
+
+        try assertGenerate(
+            source: """
+enum E {}
+""",
+            typeConverterProvider: typeConverterProvider,
+            expecteds: [
+"""
+export type E = void & TagRecord<"E">;
+"""
+            ]
+        )
+    }
 }
