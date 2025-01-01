@@ -339,4 +339,32 @@ export function E_decode(json: E$JSON): E {
             ]
         )
     }
+
+    func testConflictPropertyName() throws {
+        try assertGenerate(
+            source: """
+enum E<T> {
+    case entity(entity: String, json: String)
+    case json
+    case t(T)
+}
+""",
+            expecteds: [
+                // decode
+"""
+const json2 = j.json;
+""", """
+json: json2
+""",
+
+// encode
+"""
+const entity2 = e.entity;
+""", """
+entity: entity2,
+"""
+            ],
+            unexpecteds: []
+        )
+    }
 }
