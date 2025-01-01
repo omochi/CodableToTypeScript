@@ -80,7 +80,9 @@ public struct StructConverter: TypeConverter {
     public func decodeDecl() throws -> TSFunctionDecl? {
         guard let function = try decodeSignature() else { return nil }
 
-        var fields: [TSObjectExpr.Field] = []
+        var nameProvider = NameProvider()
+        nameProvider.register(signature: function)
+        var varNames: [String: String] = [:]
 
         try withErrorCollector { collect in
             for field in decl.storedProperties.instances {
@@ -93,8 +95,11 @@ public struct StructConverter: TypeConverter {
                         .callDecodeField(json: expr)
                 }
 
+                let varName = nameProvider.provide(base: TSKeyword.escaped(field.name))
+                varNames[field.name] = varName
+
                 let def = TSVarDecl(
-                    kind: .const, name: TSKeyword.escaped(field.name),
+                    kind: .const, name: varName,
                     initializer: expr
                 )
 
@@ -102,8 +107,10 @@ public struct StructConverter: TypeConverter {
             }
         }
 
+        var fields: [TSObjectExpr.Field] = []
         for field in decl.storedProperties.instances {
-            let expr = TSIdentExpr(TSKeyword.escaped(field.name))
+            let varName = try varNames[field.name].unwrap(name: "var name")
+            let expr = TSIdentExpr(varName)
 
             fields.append(
                 .named(
@@ -138,7 +145,9 @@ public struct StructConverter: TypeConverter {
     public func encodeDecl() throws -> TSFunctionDecl? {
         guard let function = try encodeSignature() else { return nil }
 
-        var fields: [TSObjectExpr.Field] = []
+        var nameProvider = NameProvider()
+        nameProvider.register(signature: function)
+        var varNames: [String: String] = [:]
 
         for field in decl.storedProperties.instances {
             var expr: any TSExpr = TSMemberExpr(
@@ -149,16 +158,21 @@ public struct StructConverter: TypeConverter {
             expr = try generator.converter(for: field.interfaceType)
                 .callEncodeField(entity: expr)
 
+            let varName = nameProvider.provide(base: TSKeyword.escaped(field.name))
+            varNames[field.name] = varName
+
             let def = TSVarDecl(
-                kind: .const, name: TSKeyword.escaped(field.name),
+                kind: .const, name: varName,
                 initializer: expr
             )
 
             function.body.elements.append(def)
         }
 
+        var fields: [TSObjectExpr.Field] = []
         for field in decl.storedProperties.instances {
-            let expr = TSIdentExpr(TSKeyword.escaped(field.name))
+            let varName = try varNames[field.name].unwrap(name: "var name")
+            let expr = TSIdentExpr(varName)
 
             fields.append(
                 .named(
