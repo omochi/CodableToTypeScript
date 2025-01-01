@@ -7,8 +7,12 @@ struct NameProvider {
 
     mutating func register(signature: TSFunctionDecl) {
         for param in signature.params {
-            used.insert(param.name)
+            register(name: param.name)
         }
+    }
+
+    mutating func register(name: String) {
+        used.insert(name)
     }
 
     mutating func provide(base: String) -> String {

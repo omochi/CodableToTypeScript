@@ -326,6 +326,7 @@ private struct DecodeObjFuncGen {
                 )
             )
             block.append(j)
+            nameProvider.register(name: "j")
         }
 
         var names: [String: String] = [:]
@@ -475,6 +476,7 @@ private struct EncodeObjFuncGen {
                 initializer: TSMemberExpr(base: TSIdentExpr.entity, name: element.name)
             )
             code.append(e)
+            nameProvider.register(name: "e")
         }
 
         var names: [String: String] = [:]
