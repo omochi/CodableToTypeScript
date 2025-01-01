@@ -79,11 +79,15 @@ public struct EnumConverter: TypeConverter {
                 type: TSIdentType.never
             )
         case .void:
+            var type: any TSType = TSIdentType.void
+            if target == .entity {
+                type = try attachTag(to: type)
+            }
             return TSTypeDecl(
                 modifiers: [.export],
                 name: try name(for: target),
                 genericParams: genericParams,
-                type: try attachTag(to: TSIdentType.void)
+                type: type
             )
         case .string:
             let items: [any TSType] = decl.caseElements.map { (ce) in
