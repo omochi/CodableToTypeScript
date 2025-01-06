@@ -430,4 +430,32 @@ export type S = {
             ]
         )
     }
+
+    func testConflictPropertyName() throws {
+        try assertGenerate(
+            source: """
+struct S<T> {
+    var entity: String
+    var json: String
+    var t: T
+}
+""",
+            expecteds: [
+                // decode
+"""
+const json2 = json.json;
+""", """
+json: json2,
+""",
+
+// encode
+"""
+const entity2 = entity.entity;
+""", """
+entity: entity2,
+"""
+            ],
+            unexpecteds: []
+        )
+    }
 }
