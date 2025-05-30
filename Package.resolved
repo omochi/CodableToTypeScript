@@ -30,10 +30,10 @@
     {
       "identity" : "typescriptast",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/omochi/TypeScriptAST",
+      "location" : "https://github.com/omochi/TypeScriptAST.git",
       "state" : {
-        "revision" : "4f6420d45d6dabc79b30954ea3aa524b7810a68b",
-        "version" : "2.0.1"
+        "branch" : "path-alias",
+        "revision" : "c495768c387046826636911aabe2b53cfbaac9c6"
       }
     }
   ],
