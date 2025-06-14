@@ -12,9 +12,10 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/omochi/SwiftTypeReader.git", from: "3.0.0"),
+        .package(url: "https://github.com/omochi/SwiftTypeReader.git", branch: "swift-syntax-601"),
 //        .package(path: "../SwiftTypeReader"),
         .package(url: "https://github.com/omochi/TypeScriptAST.git", branch: "path-alias"),
+//        .package(path: "../TypeScriptAST"),
     ],
     targets: [
         .target(

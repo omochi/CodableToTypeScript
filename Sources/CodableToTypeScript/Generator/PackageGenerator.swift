@@ -12,7 +12,7 @@ public final class PackageGenerator {
         importFileExtension: ImportFileExtension,
         outputDirectory: URL,
         typeScriptExtension: String = "ts",
-        pathAliases: PathAliasTable = .init()
+        pathPrefixReplacements: PathPrefixReplacements = []
     ) {
         self.context = context
         self.fileManager = fileManager
@@ -27,7 +27,7 @@ public final class PackageGenerator {
             isDirectory: true, relativeTo: outputDirectory.baseURL
         )
         self.typeScriptExtension = typeScriptExtension
-        self.pathAliases = pathAliases
+        self.pathPrefixReplacements = pathPrefixReplacements
     }
 
     public let context: SwiftTypeReader.Context
@@ -37,7 +37,7 @@ public final class PackageGenerator {
     public let importFileExtension: ImportFileExtension
     public let outputDirectory: URL
     public let typeScriptExtension: String
-    public let pathAliases: PathAliasTable
+    public let pathPrefixReplacements: PathPrefixReplacements
     @available(*, deprecated, renamed: "didConvertSource")
     public var didGenerateEntry: ((SourceFile, PackageEntry) throws -> Void)? {
         get { didConvertSource }
@@ -115,7 +115,7 @@ public final class PackageGenerator {
                         from: entry.file,
                         symbolTable: allSymbols,
                         fileExtension: importFileExtension,
-                        pathAliasTable: pathAliases
+                        pathPrefixReplacements: pathPrefixReplacements
                     )
                     tsSource.replaceImportDecls(imports)
                     for importedSymbolName in imports.flatMap(\.names) {
