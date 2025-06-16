@@ -2,6 +2,20 @@
 
 import PackageDescription
 
+let isLocalDevelopment = false
+
+let dependencies: [Package.Dependency] = if isLocalDevelopment {
+    [
+        .package(path: "../SwiftTypeReader"),
+        .package(path: "../TypeScriptAST"),
+    ]
+} else {
+    [
+        .package(url: "https://github.com/omochi/SwiftTypeReader.git", from: "3.2.0"),
+        .package(url: "https://github.com/omochi/TypeScriptAST.git", from: "2.1.0"),
+    ]
+}
+
 let package = Package(
     name: "CodableToTypeScript",
     platforms: [.macOS(.v13)],
@@ -11,11 +25,7 @@ let package = Package(
             targets: ["CodableToTypeScript"]
         )
     ],
-    dependencies: [
-        .package(url: "https://github.com/omochi/SwiftTypeReader.git", from: "3.0.0"),
-//        .package(path: "../SwiftTypeReader"),
-        .package(url: "https://github.com/omochi/TypeScriptAST.git", from: "2.0.1"),
-    ],
+    dependencies: dependencies,
     targets: [
         .target(
             name: "TestUtils"

@@ -3,10 +3,10 @@
     {
       "identity" : "swift-collections",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-collections",
+      "location" : "https://github.com/apple/swift-collections.git",
       "state" : {
-        "revision" : "9bf03ff58ce34478e66aaee630e491823326fd06",
-        "version" : "1.1.3"
+        "revision" : "c1805596154bb3a265fd91b8ac0c4433b4348fb0",
+        "version" : "1.2.0"
       }
     },
     {
@@ -14,26 +14,26 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftlang/swift-syntax.git",
       "state" : {
-        "revision" : "0687f71944021d616d34d922343dcef086855920",
-        "version" : "600.0.1"
+        "revision" : "f99ae8aa18f0cf0d53481901f88a0991dc3bd4a2",
+        "version" : "601.0.1"
       }
     },
     {
       "identity" : "swifttypereader",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/omochi/SwiftTypeReader",
+      "location" : "https://github.com/omochi/SwiftTypeReader.git",
       "state" : {
-        "revision" : "0954567ba2d3de21c65f1887af7565db0d979da2",
-        "version" : "3.0.0"
+        "revision" : "bda0cbe9cb561e70d87e0e5843c1e068d79867ba",
+        "version" : "3.2.0"
       }
     },
     {
       "identity" : "typescriptast",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/omochi/TypeScriptAST",
+      "location" : "https://github.com/omochi/TypeScriptAST.git",
       "state" : {
-        "revision" : "4f6420d45d6dabc79b30954ea3aa524b7810a68b",
-        "version" : "2.0.1"
+        "revision" : "2d4709364a1d80751179efa34bc3c9bb0709bd1b",
+        "version" : "2.1.0"
       }
     }
   ],
