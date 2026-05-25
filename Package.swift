@@ -1,4 +1,4 @@
-// swift-tools-version: 5.8
+// swift-tools-version: 6.0
 
 import PackageDescription
 
@@ -11,8 +11,8 @@ let dependencies: [Package.Dependency] = if isLocalDevelopment {
     ]
 } else {
     [
-        .package(url: "https://github.com/omochi/SwiftTypeReader.git", from: "3.2.0"),
-        .package(url: "https://github.com/omochi/TypeScriptAST.git", from: "2.1.0"),
+        .package(url: "https://github.com/omochi/SwiftTypeReader.git", from: "3.2.2"),
+        .package(url: "https://github.com/omochi/TypeScriptAST.git", from: "2.2.0"),
     ]
 }
 

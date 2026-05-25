@@ -1,4 +1,5 @@
 {
+  "originHash" : "7b8b68003427f5836e4fdf2b42e8b7c4a911d5637c3a1e8b9ff258aa629c84ce",
   "pins" : [
     {
       "identity" : "swift-collections",
@@ -14,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftlang/swift-syntax.git",
       "state" : {
-        "revision" : "f99ae8aa18f0cf0d53481901f88a0991dc3bd4a2",
-        "version" : "601.0.1"
+        "revision" : "9de99a78f099e59caf2b2beec65a4c45d54b2081",
+        "version" : "603.0.1"
       }
     },
     {
@@ -23,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/omochi/SwiftTypeReader.git",
       "state" : {
-        "revision" : "bda0cbe9cb561e70d87e0e5843c1e068d79867ba",
-        "version" : "3.2.0"
+        "revision" : "0d2e8fdf4c136eaca42db79af036570fbc9429c7",
+        "version" : "3.3.2"
       }
     },
     {
@@ -32,10 +33,10 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/omochi/TypeScriptAST.git",
       "state" : {
-        "revision" : "2d4709364a1d80751179efa34bc3c9bb0709bd1b",
-        "version" : "2.1.0"
+        "revision" : "3f187b5b31a8caa9a2c073ad40a9248ceaf7b8fd",
+        "version" : "2.2.0"
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }
