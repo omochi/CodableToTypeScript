@@ -10,10 +10,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: "5.10"
       - uses: actions/checkout@v4
-      - run: swift package resolve
-      - run: swift build
+      - uses: vapor/swiftly-action@v0.2
+        with:
+          toolchain: "6.3"
       - run: swift test
