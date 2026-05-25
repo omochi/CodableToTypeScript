@@ -9,7 +9,7 @@ struct TypeSelector {
     }
 
     static func last(
-        file: StaticString = #file,
+        file: StaticString = #filePath,
         line: UInt = #line
     ) -> TypeSelector {
         TypeSelector { (module) in
@@ -22,7 +22,7 @@ struct TypeSelector {
 
     static func predicate(
         _ body: @escaping (any TypeDecl) -> Bool,
-        file: StaticString = #file, line: UInt = #line
+        file: StaticString = #filePath, line: UInt = #line
     ) -> TypeSelector {
         TypeSelector { (module) in
             try XCTUnwrap(
@@ -36,7 +36,7 @@ struct TypeSelector {
     static func name(
         _ name: String,
         recursive: Bool = false,
-        file: StaticString = #file, line: UInt = #line
+        file: StaticString = #filePath, line: UInt = #line
     ) -> TypeSelector {
         func pred(decl: any TypeDecl) -> Bool {
             return decl.valueName == name
@@ -51,7 +51,7 @@ struct TypeSelector {
 
     static func recursivePredicate(
         _ body: @escaping (any TypeDecl) -> Bool,
-        file: StaticString = #file, line: UInt = #line
+        file: StaticString = #filePath, line: UInt = #line
     ) -> TypeSelector {
         TypeSelector { (module) in
             var result: (any TypeDecl)? = nil

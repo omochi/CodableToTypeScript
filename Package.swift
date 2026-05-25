@@ -18,7 +18,7 @@ let dependencies: [Package.Dependency] = if isLocalDevelopment {
 
 let package = Package(
     name: "CodableToTypeScript",
-    platforms: [.macOS(.v13)],
+    platforms: [.macOS(.v15)],
     products: [
         .library(
             name: "CodableToTypeScript",

@@ -1,18 +1,27 @@
 import Foundation
+import Synchronization
 
 extension EasyProcess {
     static func capture(path: URL, args: [String]) throws -> String {
-        var outData = Data()
-        var errData = Data()
+        let outData: Mutex<Data> = Mutex(Data())
+        let errData: Mutex<Data> = Mutex(Data())
         let process = EasyProcess(
             path: path,
             args: args,
-            outSink: { outData.append($0) },
-            errorSink: { errData.append($0) }
+            outSink: { chunk in
+                outData.withLock { outData in
+                    outData.append(chunk)
+                }
+            },
+            errorSink: { chunk in
+                errData.withLock { errData in
+                    errData.append(chunk)
+                }
+            }
         )
         let status = try process.run()
-        let out = String(data: outData, encoding: .utf8) ?? ""
-        let err = String(data: errData, encoding: .utf8) ?? ""
+        let out = String(data: outData.withLock { $0 }, encoding: .utf8) ?? ""
+        let err = String(data: errData.withLock { $0 }, encoding: .utf8) ?? ""
         guard status == EXIT_SUCCESS else {
             throw MessageError("invalid status: \(status), err=\(err)")
         }
