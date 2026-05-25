@@ -45,7 +45,7 @@ func assertText(
     text: String,
     expecteds: [String] = [],
     unexpecteds: [String] = [],
-    file: StaticString = #file,
+    file: StaticString = #filePath,
     line: UInt = #line
 ) {
     var result = AssertTextResult(text: text, file: file, line: line)
