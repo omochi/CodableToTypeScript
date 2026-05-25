@@ -2,6 +2,7 @@ import Foundation
 import CodableToTypeScript
 import SwiftTypeReader
 import TypeScriptAST
+import Synchronization
 
 struct PackageBuildTester {
     private static func makeLaunchName() -> String {
@@ -14,23 +15,28 @@ struct PackageBuildTester {
     }
 
     private static func addPath() throws {
-        if isAddPathDone { return }
-        isAddPathDone = true
-        try Env.addPath("/usr/local/bin")
+        try isAddPathDone.withLock { v in
+            if v { return }
+            v = true
+            try Env.addPath("/usr/local/bin")
+        }
     }
-    private static var isAddPathDone = false
+
+    private static let isAddPathDone: Mutex<Bool> = Mutex(false)
 
     private static func launchDirectory(fileManager: FileManager) -> URL {
-        if let dir = launchDirectoryCache { return dir }
+        return launchDirectoryCache.withLock { cache in
+            if let dir = cache { return dir }
 
-        let dir = fileManager.temporaryDirectory
-            .appendingPathComponent("CodableToTypeScriptTests")
-            .appendingPathComponent(makeLaunchName())
-        print("[PackageBuildTester]: launchDir=\(dir.path)")
-        launchDirectoryCache = dir
-        return dir
+            let dir = fileManager.temporaryDirectory
+                .appendingPathComponent("CodableToTypeScriptTests")
+                .appendingPathComponent(makeLaunchName())
+            print("[PackageBuildTester]: launchDir=\(dir.path)")
+            cache = dir
+            return dir
+        }
     }
-    private static var launchDirectoryCache: URL?
+    private static let launchDirectoryCache: Mutex<URL?> = Mutex(nil)
 
     init(
         fileManager: FileManager = .default,
@@ -117,6 +123,7 @@ struct PackageBuildTester {
         let json = """
         {
           "compilerOptions": {
+            "rootDir": "src",
             "outDir": "out",
             "module": "commonjs",
             "strict": true,

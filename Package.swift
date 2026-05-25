@@ -1,4 +1,4 @@
-// swift-tools-version: 5.8
+// swift-tools-version: 6.0
 
 import PackageDescription
 
@@ -11,14 +11,14 @@ let dependencies: [Package.Dependency] = if isLocalDevelopment {
     ]
 } else {
     [
-        .package(url: "https://github.com/omochi/SwiftTypeReader.git", from: "3.2.0"),
-        .package(url: "https://github.com/omochi/TypeScriptAST.git", from: "2.1.0"),
+        .package(url: "https://github.com/omochi/SwiftTypeReader.git", from: "3.2.2"),
+        .package(url: "https://github.com/omochi/TypeScriptAST.git", from: "2.2.0"),
     ]
 }
 
 let package = Package(
     name: "CodableToTypeScript",
-    platforms: [.macOS(.v13)],
+    platforms: [.macOS(.v15)],
     products: [
         .library(
             name: "CodableToTypeScript",
@@ -35,8 +35,7 @@ let package = Package(
             dependencies: [
                 .product(name: "SwiftTypeReader", package: "SwiftTypeReader"),
                 .product(name: "TypeScriptAST", package: "TypeScriptAST")
-            ],
-            swiftSettings: swiftSettings()
+            ]
         ),
         .testTarget(
             name: "CodableToTypeScriptTests",
@@ -47,10 +46,3 @@ let package = Package(
         ),
     ]
 )
-
-func swiftSettings() -> [SwiftSetting] {
-    return [
-        .enableUpcomingFeature("BareSlashRegexLiterals"),
-        .enableExperimentalFeature("StrictConcurrency")
-    ]
-}

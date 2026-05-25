@@ -42,7 +42,7 @@ class GenerateTestCaseBase: XCTestCase {
         externalReference: ExternalReference? = nil,
         expecteds: [String] = [],
         unexpecteds: [String] = [],
-        file: StaticString = #file,
+        file: StaticString = #filePath,
         line: UInt = #line,
         function: StaticString = #function
     ) throws {
