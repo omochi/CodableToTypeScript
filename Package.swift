@@ -35,8 +35,7 @@ let package = Package(
             dependencies: [
                 .product(name: "SwiftTypeReader", package: "SwiftTypeReader"),
                 .product(name: "TypeScriptAST", package: "TypeScriptAST")
-            ],
-            swiftSettings: swiftSettings()
+            ]
         ),
         .testTarget(
             name: "CodableToTypeScriptTests",
@@ -47,10 +46,3 @@ let package = Package(
         ),
     ]
 )
-
-func swiftSettings() -> [SwiftSetting] {
-    return [
-        .enableUpcomingFeature("BareSlashRegexLiterals"),
-        .enableExperimentalFeature("StrictConcurrency")
-    ]
-}
