@@ -123,6 +123,7 @@ struct PackageBuildTester {
         let json = """
         {
           "compilerOptions": {
+            "rootDir": "src",
             "outDir": "out",
             "module": "commonjs",
             "strict": true,
