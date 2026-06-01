@@ -105,11 +105,23 @@ struct C {
 """,
             typeSelector: .name("C"),
             expecteds: ["""
-import { A_B, TagRecord } from "..";
+import { A_B, A_B$JSON, TagRecord } from "..";
 """, """
 export type C = {
     b: A_B;
 } & TagRecord<"C">;
+""", """
+export type C$JSON = {
+    b: A_B$JSON;
+};
+""", """
+export function C_decode(json: C$JSON): C {
+    return json;
+}
+""", """
+export function C_encode(entity: C): C$JSON {
+    return entity;
+}
 """]
         )
     }

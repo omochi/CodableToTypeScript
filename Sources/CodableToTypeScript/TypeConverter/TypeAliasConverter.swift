@@ -16,11 +16,6 @@ public struct TypeAliasConverter: TypeConverter {
     }
 
     public func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
-        switch target {
-        case .entity: break
-        case .json:
-            guard try hasJSONType() else { return nil }
-        }
         return TSTypeDecl(
             modifiers: [.export],
             name: try name(for: target),
@@ -32,7 +27,13 @@ public struct TypeAliasConverter: TypeConverter {
     }
 
     public func hasDecode() throws -> Bool {
-        return try underlying().hasDecode()
+        return true
+    }
+
+    public func usesIdentityDecode() throws -> Bool {
+        let underlying = try underlying()
+        let needsFallbackCast = try underlying.hasJSONType() && !underlying.hasDecode()
+        return try underlying.usesIdentityDecode() && !needsFallbackCast
     }
 
     public func decodeDecl() throws -> TSFunctionDecl? {
@@ -47,7 +48,13 @@ public struct TypeAliasConverter: TypeConverter {
     }
 
     public func hasEncode() throws -> Bool {
-        return try underlying().hasEncode()
+        return true
+    }
+
+    public func usesIdentityEncode() throws -> Bool {
+        let underlying = try underlying()
+        let needsFallbackCast = try underlying.hasJSONType() && !underlying.hasEncode()
+        return try underlying.usesIdentityEncode() && !needsFallbackCast
     }
 
     public func encodeDecl() throws -> TSFunctionDecl? {

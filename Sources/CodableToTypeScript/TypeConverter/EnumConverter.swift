@@ -60,12 +60,6 @@ public struct EnumConverter: TypeConverter {
     }
 
     public func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
-        switch target {
-        case .entity: break
-        case .json:
-            guard try hasJSONType() else { return nil }
-        }
-
         let genericParams: [TSTypeParameterNode] = try self.genericParams().map {
             .init(try $0.name(for: target))
         }
@@ -216,19 +210,37 @@ public struct EnumConverter: TypeConverter {
     }
 
     public func hasDecode() throws -> Bool {
+        return true
+    }
+
+    public func usesIdentityDecode() throws -> Bool {
         switch kind {
-        case .never: return false
-        case .void: return false
-        case .string: return false
-        case .int: return true
-        case .normal: return true
+        case .never: return true
+        case .void: return true
+        case .string: return true
+        case .int: return false
+        case .normal: return false
         }
     }
 
     public func decodeDecl() throws -> TSFunctionDecl? {
+        if try usesIdentityDecode() {
+            guard let decl = try decodeSignature() else { return nil }
+            let expr: any TSExpr = switch kind {
+            case .void:
+                TSAsExpr(TSIdentExpr.json, try type(for: .entity))
+            default:
+                TSIdentExpr.json
+            }
+            decl.body.elements.append(
+                TSReturnStmt(expr)
+            )
+            return decl
+        }
+
         switch kind {
         case .never, .void, .string:
-            return nil
+            throw MessageError("Unexpected enum decode kind: \(kind)")
         case .int:
             return try DecodeIntFuncGen(
                 converter: self,
@@ -244,38 +256,37 @@ public struct EnumConverter: TypeConverter {
     }
 
     public func hasEncode() throws -> Bool {
+        return true
+    }
+
+    public func usesIdentityEncode() throws -> Bool {
         switch kind {
-        case .never: return false
-        case .void: return false
-        case .string: return false
-        case .int: return true
-        case .normal: break
+        case .never: return true
+        case .void: return true
+        case .string: return true
+        case .int: return false
+        case .normal: return false
         }
-
-        let map = `enum`.contextSubstitutionMap()
-
-        var result = false
-
-        try withErrorCollector { collect in
-            for caseElement in decl.caseElements {
-                for (i, value) in caseElement.associatedValues.enumerated() {
-                    result = result || collect(at: "\(caseElement.name).\(value.interfaceName ?? "_\(i)")") {
-                        let value = try generator.converter(
-                            for: value.interfaceType.subst(map: map)
-                        )
-                        return try value.hasEncode()
-                    } ?? false
-                }
-            }
-        }
-
-        return result
     }
 
     public func encodeDecl() throws -> TSFunctionDecl? {
+        if try usesIdentityEncode() {
+            guard let decl = try encodeSignature() else { return nil }
+            let expr: any TSExpr = switch kind {
+            case .void:
+                TSAsExpr(TSIdentExpr.entity, try type(for: .json))
+            default:
+                TSIdentExpr.entity
+            }
+            decl.body.elements.append(
+                TSReturnStmt(expr)
+            )
+            return decl
+        }
+
         switch kind {
         case .never, .void, .string:
-            return nil
+            throw MessageError("Unexpected enum encode kind: \(kind)")
         case .int:
             return try EncodeIntFuncGen(
                 converter: self,

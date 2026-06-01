@@ -29,6 +29,10 @@ public struct ArrayConverter: TypeConverter {
         return try element().hasDecode()
     }
 
+    public func usesIdentityDecode() throws -> Bool {
+        return try element().usesIdentityDecode()
+    }
+
     public func decodeName() throws -> String {
         return generator.helperLibrary().name(.arrayDecode)
     }
@@ -46,6 +50,10 @@ public struct ArrayConverter: TypeConverter {
 
     public func hasEncode() throws -> Bool {
         return try element().hasEncode()
+    }
+
+    public func usesIdentityEncode() throws -> Bool {
+        return try element().usesIdentityEncode()
     }
 
     public func encodeName() throws -> String {

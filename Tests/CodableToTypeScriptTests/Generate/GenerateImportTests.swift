@@ -44,6 +44,7 @@ import {
     C,
     TagRecord,
     X,
+    X$JSON,
     Y
 }
 """
@@ -85,9 +86,11 @@ import {
     E,
     E$JSON,
     E_decode,
+    E_encode,
     S,
     S$JSON,
     S_decode,
+    S_encode,
     TagRecord
 }
 """]

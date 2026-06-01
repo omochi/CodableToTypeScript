@@ -169,7 +169,7 @@ export type S$JSON = number | null;
 """, """
 export function S_decode(json: S$JSON): S {
     return {
-        rawValue: json as number | null ?? undefined
+        rawValue: json as unknown as number | null ?? undefined
     };
 }
 """, """
@@ -231,12 +231,12 @@ export type S$JSON = string[];
 """, """
 export function S_decode(json: S$JSON): S {
     return {
-        rawValue: json as string[]
+        rawValue: json as unknown as string[]
     };
 }
 """, """
 export function S_encode(entity: S): S$JSON {
-    return entity.rawValue as string[];
+    return entity.rawValue as unknown as string[];
 }
 """]
         )
@@ -259,16 +259,16 @@ export type S = {
     rawValue: K;
 } & TagRecord<"S">;
 """, """
-export type S$JSON = K;
+export type S$JSON = K$JSON;
 """, """
 export function S_decode(json: S$JSON): S {
     return {
-        rawValue: json
+        rawValue: json as unknown as K
     };
 }
 """, """
 export function S_encode(entity: S): S$JSON {
-    return entity.rawValue;
+    return entity.rawValue as unknown as K$JSON;
 }
 """]
         )
@@ -300,7 +300,7 @@ export function S_decode(json: S$JSON): S {
 }
 """, """
 export function S_encode(entity: S): S$JSON {
-    return entity.rawValue as E$JSON;
+    return E_encode(entity.rawValue);
 }
 """
                        ]
@@ -433,7 +433,7 @@ export function S_decode(json: S$JSON): S {
 }
 """, """
 export function S_encode(entity: S): S$JSON {
-    return entity.rawValue as K$JSON<E$JSON>;
+    return K_encode<E, E$JSON>(entity.rawValue, E_encode);
 }
 """
                        ]
@@ -457,16 +457,16 @@ export type S = {
     rawValue: K<number>;
 } & TagRecord<"S">;
 """, """
-export type S$JSON = K<number>;
+export type S$JSON = K$JSON<number>;
 """, """
 export function S_decode(json: S$JSON): S {
     return {
-        rawValue: json as K<number>
+        rawValue: json as unknown as K<number>
     };
 }
 """, """
 export function S_encode(entity: S): S$JSON {
-    return entity.rawValue as K<number>;
+    return entity.rawValue as unknown as K$JSON<number>;
 }
 """
                        ]

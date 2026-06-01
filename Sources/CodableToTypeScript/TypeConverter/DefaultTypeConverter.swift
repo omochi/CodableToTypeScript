@@ -87,10 +87,15 @@ public struct DefaultTypeConverter {
         return "\(entityName)_decode"
     }
 
+    public func usesIdentityDecode() throws -> Bool {
+        let converter = try self.converter()
+        return try !converter.hasDecode()
+    }
+
     public func boundDecode() throws -> any TSExpr {
         let converter = try self.converter()
 
-        guard try converter.hasDecode() else {
+        if try converter.usesIdentityDecode() {
             return generator.helperLibrary().access(.identity)
         }
 
@@ -124,10 +129,13 @@ public struct DefaultTypeConverter {
 
     public func callDecode(genericArgs: [any SType], json: any TSExpr) throws -> any TSExpr {
         let converter = try self.converter()
-        guard try converter.hasDecode() else {
+        if try converter.usesIdentityDecode() {
             var expr = json
             if try converter.hasJSONType() || !genericArgs.isEmpty {
-                expr = TSAsExpr(expr, try converter.type(for: .entity))
+                expr = TSAsExpr(
+                    TSAsExpr(expr, TSIdentType("unknown")),
+                    try converter.type(for: .entity)
+                )
             }
             return expr
         }
@@ -221,10 +229,15 @@ public struct DefaultTypeConverter {
         return "\(entityName)_encode"
     }
 
+    public func usesIdentityEncode() throws -> Bool {
+        let converter = try self.converter()
+        return try !converter.hasEncode()
+    }
+
     public func boundEncode() throws -> any TSExpr {
         let converter = try self.converter()
 
-        guard try converter.hasEncode() else {
+        if try converter.usesIdentityEncode() {
             return generator.helperLibrary().access(.identity)
         }
 
@@ -258,10 +271,13 @@ public struct DefaultTypeConverter {
 
     public func callEncode(genericArgs: [any SType], entity: any TSExpr) throws -> any TSExpr {
         let converter = try self.converter()
-        guard try converter.hasEncode() else {
+        if try converter.usesIdentityEncode() {
             var expr = entity
             if try converter.hasJSONType() || !genericArgs.isEmpty {
-                expr = TSAsExpr(expr, try converter.type(for: .json))
+                expr = TSAsExpr(
+                    TSAsExpr(expr, TSIdentType("unknown")),
+                    try converter.type(for: .json)
+                )
             }
             return expr
         }

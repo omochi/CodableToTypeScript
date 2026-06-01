@@ -12,6 +12,7 @@ public protocol TypeConverter {
     func fieldToValue(field: any TSExpr, for target: GenerationTarget) throws -> any TSExpr
     func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl?
     func hasDecode() throws -> Bool
+    func usesIdentityDecode() throws -> Bool
     func decodeName() throws -> String
     func boundDecode() throws -> any TSExpr
     func callDecode(json: any TSExpr) throws -> any TSExpr
@@ -19,6 +20,7 @@ public protocol TypeConverter {
     func decodeSignature() throws -> TSFunctionDecl?
     func decodeDecl() throws -> TSFunctionDecl?
     func hasEncode() throws -> Bool
+    func usesIdentityEncode() throws -> Bool
     func encodeName() throws -> String
     func boundEncode() throws -> any TSExpr
     func callEncode(entity: any TSExpr) throws -> any TSExpr
@@ -63,6 +65,10 @@ extension TypeConverter {
         return try `default`.decodeName()
     }
 
+    public func usesIdentityDecode() throws -> Bool {
+        return try `default`.usesIdentityDecode()
+    }
+
     public func boundDecode() throws -> any TSExpr {
         return try `default`.boundDecode()
     }
@@ -81,6 +87,10 @@ extension TypeConverter {
 
     public func encodeName() throws -> String {
         return try `default`.encodeName()
+    }
+
+    public func usesIdentityEncode() throws -> Bool {
+        return try `default`.usesIdentityEncode()
     }
 
     public func boundEncode() throws -> any TSExpr {

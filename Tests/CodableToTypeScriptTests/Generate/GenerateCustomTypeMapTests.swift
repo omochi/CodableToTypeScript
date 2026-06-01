@@ -63,11 +63,15 @@ export function S_decode(json: S$JSON): S {
         a: a
     };
 }
+""", """
+export function S_encode(entity: S): S$JSON {
+    const a = entity.a as unknown as string;
+    return {
+        a: a
+    };
+}
 """
-                       ],
-            unexpecteds: ["""
-export function S_encode
-"""]
+                       ]
         )
     }
 
@@ -158,11 +162,15 @@ export function S_encode(entity: S): S$JSON {
         a: a
     };
 }
+""", """
+export function S_decode(json: S$JSON): S {
+    const a = json.a as unknown as Date;
+    return {
+        a: a
+    };
+}
 """
-                       ],
-            unexpecteds: ["""
-export function S_decode
-"""]
+                       ]
         )
     }
 

@@ -21,6 +21,8 @@ struct A {
             .converter(for: sType)
         XCTAssertEqual(try sConverter.hasDecode(), true)
         XCTAssertEqual(try sConverter.hasEncode(), true)
+        XCTAssertEqual(try sConverter.usesIdentityDecode(), false)
+        XCTAssertEqual(try sConverter.usesIdentityEncode(), false)
 
         let aDecl = try XCTUnwrap(source.find(name: "A"))
 
@@ -30,8 +32,10 @@ struct A {
             .interfaceType)
         let fooConverter = try CodeGenerator(context: context)
             .converter(for: fooType)
-        XCTAssertEqual(try fooConverter.hasDecode(), false)
-        XCTAssertEqual(try fooConverter.hasEncode(), false)
+        XCTAssertEqual(try fooConverter.hasDecode(), true)
+        XCTAssertEqual(try fooConverter.hasEncode(), true)
+        XCTAssertEqual(try fooConverter.usesIdentityDecode(), true)
+        XCTAssertEqual(try fooConverter.usesIdentityEncode(), true)
 
         let barType = try XCTUnwrap(aDecl.asStruct?
             .findInNominalTypeDecl(name: "bar", options: LookupOptions())?
@@ -41,6 +45,8 @@ struct A {
             .converter(for: barType)
         XCTAssertEqual(try barConverter.hasDecode(), true)
         XCTAssertEqual(try barConverter.hasEncode(), true)
+        XCTAssertEqual(try barConverter.usesIdentityDecode(), false)
+        XCTAssertEqual(try barConverter.usesIdentityEncode(), false)
 
         let bazType = try XCTUnwrap(aDecl.asStruct?
             .findInNominalTypeDecl(name: "baz", options: LookupOptions())?
@@ -48,10 +54,12 @@ struct A {
             .interfaceType)
         let bazConverter = try CodeGenerator(context: context)
             .converter(for: bazType)
-        XCTAssertThrowsError(try bazConverter.hasDecode()) { (error) in
+        XCTAssertEqual(try bazConverter.hasDecode(), true)
+        XCTAssertEqual(try bazConverter.hasEncode(), true)
+        XCTAssertThrowsError(try bazConverter.usesIdentityDecode()) { (error) in
             XCTAssertTrue("\(error)".contains("Error type can't be evaluated: UNKNOWN"), "rawError: \(error)")
         }
-        XCTAssertThrowsError(try bazConverter.hasEncode()) { (error) in
+        XCTAssertThrowsError(try bazConverter.usesIdentityEncode()) { (error) in
             XCTAssertTrue("\(error)".contains("Error type can't be evaluated: UNKNOWN"), "rawError: \(error)")
         }
     }

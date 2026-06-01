@@ -15,11 +15,21 @@ export type S = {
     a: number;
     b: string;
 } & TagRecord<"S">;
+""", """
+export type S$JSON = {
+    a: number;
+    b: string;
+};
+""", """
+export function S_decode(json: S$JSON): S {
+    return json;
+}
+""", """
+export function S_encode(entity: S): S$JSON {
+    return entity;
+}
 """
-            ],
-            unexpecteds: ["""
-export function S_decode
-"""]
+            ]
         )
     }
 
@@ -126,8 +136,14 @@ struct S {
     var e3: Int???
 """,
             typeSelector: .name("S"),
-            unexpecteds: ["""
-export function S_decode
+            expecteds: ["""
+export function S_decode(json: S$JSON): S {
+    return json;
+}
+""", """
+export function S_encode(entity: S): S$JSON {
+    return entity;
+}
 """
             ]
         )
@@ -179,8 +195,14 @@ struct S {
 """
             ,
             typeSelector: .name("S"),
-            unexpecteds: ["""
-export function S_decode
+            expecteds: ["""
+export function S_decode(json: S$JSON): S {
+    return json;
+}
+""", """
+export function S_encode(entity: S): S$JSON {
+    return entity;
+}
 """]
         )
     }
@@ -252,7 +274,7 @@ export function S_decode(json: S$JSON): S {
 }
 
 export function S_encode(entity: S): S$JSON {
-    const e1 = Set_encode<E, E$JSON>(entity.e1, identity);
+    const e1 = Set_encode<E, E$JSON>(entity.e1, E_encode);
     return {
         e1: e1
     };
@@ -307,8 +329,12 @@ export function S_decode(json: S$JSON): S {
 }
 """, """
 export function S_encode(entity: S): S$JSON {
-    const e1 = Dictionary_encode<E, E$JSON>(entity.e1, identity);
-    const e2 = Dictionary_encode<(E | null)[], (E$JSON | null)[]>(entity.e2, identity);
+    const e1 = Dictionary_encode<E, E$JSON>(entity.e1, E_encode);
+    const e2 = Dictionary_encode<(E | null)[], (E$JSON | null)[]>(entity.e2, (entity: (E | null)[]): (E$JSON | null)[] => {
+        return Array_encode<E | null, E$JSON | null>(entity, (entity: E | null): E$JSON | null => {
+            return Optional_encode<E, E$JSON>(entity, E_encode);
+        });
+    });
     const e3 = Dictionary_encode<number, number>(entity.e3, identity);
     return {
         e1: e1,
