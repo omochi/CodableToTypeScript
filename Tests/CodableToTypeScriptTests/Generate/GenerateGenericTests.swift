@@ -366,6 +366,62 @@ export function S_decode(json: S$JSON): S {
         )
     }
 
+    func testApplyGenericWithIdentityCodedTag() throws {
+        var typeMap = TypeMap.default
+        typeMap.table["Box"] = .coding(
+            entityType: "Box",
+            jsonType: "Box_JSON",
+            decode: "Box_decode",
+            encode: "Box_encode"
+        )
+
+        let typeConverterProvider = TypeConverterProvider(
+            typeMap: typeMap,
+            customProvider: { (gen, ty) in
+                guard let cnv = try TypeConverterProvider.defaultConverter(generator: gen, type: ty) else {
+                    return nil
+                }
+
+                if let cnv = cnv as? EnumConverter {
+                    return EnumConverter(generator: gen, enum: cnv.enum, emptyEnumStrategy: .void)
+                }
+
+                return nil
+            }
+        )
+
+        try assertGenerate(
+            source: """
+enum K {}
+struct Box<T> {}
+typealias ID = Box<K>
+""",
+            typeConverterProvider: typeConverterProvider,
+            externalReference: ExternalReference(
+                symbols: ["Box", "Box_JSON", "Box_decode", "Box_encode"],
+                code: """
+                export type Box<T> = string & { __tag?: T };
+                export type Box_JSON<T$JSON> = string;
+                export function Box_decode<T, T$JSON>(json: Box_JSON<T$JSON>, T_decode: (json: T$JSON) => T): Box<T> { throw 0; }
+                export function Box_encode<T, T$JSON>(entity: Box<T>, T_encode: (entity: T) => T$JSON): Box_JSON<T$JSON> { throw 0; }
+                """
+            ),
+            expecteds: ["""
+export type ID = Box<K>;
+""", """
+export type ID$JSON = Box_JSON<K$JSON>;
+""", """
+export function ID_decode(json: ID$JSON): ID {
+    return Box_decode<K, K$JSON>(json, K_decode);
+}
+""", """
+export function ID_encode(entity: ID): ID$JSON {
+    return Box_encode<K, K$JSON>(entity, K_encode);
+}
+"""]
+        )
+    }
+
     func testApplyComposedType() throws {
         try assertGenerate(
             source: """

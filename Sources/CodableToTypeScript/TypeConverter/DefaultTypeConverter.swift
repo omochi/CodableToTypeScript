@@ -95,7 +95,7 @@ public struct DefaultTypeConverter {
     public func boundDecode() throws -> any TSExpr {
         let converter = try self.converter()
 
-        if try converter.usesIdentityDecode() {
+        if try converter.usesIdentityDecode() && !converter.hasJSONType() {
             return generator.helperLibrary().access(.identity)
         }
 
@@ -237,7 +237,7 @@ public struct DefaultTypeConverter {
     public func boundEncode() throws -> any TSExpr {
         let converter = try self.converter()
 
-        if try converter.usesIdentityEncode() {
+        if try converter.usesIdentityEncode() && !converter.hasJSONType() {
             return generator.helperLibrary().access(.identity)
         }
 
