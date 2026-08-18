@@ -119,7 +119,7 @@ struct S {
             externalReference: dateTypeExternal(),
             expecteds: ["""
 export function S_encode(entity: S): S$JSON {
-    const a = entity.a as E$JSON;
+    const a = E_encode(entity.a);
     const b = Date_encode(entity.b);
     return {
         a: a,

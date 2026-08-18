@@ -37,12 +37,19 @@ struct S<T> {
 export type S<T> = {
     a: number;
 } & TagRecord<"S", [T]>;
-"""],
-            unexpecteds: ["""
-export type S$JSON<T$JSON>
 """, """
-export function S_decode<T, T$JSON>
-"""]
+export type S$JSON<T$JSON> = {
+    a: number;
+};
+""", """
+export function S_decode<T, T$JSON>(json: S$JSON<T$JSON>, T_decode: (json: T$JSON) => T): S<T> {
+    return json;
+}
+""", """
+export function S_encode<T, T$JSON>(entity: S<T>, T_encode: (entity: T) => T$JSON): S$JSON<T$JSON> {
+    return entity;
+}
+"""],
         )
     }
 
@@ -61,14 +68,18 @@ struct S {
 export type S = {
     a: K<number>;
 } & TagRecord<"S">;
-"""
-            ],
-            unexpecteds: ["""
-export type S$JSON
 """, """
-export function S_decode
+export type S$JSON = {
+    a: K$JSON<number>;
+};
 """, """
-export function S_encode
+export function S_decode(json: S$JSON): S {
+    return json;
+}
+""", """
+export function S_encode(entity: S): S$JSON {
+    return entity;
+}
 """
             ]
         )
@@ -218,13 +229,13 @@ export type S<T> = {
 export type S$JSON<T$JSON> = {
     a: K$JSON<T$JSON>;
     b: L$JSON<T$JSON>;
-    c: X<T$JSON>;
+    c: X$JSON<T$JSON>;
 };
 """, """
 export function S_decode<T, T$JSON>(json: S$JSON<T$JSON>, T_decode: (json: T$JSON) => T): S<T> {
     const a = K_decode<T, T$JSON>(json.a, T_decode);
     const b = L_decode<T, T$JSON>(json.b, T_decode);
-    const c = json.c as X<T>;
+    const c = json.c as unknown as X<T>;
     return {
         a: a,
         b: b,
@@ -332,17 +343,17 @@ export type S = {
 } & TagRecord<"S">;
 """, """
 export type S$JSON = {
-    i: K<number>;
-    a: K<A>;
+    i: K$JSON<number>;
+    a: K$JSON<A$JSON>;
     b: K$JSON<B$JSON>;
-    c: K<C>;
+    c: K$JSON<C$JSON>;
 };
 """, """
 export function S_decode(json: S$JSON): S {
-    const i = json.i as K<number>;
-    const a = json.a as K<A>;
+    const i = json.i as unknown as K<number>;
+    const a = json.a as unknown as K<A>;
     const b = K_decode<B, B$JSON>(json.b, B_decode);
-    const c = json.c as K<C>;
+    const c = json.c as unknown as K<C>;
     return {
         i: i,
         a: a,
@@ -352,6 +363,62 @@ export function S_decode(json: S$JSON): S {
 }
 """
             ]
+        )
+    }
+
+    func testApplyGenericWithIdentityCodedTag() throws {
+        var typeMap = TypeMap.default
+        typeMap.table["Box"] = .coding(
+            entityType: "Box",
+            jsonType: "Box_JSON",
+            decode: "Box_decode",
+            encode: "Box_encode"
+        )
+
+        let typeConverterProvider = TypeConverterProvider(
+            typeMap: typeMap,
+            customProvider: { (gen, ty) in
+                guard let cnv = try TypeConverterProvider.defaultConverter(generator: gen, type: ty) else {
+                    return nil
+                }
+
+                if let cnv = cnv as? EnumConverter {
+                    return EnumConverter(generator: gen, enum: cnv.enum, emptyEnumStrategy: .void)
+                }
+
+                return nil
+            }
+        )
+
+        try assertGenerate(
+            source: """
+enum K {}
+struct Box<T> {}
+typealias ID = Box<K>
+""",
+            typeConverterProvider: typeConverterProvider,
+            externalReference: ExternalReference(
+                symbols: ["Box", "Box_JSON", "Box_decode", "Box_encode"],
+                code: """
+                export type Box<T> = string & { __tag?: T };
+                export type Box_JSON<T$JSON> = string;
+                export function Box_decode<T, T$JSON>(json: Box_JSON<T$JSON>, T_decode: (json: T$JSON) => T): Box<T> { throw 0; }
+                export function Box_encode<T, T$JSON>(entity: Box<T>, T_encode: (entity: T) => T$JSON): Box_JSON<T$JSON> { throw 0; }
+                """
+            ),
+            expecteds: ["""
+export type ID = Box<K>;
+""", """
+export type ID$JSON = Box_JSON<K$JSON>;
+""", """
+export function ID_decode(json: ID$JSON): ID {
+    return Box_decode<K, K$JSON>(json, K_decode);
+}
+""", """
+export function ID_encode(entity: ID): ID$JSON {
+    return Box_encode<K, K$JSON>(entity, K_encode);
+}
+"""]
         )
     }
 
@@ -380,15 +447,15 @@ export type S = {
 } & TagRecord<"S">;
 """, """
 export type S$JSON = {
-    a: K<number | null>;
-    b: K<number[]>;
+    a: K$JSON<number | null>;
+    b: K$JSON<number[]>;
     c: K$JSON<E$JSON | null>;
     d: K$JSON<E$JSON[]>;
 };
 """, """
 export function S_decode(json: S$JSON): S {
-    const a = json.a as K<number | null>;
-    const b = json.b as K<number[]>;
+    const a = json.a as unknown as K<number | null>;
+    const b = json.b as unknown as K<number[]>;
     const c = K_decode<E | null, E$JSON | null>(json.c, (json: E$JSON | null): E | null => {
         return Optional_decode<E, E$JSON>(json, E_decode);
     });
@@ -549,13 +616,13 @@ export type U = {
 export type U$JSON = {
     k: S_K$JSON<E$JSON>;
     k2: S_K2$JSON<E$JSON>;
-    k3: S_K<number>;
+    k3: S_K$JSON<number>;
 };
 """, """
 export function U_decode(json: U$JSON): U {
     const k = S_K_decode<E, E$JSON>(json.k, E_decode);
     const k2 = S_K2_decode<E, E$JSON>(json.k2, E_decode);
-    const k3 = json.k3 as S_K<number>;
+    const k3 = json.k3 as unknown as S_K<number>;
     return {
         k: k,
         k2: k2,
@@ -645,7 +712,7 @@ export function K_encode<T, T$JSON>(entity: K<T>, T_encode: (entity: T) => T$JSO
         E$JSON,
         T,
         T$JSON
-    >(entity.k, identity, T_encode);
+    >(entity.k, E_encode, T_encode);
     return {
         k: k
     };

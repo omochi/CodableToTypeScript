@@ -324,7 +324,7 @@ export function E_decode(json: E$JSON): E {
         };
     } else if ("c" in json) {
         const j = json.c;
-        const _0 = j._0;
+        const _0 = j._0 as unknown as C;
         return {
             kind: "c",
             c: {

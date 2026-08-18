@@ -14,12 +14,6 @@ public struct StructConverter: TypeConverter {
     private var decl: StructDecl { `struct`.decl }
 
     public func typeDecl(for target: GenerationTarget) throws -> TSTypeDecl? {
-        switch target {
-        case .entity: break
-        case .json:
-            guard try hasJSONType() else { return nil }
-        }
-
         var fields: [TSObjectType.Field] = []
 
         try withErrorCollector { collect in
@@ -63,15 +57,21 @@ public struct StructConverter: TypeConverter {
     }
     
     public func hasDecode() throws -> Bool {
+        return true
+    }
+
+    public func usesIdentityDecode() throws -> Bool {
         let map = `struct`.contextSubstitutionMap()
 
-        var result = false
+        var result = true
         try withErrorCollector { collect in
             for p in decl.storedProperties.instances {
-                result = result || collect(at: "\(p.name)") {
+                let fieldUsesIdentity = collect(at: "\(p.name)") {
                     let converter = try generator.converter(for: p.interfaceType.subst(map: map))
-                    return try converter.hasDecode()
+                    let needsFallbackCast = try converter.hasJSONType() && !converter.hasDecode()
+                    return try converter.usesIdentityDecode() && !needsFallbackCast
                 } ?? false
+                result = result && fieldUsesIdentity
             }
         }
         return result
@@ -79,6 +79,13 @@ public struct StructConverter: TypeConverter {
 
     public func decodeDecl() throws -> TSFunctionDecl? {
         guard let function = try decodeSignature() else { return nil }
+
+        if try usesIdentityDecode() {
+            function.body.elements.append(
+                TSReturnStmt(TSIdentExpr.json)
+            )
+            return function
+        }
 
         var nameProvider = NameProvider()
         nameProvider.register(signature: function)
@@ -128,15 +135,21 @@ public struct StructConverter: TypeConverter {
     }
 
     public func hasEncode() throws -> Bool {
+        return true
+    }
+
+    public func usesIdentityEncode() throws -> Bool {
         let map = `struct`.contextSubstitutionMap()
 
-        var result = false
+        var result = true
         try withErrorCollector { collect in
             for p in decl.storedProperties.instances {
-                result = result || collect(at: "\(p.name)") {
+                let fieldUsesIdentity = collect(at: "\(p.name)") {
                     let converter = try generator.converter(for: p.interfaceType.subst(map: map))
-                    return try converter.hasEncode()
+                    let needsFallbackCast = try converter.hasJSONType() && !converter.hasEncode()
+                    return try converter.usesIdentityEncode() && !needsFallbackCast
                 } ?? false
+                result = result && fieldUsesIdentity
             }
         }
         return result
@@ -144,6 +157,13 @@ public struct StructConverter: TypeConverter {
 
     public func encodeDecl() throws -> TSFunctionDecl? {
         guard let function = try encodeSignature() else { return nil }
+
+        if try usesIdentityEncode() {
+            function.body.elements.append(
+                TSReturnStmt(TSIdentExpr.entity)
+            )
+            return function
+        }
 
         var nameProvider = NameProvider()
         nameProvider.register(signature: function)

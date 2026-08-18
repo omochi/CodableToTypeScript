@@ -9,11 +9,18 @@ typealias A = Int
 """,
             expecteds: ["""
 export type A = number;
+""", """
+export type A$JSON = number;
+""", """
+export function A_decode(json: A$JSON): A {
+    return json;
+}
+""", """
+export function A_encode(entity: A): A$JSON {
+    return entity;
+}
 """
-            ],
-            unexpecteds: ["""
-export type A$JSON
-"""]
+            ]
         )
     }
 

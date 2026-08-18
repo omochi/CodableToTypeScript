@@ -75,7 +75,7 @@ export function E_decode(json: E$JSON): E {
         };
     } else if ("b" in json) {
         const j = json.b;
-        const _0 = j._0 as string[];
+        const _0 = j._0 as unknown as string[];
         return {
             kind: "b",
             b: {
@@ -110,7 +110,9 @@ import {
     E1,
     E1$JSON,
     E1_decode,
+    E1_encode,
     E2,
+    E2$JSON,
     TagRecord
 } from "..";
 """, """
@@ -121,12 +123,21 @@ export type S = {
 """, """
 export type S$JSON = {
     x: E1$JSON;
-    y: E2;
+    y: E2$JSON;
 };
 """, """
 export function S_decode(json: S$JSON): S {
     const x = E1_decode(json.x);
-    const y = json.y;
+    const y = json.y as unknown as E2;
+    return {
+        x: x,
+        y: y
+    };
+}
+""", """
+export function S_encode(entity: S): S$JSON {
+    const x = E1_encode(entity.x);
+    const y = entity.y as unknown as E2$JSON;
     return {
         x: x,
         y: y
@@ -154,6 +165,7 @@ import {
     E,
     E$JSON,
     E_decode,
+    E_encode,
     TagRecord
 } from "..";
 """, """

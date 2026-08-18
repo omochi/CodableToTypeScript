@@ -45,6 +45,10 @@ public struct OptionalConverter: TypeConverter {
         return try wrapped(limit: nil).hasDecode()
     }
 
+    public func usesIdentityDecode() throws -> Bool {
+        return try wrapped(limit: nil).usesIdentityDecode()
+    }
+
     public func decodeName() throws -> String {
         return generator.helperLibrary().name(.optionalDecode)
     }
@@ -57,7 +61,15 @@ public struct OptionalConverter: TypeConverter {
     }
 
     public func callDecodeField(json: any TSExpr) throws -> any TSExpr {
-        guard try hasDecode() else { return json }
+        if try usesIdentityDecode() {
+            if try hasJSONType() {
+                return TSAsExpr(
+                    TSAsExpr(json, TSIdentType("unknown")),
+                    try fieldType(for: .entity).type
+                )
+            }
+            return json
+        }
         let decodeName = generator.helperLibrary().name(.optionalFieldDecode)
         return try generator.callDecode(
             callee: TSIdentExpr(decodeName),
@@ -74,6 +86,10 @@ public struct OptionalConverter: TypeConverter {
         return try wrapped(limit: nil).hasEncode()
     }
 
+    public func usesIdentityEncode() throws -> Bool {
+        return try wrapped(limit: nil).usesIdentityEncode()
+    }
+
     public func encodeName() throws -> String {
         return generator.helperLibrary().name(.optionalEncode)
     }
@@ -86,7 +102,15 @@ public struct OptionalConverter: TypeConverter {
     }
 
     public func callEncodeField(entity: any TSExpr) throws -> any TSExpr {
-        guard try hasEncode() else { return entity }
+        if try usesIdentityEncode() {
+            if try hasJSONType() {
+                return TSAsExpr(
+                    TSAsExpr(entity, TSIdentType("unknown")),
+                    try fieldType(for: .json).type
+                )
+            }
+            return entity
+        }
         let encodeName = generator.helperLibrary().name(.optionalFieldEncode)
         return try generator.callEncode(
             callee: TSIdentExpr(encodeName),
