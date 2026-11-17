@@ -334,7 +334,7 @@ struct HelperLibraryGenerator {
                     initializer: TSObjectExpr([])
                 ),
                 TSForInStmt(
-                    kind: .const, name: "k", operator: .in,
+                    kind: .const, name: "k", operator: .of,
                     expr: TSCallExpr(callee: TSMemberExpr(base: TSIdentExpr.entity, name: "keys"), args: []),
                     body: TSBlockStmt([
                         TSAssignExpr(

@@ -70,7 +70,7 @@ export function Dictionary_encode<T, T$JSON>(entity: Map<string, T>, T_encode: (
     const json: {
         [key: string]: T$JSON;
     } = {};
-    for (const k in entity.keys()) {
+    for (const k of entity.keys()) {
         json[k] = T_encode(entity.get(k) !!);
     }
     return json;
@@ -100,5 +100,43 @@ export type TagRecord<Name extends string, Args extends any[] = []> = Args["leng
 """
             ]
         )
+    }
+
+    func testDictionaryRoundTrip() throws {
+        if ProcessInfo.processInfo.environment["SKIP_TSC"] != nil {
+            throw XCTSkip("SKIP_TSC is set")
+        }
+
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let helper = CodeGenerator(context: Context()).generateHelperLibrary().print()
+        try helper.write(to: directory.appendingPathComponent("helper.ts"), atomically: true, encoding: .utf8)
+        let test = #"""
+        import { Dictionary_encode, Dictionary_decode } from "./helper";
+
+        function check(condition: boolean, message: string): void {
+            if (!condition) throw new Error(message);
+        }
+
+        const input = new Map<string, number | null>([["first", 1], ["second", null], ["third", 3]]);
+        const encoded = Dictionary_encode(input, value => value === null ? null : `value:${value}`);
+        check(JSON.stringify(encoded) === '{"first":"value:1","second":null,"third":"value:3"}', "encoded values");
+        const decoded = Dictionary_decode(JSON.parse(JSON.stringify(encoded)),
+            (value: string | null) => value === null ? null : Number(value.slice(6)));
+        check(JSON.stringify([...decoded]) === JSON.stringify([...input]), "round trip");
+        check(JSON.stringify(Dictionary_encode(new Map<string, number>(), value => value)) === "{}", "empty map");
+        check(Dictionary_decode({}, (value: number) => value).size === 0, "empty object");
+
+        """#
+        try test.write(to: directory.appendingPathComponent("test.ts"), atomically: true, encoding: .utf8)
+        let config = """
+        { "compilerOptions": { "strict": true, "target": "es2015", "module": "commonjs" } }
+        """
+        try config.write(to: directory.appendingPathComponent("tsconfig.json"), atomically: true, encoding: .utf8)
+        try EasyProcess.command(["npx", "tsc", "--project", directory.path])
+        try EasyProcess.command(["node", directory.appendingPathComponent("test.js").path])
     }
 }
