@@ -8,10 +8,14 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: vapor/swiftly-action@v0.2
         with:
-          toolchain: "6.3"
+          toolchain: "6.3.2"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - run: npm install --global typescript@5.9.3
       - run: swift test
