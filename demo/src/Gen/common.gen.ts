@@ -35,7 +35,7 @@ export function Dictionary_decode<T, T_JSON>(json: {
 }, T_decode: (json: T_JSON) => T): Map<string, T> {
     const entity = new Map<string, T>();
     for (const k in json) {
-        if (json.hasOwnProperty(k)) {
+        if (Object.prototype.hasOwnProperty.call(json, k)) {
             entity.set(k, T_decode(json[k]));
         }
     }
@@ -49,7 +49,12 @@ export function Dictionary_encode<T, T_JSON>(entity: Map<string, T>, T_encode: (
         [key: string]: T_JSON;
     } = {};
     for (const k of entity.keys()) {
-        json[k] = T_encode(entity.get(k) !!);
+        Object.defineProperty(json, k, {
+            value: T_encode(entity.get(k) !!),
+            enumerable: true,
+            writable: true,
+            configurable: true
+        });
     }
     return json;
 }
