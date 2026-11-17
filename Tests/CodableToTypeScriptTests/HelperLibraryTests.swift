@@ -57,7 +57,7 @@ export function Dictionary_decode<T, T$JSON>(json: {
 }, T_decode: (json: T$JSON) => T): Map<string, T> {
     const entity = new Map<string, T>();
     for (const k in json) {
-        if (json.hasOwnProperty(k)) {
+        if (Object.prototype.hasOwnProperty.call(json, k)) {
             entity.set(k, T_decode(json[k]));
         }
     }
@@ -71,7 +71,12 @@ export function Dictionary_encode<T, T$JSON>(entity: Map<string, T>, T_encode: (
         [key: string]: T$JSON;
     } = {};
     for (const k of entity.keys()) {
-        json[k] = T_encode(entity.get(k) !!);
+        Object.defineProperty(json, k, {
+            value: T_encode(entity.get(k) !!),
+            enumerable: true,
+            writable: true,
+            configurable: true
+        });
     }
     return json;
 }
@@ -130,6 +135,16 @@ export type TagRecord<Name extends string, Args extends any[] = []> = Args["leng
         check(JSON.stringify(Dictionary_encode(new Map<string, number>(), value => value)) === "{}", "empty map");
         check(Dictionary_decode({}, (value: number) => value).size === 0, "empty object");
 
+        const special = new Map<string, number>([["__proto__", 7], ["hasOwnProperty", 8], ["constructor", 9]]);
+        const specialJSON = Dictionary_encode(special, value => value);
+        check(Object.getPrototypeOf(specialJSON) === Object.prototype, "object prototype");
+        check(JSON.stringify(specialJSON) === '{"__proto__":7,"hasOwnProperty":8,"constructor":9}', "special keys encoded");
+        check(JSON.stringify([...Dictionary_decode(JSON.parse(JSON.stringify(specialJSON)), (value: number) => value)])
+            === JSON.stringify([...special]), "special keys round trip");
+        const inherited = Object.assign(Object.create({ inherited: 1 }), { own: 2 });
+        check(JSON.stringify([...Dictionary_decode(inherited, (value: number) => value)]) === '[["own",2]]', "own keys only");
+        const noPrototype = Object.assign(Object.create(null), { hasOwnProperty: 3 });
+        check(Dictionary_decode(noPrototype, (value: number) => value).get("hasOwnProperty") === 3, "null prototype");
         """#
         try test.write(to: directory.appendingPathComponent("test.ts"), atomically: true, encoding: .utf8)
         let config = """

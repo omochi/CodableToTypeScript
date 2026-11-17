@@ -292,9 +292,12 @@ struct HelperLibraryGenerator {
                         TSIfStmt(
                             condition: TSCallExpr(
                                 callee: TSMemberExpr(
-                                    base: TSIdentExpr.json, name: "hasOwnProperty"
+                                    base: TSMemberExpr(
+                                        base: TSMemberExpr(base: TSIdentExpr("Object"), name: "prototype"),
+                                        name: "hasOwnProperty"
+                                    ), name: "call"
                                 ),
-                                args: [TSIdentExpr("k")]
+                                args: [TSIdentExpr.json, TSIdentExpr("k")]
                             ),
                             then: TSBlockStmt([
                                 TSCallExpr(
@@ -337,19 +340,22 @@ struct HelperLibraryGenerator {
                     kind: .const, name: "k", operator: .of,
                     expr: TSCallExpr(callee: TSMemberExpr(base: TSIdentExpr.entity, name: "keys"), args: []),
                     body: TSBlockStmt([
-                        TSAssignExpr(
-                            TSSubscriptExpr(base: TSIdentExpr.json, key: TSIdentExpr("k")),
-                            TSCallExpr(
-                                callee: tEncode(),
-                                args: [
-                                    TSPostfixOperatorExpr(
+                        TSCallExpr(
+                            callee: TSMemberExpr(base: TSIdentExpr("Object"), name: "defineProperty"),
+                            args: [TSIdentExpr.json, TSIdentExpr("k"), TSObjectExpr([
+                                .named(name: "value", value: TSCallExpr(
+                                    callee: tEncode(),
+                                    args: [TSPostfixOperatorExpr(
                                         TSCallExpr(
                                             callee: TSMemberExpr(base: TSIdentExpr.entity, name: "get"),
                                             args: [TSIdentExpr("k")]
                                         ), "!!"
-                                    )
-                                ]
-                            )
+                                    )]
+                                )),
+                                .named(name: "enumerable", value: TSBooleanLiteralExpr.true),
+                                .named(name: "writable", value: TSBooleanLiteralExpr.true),
+                                .named(name: "configurable", value: TSBooleanLiteralExpr.true)
+                            ])]
                         )
                     ])
                 ),
