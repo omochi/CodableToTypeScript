@@ -48,7 +48,7 @@ export function Dictionary_encode<T, T_JSON>(entity: Map<string, T>, T_encode: (
     const json: {
         [key: string]: T_JSON;
     } = {};
-    for (const k in entity.keys()) {
+    for (const k of entity.keys()) {
         json[k] = T_encode(entity.get(k) !!);
     }
     return json;
